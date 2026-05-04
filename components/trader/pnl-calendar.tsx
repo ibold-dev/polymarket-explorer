@@ -120,16 +120,18 @@ export function PnlCalendar({ data, periods }: { data: DailyPnlEntry[]; periods:
 					<CalendarTooltipRow label="High" value={entry.high} />
 					<CalendarTooltipRow label="Low" value={entry.low} />
 					<CalendarTooltipRow label="Close" value={entry.close} />
+					<CalendarTooltipRow label="Open positions" value={entry.numOpenPositions} currency={false} />
+					<CalendarTooltipRow label="USD balance" value={entry.usdBalance} />
 				</div>
 			</div>
 		)
 	}
 
-	function CalendarTooltipRow({ label, value }: { label: string; value: number }) {
+	function CalendarTooltipRow({ label, value, currency = true }: { label: string; value: number; currency?: boolean }) {
 		return (
 			<div className="flex items-center justify-between gap-3">
 				<span className="text-muted-foreground">{label}</span>
-				<span className="font-mono font-medium tabular-nums">{formatNumber(value, { currency: true, compact: true })}</span>
+				<span className="font-mono font-medium tabular-nums">{formatNumber(value, currency ? { currency: true, compact: true } : { decimals: 0 })}</span>
 			</div>
 		)
 	}
@@ -223,11 +225,13 @@ export function PnlCalendar({ data, periods }: { data: DailyPnlEntry[]; periods:
 							{formatNumber(selectedEntry.pnl, { currency: true, compact: true })}
 						</span>
 					</div>
-					<div className="mt-3 grid grid-cols-2 gap-2">
+					<div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
 						<CalendarSelectedMetric label="Open" value={selectedEntry.open} />
 						<CalendarSelectedMetric label="High" value={selectedEntry.high} />
 						<CalendarSelectedMetric label="Low" value={selectedEntry.low} />
 						<CalendarSelectedMetric label="Close" value={selectedEntry.close} />
+						<CalendarSelectedMetric label="USD Balance" value={selectedEntry.usdBalance} />
+						<CalendarSelectedMetric label="Open Positions" value={selectedEntry.numOpenPositions} currency={false} />
 					</div>
 				</div>
 			)}
@@ -235,12 +239,22 @@ export function PnlCalendar({ data, periods }: { data: DailyPnlEntry[]; periods:
 	)
 }
 
-function CalendarSelectedMetric({ label, value }: { label: string; value: number }) {
+function CalendarSelectedMetric({
+	label,
+	value,
+	currency = true,
+	valueClassName,
+}: {
+	label: string
+	value: number | null
+	currency?: boolean
+	valueClassName?: string
+}) {
 	return (
 		<div className="rounded-md bg-muted px-3 py-2">
 			<p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
-			<p className="mt-1 font-mono text-sm font-medium tabular-nums">
-				{formatNumber(value, { currency: true, compact: true })}
+			<p className={cn("mt-1 font-mono text-sm font-medium tabular-nums", valueClassName)}>
+				{formatNumber(value, currency ? { currency: true, compact: true } : { decimals: 0 })}
 			</p>
 		</div>
 	)

@@ -9,7 +9,7 @@ import {
 	type IChartApi,
 	type UTCTimestamp,
 } from "lightweight-charts"
-import { ChartArea, ChartCandlestick } from "lucide-react"
+import { ChartArea, ChartCandlestick, Settings2Icon } from "lucide-react"
 import { Area, AreaChart, CartesianGrid, Line, ReferenceDot, XAxis, YAxis } from "recharts"
 
 import {
@@ -17,6 +17,8 @@ import {
 	ChartTooltip,
 	type ChartConfig,
 } from "@/components/ui/chart"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import type { PnlChartAnnotation, PnlDataPoint } from "@/lib/struct/pnl"
 import { formatDateCompact, formatDateFull, formatDateTimeFull, pnlColorClass } from "@/lib/format"
@@ -35,11 +37,24 @@ const chartConfig = {
 		label: "PnL",
 		color: "var(--chart-1)",
 	},
+	metric: {
+		label: "Metric",
+		color: "var(--chart-1)",
+	},
 } satisfies ChartConfig
 
 type PnlChartPoint = PnlDataPoint & {
 	range: [number, number]
+	metric: number
 }
+
+export type PnlChartMetric = "pnl" | "usdBalance" | "openPositions"
+
+const chartMetricOptions = [
+	{ value: "pnl", label: "PnL" },
+	{ value: "usdBalance", label: "USD Balance" },
+	{ value: "openPositions", label: "Open Positions" },
+] satisfies Array<{ value: PnlChartMetric; label: string }>
 
 const annotationConfig = {
 	best: {
@@ -103,10 +118,22 @@ function AnnotationDotShape({
 	)
 }
 
-function toChartPoint(point: PnlDataPoint): PnlChartPoint {
+function getChartMetricValue(point: PnlDataPoint, metric: PnlChartMetric) {
+	if (metric === "usdBalance") return point.usdBalance
+	if (metric === "openPositions") return point.numOpenPositions
+	return point.p
+}
+
+function formatChartMetricValue(value: number, metric: PnlChartMetric) {
+	if (metric === "openPositions") return formatNumber(value, { decimals: 0 })
+	return formatNumber(value, { currency: true, compact: true })
+}
+
+function toChartPoint(point: PnlDataPoint, metric: PnlChartMetric): PnlChartPoint {
 	return {
 		...point,
 		range: [Math.min(point.open, point.close), Math.max(point.open, point.close)],
+		metric: getChartMetricValue(point, metric),
 	}
 }
 
@@ -138,17 +165,29 @@ function PnlTooltipContent({
 				<TooltipValue label="Low" value={entry.low} />
 				<TooltipValue label="Close" value={entry.close} />
 				<TooltipValue label="Change" value={change} valueClassName={pnlColorClass(change)} />
+				<TooltipValue label="USD balance" value={entry.usdBalance} />
+				<TooltipValue label="Open positions" value={entry.numOpenPositions} currency={false} />
 			</div>
 		</div>
 	)
 }
 
-function TooltipValue({ label, value, valueClassName }: { label: string; value: number; valueClassName?: string }) {
+function TooltipValue({
+	label,
+	value,
+	valueClassName,
+	currency = true,
+}: {
+	label: string
+	value: number
+	valueClassName?: string
+	currency?: boolean
+}) {
 	return (
 		<div className="flex items-center justify-between gap-4 leading-none">
 			<span className="text-muted-foreground">{label}</span>
 			<span className={cn("shrink-0 font-mono font-medium text-foreground tabular-nums", valueClassName)}>
-				{formatNumber(value, { currency: true })}
+				{formatNumber(value, currency ? { currency: true } : { decimals: 0 })}
 			</span>
 		</div>
 	)
@@ -178,6 +217,43 @@ export function ChartModeToggle({ value, onChange }: { value: PnlChartMode; onCh
 				<span className="sr-only">Candles</span>
 			</ToggleGroupItem>
 		</ToggleGroup>
+	)
+}
+
+export function ChartMetricSelect({
+	value,
+	onChange,
+}: {
+	value: PnlChartMetric
+	onChange: (value: PnlChartMetric) => void
+}) {
+	return (
+		<Popover>
+			<PopoverTrigger
+				render={
+					<Button variant="outline" size="icon-sm" className="rounded-full" aria-label="Chart settings" title="Chart settings">
+						<Settings2Icon aria-hidden="true" className="size-4" />
+					</Button>
+				}
+			/>
+			<PopoverContent align="end" className="w-44 p-1.5">
+				<div className="grid gap-1">
+					{chartMetricOptions.map((option) => (
+						<button
+							key={option.value}
+							type="button"
+							onClick={() => onChange(option.value)}
+							className={cn(
+								"rounded-sm px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-muted",
+								value === option.value ? "bg-muted text-foreground" : "text-muted-foreground"
+							)}
+						>
+							{option.label}
+						</button>
+					))}
+				</div>
+			</PopoverContent>
+		</Popover>
 	)
 }
 
@@ -280,9 +356,10 @@ type PnlChartProps = {
 	timeframe?: PnlTimeframe
 	action?: ReactNode
 	chartMode?: PnlChartMode
+	chartMetric?: PnlChartMetric
 }
 
-export function PnlChartContent({ data, annotations = [], showAnnotations = false, timeframe, action, chartMode = "area" }: PnlChartProps) {
+export function PnlChartContent({ data, annotations = [], showAnnotations = false, timeframe, action, chartMode = "area", chartMetric = "pnl" }: PnlChartProps) {
 	if (data.length === 0) {
 		return (
 			<div className="overflow-hidden">
@@ -305,19 +382,33 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 	}
 
 	const lastPnl = data[data.length - 1].p
-	const chartData = data.map(toChartPoint)
+	const firstPnl = data[0].open
+	const change = lastPnl - firstPnl
+	const latestOpenPositions = data[data.length - 1].numOpenPositions
+	const chartData = data.map((point) => toChartPoint(point, chartMetric))
 	const hasAnnotations = annotations.length > 0
-	const visibleAnnotations = chartMode === "area" && showAnnotations ? annotations : []
+	const visibleAnnotations = chartMode === "area" && chartMetric === "pnl" && showAnnotations ? annotations : []
 	const shouldShowTooltipTime = timeframe !== undefined
+	const showPnlRange = chartMetric === "pnl"
 
 	return (
 		<div className="overflow-hidden">
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between group-data-[share-mode=image]/share-card:mb-6 group-data-[share-mode=image]/share-card:items-end">
-				<div>
-					<p className="mb-1 text-sm text-foreground">Cumulative PnL</p>
-					<p className={cn("text-xl font-medium sm:text-2xl", pnlColorClass(lastPnl))}>
-						{formatNumber(lastPnl, { currency: true, compact: true })}
-					</p>
+				<div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:gap-5">
+					<PnlSummaryMetric
+						label="Cumulative PnL"
+						value={formatNumber(lastPnl, { currency: true, compact: true })}
+						valueClassName={pnlColorClass(lastPnl)}
+					/>
+					<PnlSummaryMetric
+						label="Change"
+						value={formatNumber(change, { currency: true, compact: true })}
+						valueClassName={pnlColorClass(change)}
+					/>
+					<PnlSummaryMetric
+						label="Open Positions"
+						value={formatNumber(latestOpenPositions, { decimals: 0 })}
+					/>
 				</div>
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
 					{hasAnnotations ? (
@@ -347,7 +438,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 						</div>
 					) : null}
 					{action ? (
-						<div className="w-full sm:w-auto sm:shrink-0 group-data-[share-mode=image]/share-card:hidden" data-share-ignore="true">
+						<div className="flex w-full flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end sm:shrink-0 group-data-[share-mode=image]/share-card:hidden" data-share-ignore="true">
 							{action}
 						</div>
 					) : null}
@@ -419,7 +510,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 							axisLine={false}
 							orientation="right"
 							tickMargin={6}
-							tickFormatter={(v) => formatNumber(v, { compact: true, currency: true })}
+							tickFormatter={(value) => formatChartMetricValue(Number(value), chartMetric)}
 							tick={{ fontSize: 12 }}
 							width={10}
 							domain={["dataMin", "dataMax"]}
@@ -430,21 +521,23 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 							}
 						/>
 						<Area
-							dataKey="p"
+							dataKey="metric"
 							type="monotone"
 							fill="url(#pnlGradient)"
 							stroke="none"
 							activeDot={false}
 						/>
-						<Area
-							dataKey="range"
-							type="monotone"
-							fill="url(#pnlRangeGradient)"
-							stroke="none"
-							activeDot={false}
-						/>
+						{showPnlRange ? (
+							<Area
+								dataKey="range"
+								type="monotone"
+								fill="url(#pnlRangeGradient)"
+								stroke="none"
+								activeDot={false}
+							/>
+						) : null}
 						<Line
-							dataKey="p"
+							dataKey="metric"
 							type="monotone"
 							dot={false}
 							stroke="var(--color-pnl)"
@@ -471,6 +564,25 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 					</ChartContainer>
 				)}
 			</div>
+		</div>
+	)
+}
+
+function PnlSummaryMetric({
+	label,
+	value,
+	valueClassName,
+}: {
+	label: string
+	value: string
+	valueClassName?: string
+}) {
+	return (
+		<div>
+			<p className="mb-1 text-xs text-muted-foreground sm:text-sm">{label}</p>
+			<p className={cn("text-lg font-medium tabular-nums sm:text-2xl", valueClassName)}>
+				{value}
+			</p>
 		</div>
 	)
 }

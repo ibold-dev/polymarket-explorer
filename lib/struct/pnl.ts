@@ -16,6 +16,8 @@ export type PnlDataPoint = {
 	low: number;
 	close: number;
 	p: number;
+	numOpenPositions: number;
+	usdBalance: number;
 };
 
 export type DailyPnlEntry = {
@@ -25,6 +27,8 @@ export type DailyPnlEntry = {
 	high: number;
 	low: number;
 	close: number;
+	numOpenPositions: number;
+	usdBalance: number;
 };
 
 const defaultPnlTimeframe: StructPnlCandleTimeframe = "lifetime";
@@ -65,6 +69,8 @@ const getTraderPnlCandlesCached = cache(
 					low: candle.low,
 					close: candle.close,
 					p: candle.close,
+					numOpenPositions: candle.num_open_positions,
+					usdBalance: candle.usdc_balance + candle.pusd_balance,
 				}))
 				.sort((a, b) => a.t - b.t);
 		} catch (error) {
@@ -329,5 +335,7 @@ function toDailyPnl(data: PnlDataPoint[]): DailyPnlEntry[] {
 		high: point.high,
 		low: point.low,
 		close: point.close,
+		numOpenPositions: point.numOpenPositions,
+		usdBalance: point.usdBalance,
 	}));
 }
