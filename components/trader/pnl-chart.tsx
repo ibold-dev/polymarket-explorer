@@ -48,10 +48,12 @@ type PnlChartPoint = PnlDataPoint & {
 	metric: number
 }
 
-export type PnlChartMetric = "pnl" | "usdBalance" | "openPositions"
+export type PnlChartOhlcMetric = "pnl" | "portfolio"
+export type PnlChartMetric = PnlChartOhlcMetric | "usdBalance" | "openPositions"
 
 const chartMetricOptions = [
-	{ value: "pnl", label: "PnL" },
+	{ value: "pnl", label: "Profit/Loss" },
+	{ value: "portfolio", label: "Portfolio Value" },
 	{ value: "usdBalance", label: "USD Balance" },
 	{ value: "openPositions", label: "Open Positions" },
 ] satisfies Array<{ value: PnlChartMetric; label: string }>
@@ -119,9 +121,32 @@ function AnnotationDotShape({
 }
 
 function getChartMetricValue(point: PnlDataPoint, metric: PnlChartMetric) {
+	if (metric === "portfolio") return point.portfolioClose
 	if (metric === "usdBalance") return point.usdBalance
 	if (metric === "openPositions") return point.numOpenPositions
 	return point.p
+}
+
+function isOhlcMetric(metric: PnlChartMetric): metric is PnlChartOhlcMetric {
+	return metric === "pnl" || metric === "portfolio"
+}
+
+function getChartMetricOhlc(point: PnlDataPoint, metric: PnlChartOhlcMetric) {
+	if (metric === "portfolio") {
+		return {
+			open: point.portfolioOpen,
+			high: point.portfolioHigh,
+			low: point.portfolioLow,
+			close: point.portfolioClose,
+		}
+	}
+
+	return {
+		open: point.open,
+		high: point.high,
+		low: point.low,
+		close: point.close,
+	}
 }
 
 function formatChartMetricValue(value: number, metric: PnlChartMetric) {
@@ -130,9 +155,11 @@ function formatChartMetricValue(value: number, metric: PnlChartMetric) {
 }
 
 function toChartPoint(point: PnlDataPoint, metric: PnlChartMetric): PnlChartPoint {
+	const ohlc = isOhlcMetric(metric) ? getChartMetricOhlc(point, metric) : null
+
 	return {
 		...point,
-		range: [Math.min(point.open, point.close), Math.max(point.open, point.close)],
+		range: ohlc ? [Math.min(ohlc.open, ohlc.close), Math.max(ohlc.open, ohlc.close)] : [getChartMetricValue(point, metric), getChartMetricValue(point, metric)],
 		metric: getChartMetricValue(point, metric),
 	}
 }
@@ -141,10 +168,12 @@ function PnlTooltipContent({
 	active,
 	payload,
 	showTime,
+	metric,
 }: {
 	active?: boolean
 	payload?: Array<{ payload?: PnlChartPoint }>
 	showTime: boolean
+	metric: PnlChartMetric
 }) {
 	const entry = payload?.[0]?.payload
 
@@ -152,7 +181,8 @@ function PnlTooltipContent({
 		return null
 	}
 
-	const change = entry.close - entry.open
+	const ohlc = isOhlcMetric(metric) ? getChartMetricOhlc(entry, metric) : null
+	const change = ohlc ? ohlc.close - ohlc.open : 0
 
 	return (
 		<div className="grid min-w-40 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
@@ -160,11 +190,22 @@ function PnlTooltipContent({
 				{showTime ? formatDateTimeFull(entry.t) : formatDateFull(entry.t)}
 			</div>
 			<div className="grid gap-1.5">
-				<TooltipValue label="Open" value={entry.open} />
-				<TooltipValue label="High" value={entry.high} />
-				<TooltipValue label="Low" value={entry.low} />
-				<TooltipValue label="Close" value={entry.close} />
-				<TooltipValue label="Change" value={change} valueClassName={pnlColorClass(change)} />
+				{ohlc ? (
+					<>
+						<TooltipValue label="Open" value={ohlc.open} />
+						<TooltipValue label="High" value={ohlc.high} />
+						<TooltipValue label="Low" value={ohlc.low} />
+						<TooltipValue label="Close" value={ohlc.close} />
+						<TooltipValue label="Change" value={change} valueClassName={pnlColorClass(change)} />
+					</>
+				) : (
+					<TooltipValue
+						label={metric === "openPositions" ? "Open positions" : "USD balance"}
+						value={getChartMetricValue(entry, metric)}
+						currency={metric !== "openPositions"}
+					/>
+				)}
+				{metric === "portfolio" ? <TooltipValue label="PnL close" value={entry.close} /> : null}
 				<TooltipValue label="USD balance" value={entry.usdBalance} />
 				<TooltipValue label="Open positions" value={entry.numOpenPositions} currency={false} />
 			</div>
@@ -231,6 +272,13 @@ export function ChartSettingsButton({
 	chartMetric: PnlChartMetric
 	onChartMetricChange: (value: PnlChartMetric) => void
 }) {
+	function handleChartModeChange(nextMode: PnlChartMode) {
+		onChartModeChange(nextMode)
+		if (nextMode === "candles" && !isOhlcMetric(chartMetric)) {
+			onChartMetricChange("pnl")
+		}
+	}
+
 	return (
 		<Popover>
 			<PopoverTrigger
@@ -244,24 +292,28 @@ export function ChartSettingsButton({
 				<div className="grid gap-3">
 					<div className="grid gap-1.5">
 						<div className="px-1 text-xs text-muted-foreground">Chart type</div>
-						<ChartModeToggle value={chartMode} onChange={onChartModeChange} />
+						<ChartModeToggle value={chartMode} onChange={handleChartModeChange} />
 					</div>
 					<div className="grid gap-1">
 						<div className="px-1 text-xs text-muted-foreground">Metric</div>
-						{chartMetricOptions.map((option) => (
-							<button
-								key={option.value}
-								type="button"
-								onClick={() => onChartMetricChange(option.value)}
-								disabled={chartMode !== "area"}
-								className={cn(
-									"rounded-sm px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50",
-									chartMetric === option.value ? "bg-muted text-foreground" : "text-muted-foreground"
-								)}
-							>
-								{option.label}
-							</button>
-						))}
+						{chartMetricOptions.map((option) => {
+							const isDisabled = chartMode === "candles" && !isOhlcMetric(option.value)
+
+							return (
+								<button
+									key={option.value}
+									type="button"
+									onClick={() => onChartMetricChange(option.value)}
+									disabled={isDisabled}
+									className={cn(
+										"rounded-sm px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50",
+										chartMetric === option.value ? "bg-muted text-foreground" : "text-muted-foreground"
+									)}
+								>
+									{option.label}
+								</button>
+							)
+						})}
 					</div>
 				</div>
 			</PopoverContent>
@@ -269,13 +321,10 @@ export function ChartSettingsButton({
 	)
 }
 
-function toCandlestickData(data: PnlDataPoint[]): CandlestickData<UTCTimestamp>[] {
+function toCandlestickData(data: PnlDataPoint[], metric: PnlChartOhlcMetric): CandlestickData<UTCTimestamp>[] {
 	return data.map((point) => ({
 		time: point.t as UTCTimestamp,
-		open: point.open,
-		high: point.high,
-		low: point.low,
-		close: point.close,
+		...getChartMetricOhlc(point, metric),
 	}))
 }
 
@@ -289,7 +338,7 @@ function getCandlestickThemeColors() {
 	}
 }
 
-function PnlCandlestickChart({ data }: { data: PnlDataPoint[] }) {
+function PnlCandlestickChart({ data, metric }: { data: PnlDataPoint[]; metric: PnlChartOhlcMetric }) {
 	const containerRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
@@ -336,13 +385,13 @@ function PnlCandlestickChart({ data }: { data: PnlDataPoint[] }) {
 			wickDownColor: "#ef4444",
 		})
 
-		series.setData(toCandlestickData(data))
+		series.setData(toCandlestickData(data, metric))
 		chart.timeScale().fitContent()
 
 		return () => {
 			chart.remove()
 		}
-	}, [data])
+	}, [data, metric])
 
 	return <div ref={containerRef} className="h-[260px] min-h-[260px] w-full sm:h-[340px] sm:min-h-[310px]" />
 }
@@ -401,7 +450,8 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 	const hasAnnotations = annotations.length > 0
 	const visibleAnnotations = chartMode === "area" && chartMetric === "pnl" && showAnnotations ? annotations : []
 	const shouldShowTooltipTime = timeframe !== undefined
-	const showPnlRange = chartMetric === "pnl"
+	const showMetricRange = isOhlcMetric(chartMetric)
+	const candlestickMetric = isOhlcMetric(chartMetric) ? chartMetric : "pnl"
 
 	return (
 		<div className="overflow-hidden">
@@ -493,7 +543,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 			) : null}
 			<div className="relative">
 				{chartMode === "candles" ? (
-					<PnlCandlestickChart data={data} />
+					<PnlCandlestickChart data={data} metric={candlestickMetric} />
 				) : (
 					<ChartContainer config={chartConfig} className="h-[260px] min-h-[260px] w-full sm:h-[340px] sm:min-h-[310px]">
 						<AreaChart accessibilityLayer data={chartData} margin={{ left: 0, right: 60, top: 0, bottom: 0 }}>
@@ -529,7 +579,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 						/>
 						<ChartTooltip
 							content={
-								<PnlTooltipContent showTime={shouldShowTooltipTime} />
+								<PnlTooltipContent showTime={shouldShowTooltipTime} metric={chartMetric} />
 							}
 						/>
 						<Area
@@ -539,7 +589,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 							stroke="none"
 							activeDot={false}
 						/>
-						{showPnlRange ? (
+						{showMetricRange ? (
 							<Area
 								dataKey="range"
 								type="monotone"

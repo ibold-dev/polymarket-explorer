@@ -16,6 +16,10 @@ export type PnlDataPoint = {
 	low: number;
 	close: number;
 	p: number;
+	portfolioOpen: number;
+	portfolioHigh: number;
+	portfolioLow: number;
+	portfolioClose: number;
 	numOpenPositions: number;
 	usdBalance: number;
 };
@@ -63,6 +67,10 @@ const getTraderPnlCandlesCached = cache(
 
 			return response.data
 				.map((candle) => {
+					const portfolioClose = candle.pc ?? candle.ub + candle.pb;
+					const portfolioOpen = candle.po ?? portfolioClose;
+					const portfolioHigh = candle.ph ?? Math.max(portfolioOpen, portfolioClose);
+					const portfolioLow = candle.pl ?? Math.min(portfolioOpen, portfolioClose);
 					const close = candle.c ?? candle.rp + candle.up;
 					const open = candle.o ?? close;
 					const high = candle.h ?? Math.max(open, close);
@@ -75,6 +83,10 @@ const getTraderPnlCandlesCached = cache(
 						low,
 						close,
 						p: close,
+						portfolioOpen,
+						portfolioHigh,
+						portfolioLow,
+						portfolioClose,
 						numOpenPositions: candle.nop,
 						usdBalance: candle.ub + candle.pb,
 					};
