@@ -7,24 +7,25 @@ import { getHomeTopMarkets } from "@/lib/struct/market-queries";
 
 const MARKET_FETCH_COUNT = 12;
 
-export async function NewMarketsList() {
+export async function TrendingMarketsList() {
 	await connection();
 
-	const result = await getHomeTopMarkets(MARKET_FETCH_COUNT, "open", undefined, "created_time", "desc", "24h", "Hide from New");
+	const result = await getHomeTopMarkets(MARKET_FETCH_COUNT, "open", undefined, "volume", "desc", "24h");
 	const rows = result.data.map(marketResponseToRow);
 
 	return (
 		<MarketsTable
 			markets={rows}
-			storageKey="home-new-markets"
+			storageKey="home-trending-markets"
 			paginationMode="none"
+			sortingMode="client"
 			homeToolbarGrid
 			toolbarAfterTimeframe={<HomeRefreshButton />}
 		/>
 	);
 }
 
-export function NewMarketsListFallback() {
+export function TrendingMarketsListFallback() {
 	return (
 		<div className="space-y-3">
 			<div className="overflow-hidden rounded-lg bg-card">
