@@ -132,7 +132,7 @@ function DataTableView<TData>({
 			/>
 		) : null
 	const homeTimeframePlaceholder =
-		homeToolbarGrid && !timeframeToggle && (toolbarRight || toolbarAfterTimeframe || toolbar) ? (
+		homeToolbarGrid && !timeframeToggle && (toolbarRight || toolbarAfterTimeframe || hideableColumns.length > 0) ? (
 			<div aria-hidden="true" className="pointer-events-none invisible hidden sm:block">
 				<TimeframeToggle
 					timeframes={METRICS_TIMEFRAMES}
