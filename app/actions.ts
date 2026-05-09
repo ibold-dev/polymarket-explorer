@@ -74,7 +74,9 @@ export type SearchResultMarket = {
 	question: string | null;
 	image_url: string | null;
 	volume_lifetime_usd: number | null;
+	volume_lifetime_shares: number | null;
 	volume_24hr_usd: number | null;
+	volume_24hr_shares: number | null;
 	status: string | null;
 	outcomes: { name: string; price: number | null }[];
 };
@@ -467,7 +469,9 @@ export async function searchAction(query: string): Promise<SearchResult> {
 			question: m.question ?? m.title ?? null,
 			image_url: m.image_url ?? null,
 			volume_lifetime_usd: m.metrics?.lifetime?.volume ?? m.volume_usd ?? null,
+			volume_lifetime_shares: m.metrics?.lifetime?.shares_volume ?? null,
 			volume_24hr_usd: extra.volume_24hr ?? m.metrics?.["24h"]?.volume ?? null,
+			volume_24hr_shares: m.metrics?.["24h"]?.shares_volume ?? null,
 			status: m.status ?? null,
 			outcomes: (m.outcomes ?? []).map((o) => ({ name: o.name, price: o.price ?? null })),
 		});
@@ -481,7 +485,9 @@ export async function searchAction(query: string): Promise<SearchResult> {
 				question: m.question ?? m.title ?? null,
 				image_url: m.image_url ?? event.image_url ?? null,
 				volume_lifetime_usd: m.volume ?? null,
+				volume_lifetime_shares: null,
 				volume_24hr_usd: m.volume_24hr ?? null,
+				volume_24hr_shares: null,
 				status: m.status ?? null,
 				outcomes: (m.outcomes ?? []).map((o) => ({ name: o.name, price: o.price ?? null })),
 			});

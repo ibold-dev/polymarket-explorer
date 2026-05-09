@@ -696,32 +696,39 @@ export function summarizeAnalytics(points: AnalyticsPoint[]): AnalyticsSummary {
 	if (points.length === 0) {
 		return {
 			totalVolumeUsd: 0,
+			totalSharesVolume: 0,
 			totalFeesUsd: 0,
 			totalTxnCount: 0,
 			uniqueTradersTotal: 0,
 			avgTradeSizeUsd: 0,
+			avgTradeSizeShares: 0,
 		};
 	}
 
 	let totalVolumeUsd = 0;
+	let totalSharesVolume = 0;
 	let totalFeesUsd = 0;
 	let totalTxnCount = 0;
 	let uniqueTradersTotal = 0;
 
 	for (const p of points) {
 		totalVolumeUsd += p.volumeUsd;
+		totalSharesVolume += p.sharesVolume;
 		totalFeesUsd += p.feesUsd;
 		totalTxnCount += p.txnCount;
 		uniqueTradersTotal += p.uniqueTraders;
 	}
 
 	const avgTradeSizeUsd = totalTxnCount > 0 ? totalVolumeUsd / totalTxnCount : 0;
+	const avgTradeSizeShares = totalTxnCount > 0 ? totalSharesVolume / totalTxnCount : 0;
 
 	return {
 		totalVolumeUsd,
+		totalSharesVolume,
 		totalFeesUsd,
 		totalTxnCount,
 		uniqueTradersTotal,
 		avgTradeSizeUsd,
+		avgTradeSizeShares,
 	};
 }

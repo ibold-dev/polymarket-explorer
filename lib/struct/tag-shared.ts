@@ -4,8 +4,6 @@ export const TAG_SORT_OPTIONS = [
 	"volume",
 	"txns",
 	"unique_traders",
-	"unique_makers",
-	"unique_takers",
 	"fees",
 ] as const satisfies readonly TagSortBy[];
 
@@ -15,8 +13,6 @@ export const TAG_SORT_LABELS: Record<TagSortOption, string> = {
 	volume: "Volume",
 	txns: "Trades",
 	unique_traders: "Traders",
-	unique_makers: "Makers",
-	unique_takers: "Takers",
 	fees: "Fees",
 };
 

@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { formatNumber } from "@/lib/format";
+import { Volume } from "@/components/ui/volume";
 import { cn, formatBuilderCodeDisplay, getTraderDisplayName, isBytes32Hex, normalizeWalletAddress } from "@/lib/utils";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { BarChart3Icon, BlocksIcon, LoaderIcon, SearchIcon, UserIcon } from "lucide-react";
@@ -92,14 +92,14 @@ function MarketMeta({ market }: { market: SearchResultMarket }) {
 		market.outcomes.find((o) => o.name.toLowerCase() === "yes") ?? market.outcomes[0] ?? null;
 	const showProbability = !isResolved && primaryOutcome?.price != null;
 
-	const lifetimeVolume =
+	const lifetimeUsd =
 		market.volume_lifetime_usd != null && market.volume_lifetime_usd > 0 ? market.volume_lifetime_usd : null;
-	const dailyVolume =
+	const dailyUsd =
 		market.volume_24hr_usd != null && market.volume_24hr_usd > 0 ? market.volume_24hr_usd : null;
-	const volumeDisplay = lifetimeVolume
-		? { value: lifetimeVolume, suffix: "vol" }
-		: dailyVolume
-			? { value: dailyVolume, suffix: "vol" }
+	const volumeDisplay = lifetimeUsd
+		? { usd: lifetimeUsd, shares: market.volume_lifetime_shares, suffix: "vol" }
+		: dailyUsd
+			? { usd: dailyUsd, shares: market.volume_24hr_shares, suffix: "vol" }
 			: null;
 
 	const parts: ReactNode[] = [];
@@ -120,8 +120,9 @@ function MarketMeta({ market }: { market: SearchResultMarket }) {
 	}
 	if (volumeDisplay) {
 		parts.push(
-			<span key="vol">
-				{formatNumber(volumeDisplay.value, { compact: true, currency: true })} {volumeDisplay.suffix}
+			<span key="vol" className="inline-flex items-center gap-1">
+				<Volume usd={volumeDisplay.usd} shares={volumeDisplay.shares} />
+				{volumeDisplay.suffix}
 			</span>,
 		);
 	}
@@ -148,7 +149,11 @@ function BuilderMeta({ builder }: { builder: SearchResultBuilder }) {
 
 function TraderMeta({ trader }: { trader: SearchResultTrader }) {
 	if (trader.volume_usd != null && trader.volume_usd > 0) {
-		return <span>{formatNumber(trader.volume_usd, { compact: true, currency: true })} vol</span>;
+		return (
+			<span className="inline-flex items-center gap-1">
+				<Volume usd={trader.volume_usd} shares={null} /> vol
+			</span>
+		);
 	}
 	return <span className="truncate font-mono text-[11px]">{trader.address}</span>;
 }
