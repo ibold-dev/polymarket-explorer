@@ -19,6 +19,9 @@ import {
 	getTopMarkets,
 	getMarketTradesPage,
 } from "@/lib/struct/market-queries";
+import { getEventsByTag } from "@/lib/struct/queries/events";
+import { eventResponseToRow } from "@/lib/event-table-map";
+import { parseEventStatusTab, type EventStatusTab } from "@/lib/event-search-params-shared";
 import {
 	defaultBuilderTradesPageSize,
 	getBuilderGlobalTags,
@@ -222,6 +225,24 @@ export async function getTagMarketsStatusPageAction({
 	return {
 		tab: safeTab,
 		markets: result.data.map(marketResponseToRow),
+		hasMore: result.hasMore,
+		nextCursor: result.nextCursor,
+	};
+}
+
+export async function getTagEventsStatusPageAction({
+	tagSlug,
+	tab,
+}: {
+	tagSlug: string;
+	tab: EventStatusTab;
+}) {
+	const safeTab = parseEventStatusTab(tab);
+	const result = await getEventsByTag(tagSlug, 24, safeTab, undefined, "volume", "desc", "24h");
+
+	return {
+		tab: safeTab,
+		events: result.data.map(eventResponseToRow),
 		hasMore: result.hasMore,
 		nextCursor: result.nextCursor,
 	};

@@ -82,6 +82,95 @@ export async function getTopEvents(
 	}
 }
 
+export async function getEventsByTag(
+	tagSlug: string,
+	limit: number = defaultPageSize,
+	status: MarketStatus = "open",
+	cursor?: string,
+	sortBy: EventSortBy = "volume",
+	sortDir: SortDirection = "desc",
+	timeframe: MetricsTimeframe = "24h",
+): Promise<PaginatedResult<Event>> {
+	const client = getStructClient();
+
+	if (!client || !tagSlug) {
+		return { data: [], hasMore: false, nextCursor: null };
+	}
+
+	try {
+		const response = await client.events.getEvents({
+			tags: tagSlug,
+			limit,
+			status,
+			sort_by: sortBy,
+			sort_dir: sortDir,
+			timeframe,
+			include_metrics: true,
+			include_markets: true,
+			include_tags: true,
+			...(cursor ? { pagination_key: cursor } : {}),
+		});
+		const hasMore = response.pagination?.has_more ?? false;
+		const nextKey = response.pagination?.pagination_key;
+		return {
+			data: response.data.map(normalizeEvent),
+			hasMore,
+			nextCursor: hasMore && nextKey != null ? String(nextKey) : null,
+		};
+	} catch (error) {
+		if (readStatus(error) === 404) {
+			return { data: [], hasMore: false, nextCursor: null };
+		}
+
+		logStructError(`getEventsByTag:${tagSlug}`, error);
+		return { data: [], hasMore: false, nextCursor: null };
+	}
+}
+
+export type EventTagFrequency = { slug: string; label: string; count: number };
+
+export async function getEventTagFrequencies(
+	sampleSize: number = 60,
+	max: number = 40,
+): Promise<EventTagFrequency[]> {
+	const client = getStructClient();
+	if (!client) return [];
+
+	try {
+		const response = await client.events.getEvents({
+			limit: sampleSize,
+			status: "open",
+			sort_by: "volume",
+			sort_dir: "desc",
+			timeframe: "lifetime",
+			include_tags: true,
+			include_markets: false,
+			include_metrics: false,
+		});
+		const tally = new Map<string, EventTagFrequency>();
+		for (const event of response.data) {
+			for (const tag of event.tags ?? []) {
+				const label = tag.label;
+				const slug = tag.slug;
+				if (!slug || typeof label !== "string" || label.length === 0) continue;
+				if (slug.startsWith("hide-from-")) continue;
+				const existing = tally.get(slug);
+				if (existing) {
+					existing.count += 1;
+				} else {
+					tally.set(slug, { slug, label, count: 1 });
+				}
+			}
+		}
+		return Array.from(tally.values())
+			.sort((a, b) => (b.count - a.count) || a.label.localeCompare(b.label))
+			.slice(0, max);
+	} catch (error) {
+		logStructError("getEventTagFrequencies", error);
+		return [];
+	}
+}
+
 export async function getEventBySlug(slug: string): Promise<Event | null> {
 	const client = getStructClient();
 

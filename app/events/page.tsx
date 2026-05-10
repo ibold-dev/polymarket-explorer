@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { EVENT_SKELETON_COLUMNS } from "@/components/event/events-table-columns";
 import { EventsStatusListing } from "@/components/event/event-status-listing";
+import { EventTagsScroller } from "@/components/event/event-tags-scroller";
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { eventResponseToRow } from "@/lib/event-table-map";
@@ -87,6 +88,9 @@ async function EventsPageContent({ searchParams }: Props) {
 						Browse prediction-market events. Each event groups related markets.
 					</p>
 				</div>
+				<Suspense fallback={<TagsScrollerFallback />}>
+					<EventTagsScroller />
+				</Suspense>
 				<EventsStatusListing
 					initialEvents={events.map(eventResponseToRow)}
 					initialTab={tab}
@@ -102,6 +106,16 @@ async function EventsPageContent({ searchParams }: Props) {
 	);
 }
 
+function TagsScrollerFallback() {
+	return (
+		<div className="-mx-4 flex gap-2 overflow-hidden px-4 sm:-mx-6 sm:px-6">
+			{Array.from({ length: 12 }).map((_, i) => (
+				<Skeleton key={i} className="h-8 w-20 shrink-0 rounded-4xl" />
+			))}
+		</div>
+	);
+}
+
 function EventsPageFallback() {
 	return (
 		<>
@@ -111,6 +125,7 @@ function EventsPageFallback() {
 					<Skeleton className="h-7 w-28" />
 					<Skeleton className="mt-1 h-5 w-72" />
 				</div>
+				<TagsScrollerFallback />
 				<DataTableSkeleton
 					columns={EVENT_SKELETON_COLUMNS}
 					rowCount={24}

@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { EventHeader, EventHeaderFallback } from "@/components/event/event-header";
 import { EventMarketsTable } from "@/components/event/event-markets-table";
 import { EventOverviewChart, EventOverviewChartFallback } from "@/components/event/event-overview-chart";
+import { EventTrades, EventTradesFallback } from "@/components/event/event-trades";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getSiteUrl } from "@/lib/env";
@@ -140,6 +141,12 @@ async function EventPageContent({ params }: { params: Props["params"] }) {
 			)}
 
 			<EventMarketsTable markets={childMarkets} />
+
+			{childMarkets.length > 0 && (
+				<Suspense fallback={<EventTradesFallback />}>
+					<EventTrades markets={childMarkets} />
+				</Suspense>
+			)}
 
 			<p className="sr-only">{`${SITE_NAME} event detail page for ${event.title ?? slug}`}</p>
 		</>

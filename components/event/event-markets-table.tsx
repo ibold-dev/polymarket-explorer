@@ -80,7 +80,7 @@ function ProbabilityCell({ market }: { market: EventMarket }) {
 		return (
 			<span className="inline-flex flex-col leading-tight">
 				<span className="text-sm font-medium text-foreground">{outcome.name}</span>
-				<span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+				<span className="text-xs text-muted-foreground">
 					Resolved
 				</span>
 			</span>
