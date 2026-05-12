@@ -9,6 +9,7 @@ import { MarketHoldersClient } from "@/components/market/market-holders-client";
 import { MarketHoldersHistoryClient } from "@/components/market/market-holders-history-client";
 import { MarketPriceSpikesTable } from "@/components/market/market-price-spikes-table";
 import { MarketTabs } from "@/components/market/market-tabs";
+import { MarketTopTradersClient } from "@/components/market/market-top-traders-client";
 import { MarketTradesTable } from "@/components/market/market-trades-table";
 import {
 	defaultMarketDetailTab,
@@ -64,6 +65,13 @@ function renderPanelData(data: MarketTabPanelData, marketTabsToolbar?: ReactNode
 				<ChartCard>
 					<MarketHoldersHistoryClient data={data.data} />
 				</ChartCard>
+			);
+		case "top-traders":
+			return (
+				<MarketTopTradersClient
+					outcomes={data.outcomes}
+					initialTraders={data.traders}
+				/>
 			);
 		case "trades":
 		default:

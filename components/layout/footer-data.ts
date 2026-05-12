@@ -1,9 +1,10 @@
 import "server-only";
 
-import type { LeaderboardEntry, MarketResponse, Tag } from "@structbuild/sdk";
+import type { MarketResponse, Tag } from "@structbuild/sdk";
 
 import { DEFAULT_MARKET_STATUS_TAB } from "@/lib/market-search-params-shared";
 import { getAllTags, getGlobalLeaderboard, getTopMarkets } from "@/lib/struct/market-queries";
+import type { TraderLeaderboardEntry } from "@/lib/struct/queries/market-holders";
 import { getRewardsMarkets } from "@/lib/struct/queries";
 import { DEFAULT_TAG_SORT, DEFAULT_TAG_TIMEFRAME } from "@/lib/struct/tag-shared";
 import { DEFAULT_TRADER_TIMEFRAME } from "@/lib/trader-timeframes";
@@ -13,7 +14,7 @@ export const FOOTER_ROW_COUNT = 5;
 export type FooterData = {
 	topMarkets: MarketResponse[];
 	topTags: Tag[];
-	topTraders: LeaderboardEntry[];
+	topTraders: TraderLeaderboardEntry[];
 	rewardsMarkets: MarketResponse[];
 };
 

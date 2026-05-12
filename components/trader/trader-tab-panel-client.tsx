@@ -33,9 +33,7 @@ type TraderTabPanelClientProps =
 	  }
 
 function tabForPanelData(props: TraderTabPanelClientProps): TraderTab {
-	if (props.kind === "activity") {
-		return "activity"
-	}
+	if (props.kind === "activity") return "activity"
 
 	return props.status === "closed" ? "closed" : "active"
 }

@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { BuilderSortBy, BuilderTimeframe } from "@structbuild/sdk";
+import type { BuilderSortBy, BuilderTimeframe, MarketEntry, PnlTimeframe } from "@structbuild/sdk";
 
 import {
 	defaultTraderTablePageSize,
+	getMarketTopTradersV3,
+	getPositionTopTradersV3,
+	getTopTradesMarketsV3,
 	getTraderPositionsPage,
 	getTraderTradesPage,
 	searchAll,
@@ -12,6 +15,7 @@ import {
 } from "@/lib/struct/queries";
 import {
 	defaultMarketTradesPageSize,
+	getMarketBySlug,
 	getMarketHolders,
 	getMarketHoldersHistory,
 	getMarketPriceJumps,
@@ -420,6 +424,22 @@ export async function getMarketTabPageAction({
 				data,
 			};
 		}
+		case "top-traders": {
+			const [market, topTraders] = await Promise.all([
+				getMarketBySlug(slug),
+				getMarketTopTradersV3({ market_slug: slug, limit: 20 }),
+			]);
+			const outcomes = (market?.outcomes ?? [])
+				.filter((o): o is { name: string; position_id: string } & typeof o => Boolean(o.position_id))
+				.map((o) => ({ position_id: o.position_id as string, name: o.name }));
+			return {
+				kind: "top-traders" as const,
+				slug,
+				conditionId,
+				outcomes,
+				traders: topTraders.data,
+			};
+		}
 		case "trades":
 		default: {
 			const pageNumber = parseMarketTradesPageParam(params);
@@ -436,6 +456,38 @@ export async function getMarketTabPageAction({
 			};
 		}
 	}
+}
+
+export async function getMarketPositionTopTradersAction({
+	positionId,
+}: {
+	positionId: string;
+}) {
+	if (!positionId) {
+		return { positionId, traders: [] };
+	}
+
+	const { data } = await getPositionTopTradersV3(positionId, { limit: 20 });
+	return { positionId, traders: data };
+}
+
+const BEST_TRADES_TIMEFRAME_SET = new Set<PnlTimeframe>(["1d", "7d", "30d", "lifetime"]);
+
+export async function getBestTradesAction({
+	timeframe,
+	limit,
+}: {
+	timeframe: PnlTimeframe;
+	limit: number;
+}): Promise<{ timeframe: PnlTimeframe; rows: MarketEntry[] }> {
+	const safeTimeframe = BEST_TRADES_TIMEFRAME_SET.has(timeframe) ? timeframe : "1d";
+	const { data } = await getTopTradesMarketsV3({
+		timeframe: safeTimeframe,
+		sort_by: "realized_pnl_usd",
+		sort_direction: "desc",
+		limit,
+	});
+	return { timeframe: safeTimeframe, rows: data };
 }
 
 export async function getBuilderGlobalTagsAction({

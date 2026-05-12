@@ -18,7 +18,6 @@ import type {
 import type { PaginatedResource } from "@/lib/struct/types"
 import { traderSearchParamParsers } from "@/lib/trader-search-params"
 import { maxTraderPageNumber } from "@/lib/trader-search-params-shared"
-import { getTraderPositionPnlDisplay } from "@/lib/trader-position-pnl"
 
 import { Badge } from "../ui/badge"
 import { DataTable } from "../ui/data-table"
@@ -189,7 +188,7 @@ function buildColumns(
 			header: () => (
 				<span className="flex items-center gap-1.5">
 					PnL
-					<TooltipWrapper content="Unrealized PnL on currently-held shares: shares × (current price − entry price). Closed positions show realized PnL.">
+					<TooltipWrapper content="Realized PnL for this position, sourced from the v3 PnL endpoint.">
 						<InfoIcon className="size-4 text-muted-foreground" />
 					</TooltipWrapper>
 				</span>
@@ -197,15 +196,16 @@ function buildColumns(
 			size: 150,
 			cell: ({ row }) => {
 				const entry = row.original
-				const pnl = getTraderPositionPnlDisplay(entry)
+				const value = entry.realized_pnl_usd ?? 0
+				const percent = entry.realized_pnl_pct ?? null
 
 				return (
-					<p className={cn(pnlColorClass(pnl.colorValue))}>
-						{formatNumber(pnl.value, { currency: true, compact: true })}
-						{pnl.percent != null ? (
+					<p className={cn(pnlColorClass(value))}>
+						{formatNumber(value, { currency: true, compact: true })}
+						{percent != null ? (
 							<span className="text-muted-foreground">
 								{" "}
-								({formatNumber(pnl.percent, { percent: true })})
+								({formatNumber(percent, { percent: true })})
 							</span>
 						) : null}
 					</p>

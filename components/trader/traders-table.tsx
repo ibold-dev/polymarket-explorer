@@ -1,6 +1,5 @@
 "use client";
 
-import type { LeaderboardEntry } from "@structbuild/sdk";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { Facehash } from "facehash";
 import type { Route } from "next";
@@ -14,12 +13,14 @@ import { TooltipWrapper } from "@/components/ui/tooltip";
 import { Volume } from "@/components/ui/volume";
 import { facehashColorClasses } from "@/lib/facehash";
 import { formatNumber, pnlColorClass } from "@/lib/format";
+import type { TraderLeaderboardEntry } from "@/lib/struct/queries/market-holders";
 import { cn, getTraderDisplayName, normalizeWalletAddress, truncateAddress } from "@/lib/utils";
 import { TRADER_TABLE_COLUMN_SIZES } from "./traders-table-columns";
 
 type NumericField = Extract<
-	keyof LeaderboardEntry,
-	| "pnl"
+	keyof TraderLeaderboardEntry,
+	| "realized_pnl_usd"
+	| "current_pnl"
 	| "events_traded"
 	| "markets_traded"
 	| "markets_won"
@@ -36,10 +37,12 @@ type NumericField = Extract<
 	| "total_merges"
 	| "total_trades"
 	| "total_fees"
-	| "avg_pnl_per_market"
-	| "avg_pnl_per_trade"
+	| "avg_win_usd"
+	| "avg_loss_usd"
+	| "profit_factor"
 	| "avg_hold_time_seconds"
-	| "best_trade_pnl_usd"
+	| "best_market_pnl_usd"
+	| "worst_market_pnl_usd"
 >;
 
 type LeaderboardNumericOptions = {
@@ -51,8 +54,8 @@ type LeaderboardNumericOptions = {
 	colorizePnl?: boolean;
 };
 
-function leaderboardNumeric(options: LeaderboardNumericOptions): ColumnDef<LeaderboardEntry, unknown> {
-	return numericCol<LeaderboardEntry>({
+function leaderboardNumeric(options: LeaderboardNumericOptions): ColumnDef<TraderLeaderboardEntry, unknown> {
+	return numericCol<TraderLeaderboardEntry>({
 		id: options.id,
 		title: options.title,
 		size: options.size,
@@ -67,7 +70,7 @@ function volumeColumn(
 	title: string,
 	field: NumericField,
 	size: number,
-): ColumnDef<LeaderboardEntry, unknown> {
+): ColumnDef<TraderLeaderboardEntry, unknown> {
 	return {
 		id,
 		meta: { title },
@@ -83,7 +86,7 @@ function volumeColumn(
 	};
 }
 
-function buildColumns(rankOffset: number): ColumnDef<LeaderboardEntry, unknown>[] {
+function buildColumns(rankOffset: number): ColumnDef<TraderLeaderboardEntry, unknown>[] {
 	return [
 		{
 			id: "rank",
@@ -92,9 +95,7 @@ function buildColumns(rankOffset: number): ColumnDef<LeaderboardEntry, unknown>[
 			size: TRADER_TABLE_COLUMN_SIZES.rank,
 			enableHiding: false,
 			cell: ({ row }) => (
-				<p className="text-muted-foreground tabular-nums">
-					{row.original.rank ?? rankOffset + row.index + 1}
-				</p>
+				<p className="text-muted-foreground tabular-nums">{rankOffset + row.index + 1}</p>
 			),
 		},
 		{
@@ -150,7 +151,7 @@ function buildColumns(rankOffset: number): ColumnDef<LeaderboardEntry, unknown>[
 			size: TRADER_TABLE_COLUMN_SIZES.pnl,
 			enableHiding: false,
 			cell: ({ row }) => {
-				const pnl = row.original.pnl ?? 0;
+				const pnl = row.original.realized_pnl_usd ?? 0;
 				return (
 					<p className={cn("tabular-nums font-medium", pnlColorClass(pnl))}>
 						{formatNumber(pnl, { compact: true, currency: true })}
@@ -174,15 +175,15 @@ function buildColumns(rankOffset: number): ColumnDef<LeaderboardEntry, unknown>[
 		volumeColumn("redemptionVolume", "Redemption Vol", "redemption_volume_usd", 144),
 		volumeColumn("mergeVolume", "Merge Vol", "merge_volume_usd", 128),
 		leaderboardNumeric({ id: "fees", title: "Fees", field: "total_fees", size: 112, format: { compact: true, currency: true } }),
-		leaderboardNumeric({ id: "bestTradePnl", title: "Best Trade", field: "best_trade_pnl_usd", size: TRADER_TABLE_COLUMN_SIZES.bestTradePnl, format: { compact: true, currency: true }, colorizePnl: true }),
-		durationCol<LeaderboardEntry>({
+		leaderboardNumeric({ id: "bestTradePnl", title: "Best Market", field: "best_market_pnl_usd", size: TRADER_TABLE_COLUMN_SIZES.bestTradePnl, format: { compact: true, currency: true }, colorizePnl: true }),
+		durationCol<TraderLeaderboardEntry>({
 			id: "avgHoldTime",
 			title: "Avg Hold",
 			size: TRADER_TABLE_COLUMN_SIZES.avgHoldTime,
 			accessor: (row) => row.avg_hold_time_seconds,
 		}),
-		dateCol<LeaderboardEntry>({ id: "firstTradeAt", title: "First Trade", accessor: (row) => row.first_trade_at }),
-		dateCol<LeaderboardEntry>({ id: "lastTradeAt", title: "Last Trade", size: TRADER_TABLE_COLUMN_SIZES.lastTradeAt, accessor: (row) => row.last_trade_at }),
+		dateCol<TraderLeaderboardEntry>({ id: "firstTradeAt", title: "First Trade", accessor: (row) => row.first_trade_at }),
+		dateCol<TraderLeaderboardEntry>({ id: "lastTradeAt", title: "Last Trade", size: TRADER_TABLE_COLUMN_SIZES.lastTradeAt, accessor: (row) => row.last_trade_at }),
 	];
 }
 
@@ -204,8 +205,8 @@ const DEFAULT_VISIBLE_COLUMN_ORDER = new Map(
 );
 
 function orderColumnsByDefault(
-	columns: ColumnDef<LeaderboardEntry, unknown>[],
-): ColumnDef<LeaderboardEntry, unknown>[] {
+	columns: ColumnDef<TraderLeaderboardEntry, unknown>[],
+): ColumnDef<TraderLeaderboardEntry, unknown>[] {
 	return [...columns].sort((a, b) => {
 		const aOrder = DEFAULT_VISIBLE_COLUMN_ORDER.get(a.id ?? "") ?? Number.POSITIVE_INFINITY;
 		const bOrder = DEFAULT_VISIBLE_COLUMN_ORDER.get(b.id ?? "") ?? Number.POSITIVE_INFINITY;
@@ -213,7 +214,7 @@ function orderColumnsByDefault(
 	});
 }
 
-function buildDefaultColumnVisibility(columns: ColumnDef<LeaderboardEntry, unknown>[]): VisibilityState {
+function buildDefaultColumnVisibility(columns: ColumnDef<TraderLeaderboardEntry, unknown>[]): VisibilityState {
 	const visibility: VisibilityState = {};
 	for (const column of columns) {
 		if (!column.id) continue;
@@ -223,7 +224,7 @@ function buildDefaultColumnVisibility(columns: ColumnDef<LeaderboardEntry, unkno
 }
 
 type TradersTableProps = {
-	traders: LeaderboardEntry[];
+	traders: TraderLeaderboardEntry[];
 	rankOffset?: number;
 	toolbarLeft?: React.ReactNode;
 	toolbarRight?: React.ReactNode;

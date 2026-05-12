@@ -3,15 +3,52 @@ import { InfoRow } from "@/components/trader/info-row";
 import { Separator } from "@/components/ui/separator";
 import type { PnlPeriodRecord, PnlPeriodWindow, PnlPeriods, PnlStreaks } from "@/lib/struct/pnl";
 import { formatDateCompact, formatDuration, formatNumber } from "@/lib/format";
-import type { MarketResponse, PnlV3RiskResponse, TraderPnlSummary } from "@structbuild/sdk";
+import { cn } from "@/lib/utils";
+import type { MarketResponse, PnlV3ChangesResponse, PnlV3RiskResponse, TraderPnlSummary } from "@structbuild/sdk";
 
 type PerformanceSummaryProps = {
 	pnlSummary: TraderPnlSummary | null;
 	bestTradeMarket?: MarketResponse | null;
 	pnlRisk?: PnlV3RiskResponse | null;
+	pnlChanges?: PnlV3ChangesResponse | null;
 	streaks: PnlStreaks;
 	periods: PnlPeriods;
 };
+
+const PNL_CHANGE_WINDOWS = ["1d", "7d", "30d"] as const;
+
+function PnlChangeBadges({ changes }: { changes: PnlV3ChangesResponse["changes"] | undefined }) {
+	const byTimeframe = new Map(changes?.map((window) => [window.timeframe, window]) ?? []);
+
+	return (
+		<div className="grid grid-cols-3 gap-2 text-sm font-medium">
+			{PNL_CHANGE_WINDOWS.map((window) => {
+				const entry = byTimeframe.get(window);
+				const change = entry?.total_pnl_change ?? null;
+				const colorClass = change == null
+					? "text-muted-foreground"
+					: change > 0
+						? "text-emerald-500"
+						: change < 0
+							? "text-red-500"
+							: "text-foreground";
+
+				return (
+					<span key={window} className="min-w-0 whitespace-nowrap">
+						<span className="text-muted-foreground">{window.toUpperCase()} </span>
+						{change == null ? (
+							<span className="text-muted-foreground">—</span>
+						) : (
+							<span className={cn(colorClass, "tabular-nums")}>
+								{formatNumber(change, { currency: true, compact: true })}
+							</span>
+						)}
+					</span>
+				);
+			})}
+		</div>
+	);
+}
 
 const periodWindowLabels = {
 	day: "D",
@@ -124,13 +161,20 @@ function TradingStatsGrid({ pnlSummary }: { pnlSummary: TraderPnlSummary | null 
 	);
 }
 
-export function PerformanceSummary({ pnlSummary, bestTradeMarket, pnlRisk, streaks, periods }: PerformanceSummaryProps) {
+export function PerformanceSummary({ pnlSummary, bestTradeMarket, pnlRisk, pnlChanges, streaks, periods }: PerformanceSummaryProps) {
 	const totalPnlRisk = pnlRisk?.total_pnl ?? null;
 
 	return (
 		<div className="rounded-lg bg-card p-4 sm:p-6">
 			<p className="text-sm text-foreground sm:text-base">Performance Summary</p>
 			<Separator className="my-2" />
+			<div>
+				<p className="text-sm text-foreground/90 sm:text-base">PnL Change</p>
+				<div className="mt-1">
+					<PnlChangeBadges changes={pnlChanges?.changes} />
+				</div>
+				<Separator className="my-2 sm:my-3" />
+			</div>
 			<TradingStatsGrid pnlSummary={pnlSummary} />
 			<InfoRow label="Avg. Hold Time" value={formatDuration(pnlSummary?.avg_hold_time_seconds ?? 0)} />
 			<div>

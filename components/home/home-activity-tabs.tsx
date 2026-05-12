@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, type ReactNode } from "react";
 
-type HomeActivityTab = "trades" | "trending" | "markets";
+type HomeActivityTab = "trades" | "trending" | "bestTrades" | "markets";
 
 export function HomeTabsBar() {
 	return (
@@ -17,6 +17,9 @@ export function HomeTabsBar() {
 			<TabsTrigger className="text-lg! sm:text-xl!" value="trending">
 				Trending Markets
 			</TabsTrigger>
+			<TabsTrigger className="text-lg! sm:text-xl!" value="bestTrades">
+				Best Wins
+			</TabsTrigger>
 			<TabsTrigger className="text-lg! sm:text-xl!" value="markets">
 				New Markets
 			</TabsTrigger>
@@ -27,10 +30,12 @@ export function HomeTabsBar() {
 export function HomeActivityTabs({
 	trades,
 	trending,
+	bestTrades,
 	markets,
 }: {
 	trades: ReactNode;
 	trending: ReactNode;
+	bestTrades: ReactNode;
 	markets: ReactNode;
 }) {
 	const [tab, setTab] = useState<HomeActivityTab>("trades");
@@ -43,6 +48,9 @@ export function HomeActivityTabs({
 				</div>
 				<TabsContent value="markets" keepMounted className="contents min-w-0 text-sm outline-none">
 					{markets}
+				</TabsContent>
+				<TabsContent value="bestTrades" keepMounted className="contents min-w-0 text-sm outline-none">
+					{bestTrades}
 				</TabsContent>
 				<TabsContent value="trending" keepMounted className="contents min-w-0 text-sm outline-none">
 					{trending}

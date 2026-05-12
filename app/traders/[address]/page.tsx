@@ -32,12 +32,12 @@ import {
 import { loadTraderSearchParams } from "@/lib/trader-search-params.server";
 import { getTraderAnalyticsChanges, getTraderAnalyticsDeltas, getTraderAnalyticsTimeseries } from "@/lib/struct/analytics-queries";
 import { parseAnalyticsParams } from "@/lib/struct/analytics-shared";
-import { getMarketsByConditionIds, getTraderPnlSummary, getTraderProfile } from "@/lib/struct/queries";
+import { getMarketsByConditionIds, getTraderPnlSummary, getTraderPnlV3Changes, getTraderProfile } from "@/lib/struct/queries";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildPageMetadata } from "@/lib/site-metadata";
 import { getTraderDisplayName, normalizeWalletAddress } from "@/lib/utils";
-import type { MarketResponse, PnlV3RiskResponse, TraderPnlSummary, UserProfile } from "@structbuild/sdk";
+import type { MarketResponse, PnlV3ChangesResponse, PnlV3RiskResponse, TraderPnlSummary, UserProfile } from "@structbuild/sdk";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -212,15 +212,22 @@ async function TraderPerformanceSummarySection({
 	insightsPromise,
 	bestTradeMarketPromise,
 	pnlRiskPromise,
+	pnlChangesPromise,
 }: {
 	pnlSummary: TraderPnlSummary | null;
 	insightsPromise: Promise<TraderInsightsData>;
 	bestTradeMarketPromise: Promise<MarketResponse | null>;
 	pnlRiskPromise: Promise<PnlV3RiskResponse | null>;
+	pnlChangesPromise: Promise<PnlV3ChangesResponse | null>;
 }) {
-	const [{ streaks, periods }, bestTradeMarket, pnlRisk] = await Promise.all([insightsPromise, bestTradeMarketPromise, pnlRiskPromise]);
+	const [{ streaks, periods }, bestTradeMarket, pnlRisk, pnlChanges] = await Promise.all([
+		insightsPromise,
+		bestTradeMarketPromise,
+		pnlRiskPromise,
+		pnlChangesPromise,
+	]);
 
-	return <PerformanceSummary pnlSummary={pnlSummary} bestTradeMarket={bestTradeMarket} pnlRisk={pnlRisk} streaks={streaks} periods={periods} />;
+	return <PerformanceSummary pnlSummary={pnlSummary} bestTradeMarket={bestTradeMarket} pnlRisk={pnlRisk} pnlChanges={pnlChanges} streaks={streaks} periods={periods} />;
 }
 
 function TraderPerformanceSummaryFallback() {
@@ -258,6 +265,7 @@ async function TraderOverviewSection({
 }) {
 	const [profile, pnlSummary] = await Promise.all([profilePromise, pnlSummaryPromise]);
 	const pnlRiskPromise = getTraderPnlRisk(address, PNL_RISK_TIMEFRAMES[timeframe]);
+	const pnlChangesPromise = getTraderPnlV3Changes(address);
 
 	const displayName = getTraderDisplayName({
 		address,
@@ -324,6 +332,7 @@ async function TraderOverviewSection({
 							insightsPromise={insightsPromise}
 							bestTradeMarketPromise={bestTradeMarketPromise}
 							pnlRiskPromise={pnlRiskPromise}
+							pnlChangesPromise={pnlChangesPromise}
 						/>
 					</Suspense>
 					<Suspense fallback={<TraderDnaFallback />}>

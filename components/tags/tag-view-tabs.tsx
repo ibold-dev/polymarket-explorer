@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 const viewLabels: Record<TagView, string> = {
 	events: "Events",
 	markets: "Markets",
+	"top-traders": "Top Traders",
 };
 
 function buildViewHref(pathname: string, search: string, view: TagView) {
@@ -32,7 +33,8 @@ function buildViewHref(pathname: string, search: string, view: TagView) {
 	return (nextSearch ? `${pathname}?${nextSearch}` : pathname) as Route;
 }
 
-export function TagViewTabs({ value }: { value: TagView }) {
+export function TagViewTabs({ value, availableViews }: { value: TagView; availableViews?: readonly TagView[] }) {
+	const visibleViews = availableViews ?? tagViewValues;
 	const [isPending, startTransition] = useTransition();
 	const router = useRouter();
 	const pathname = usePathname();
@@ -61,7 +63,7 @@ export function TagViewTabs({ value }: { value: TagView }) {
 					isPending && "opacity-70",
 				)}
 			>
-				{tagViewValues.map((view) => (
+				{visibleViews.map((view) => (
 					<TabsTrigger
 						key={view}
 						className="text-base! sm:text-xl!"

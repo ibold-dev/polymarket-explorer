@@ -18,6 +18,7 @@ const tabLabels: Record<MarketDetailTab, string> = {
 	holders: "Holders",
 	spikes: "Price Spikes",
 	"holders-history": "Holders History",
+	"top-traders": "Top Traders",
 };
 
 export function MarketTabs({

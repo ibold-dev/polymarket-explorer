@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { EventHeader, EventHeaderFallback } from "@/components/event/event-header";
 import { EventMarketsTable } from "@/components/event/event-markets-table";
 import { EventOverviewChart, EventOverviewChartFallback } from "@/components/event/event-overview-chart";
+import { EventTopTraders, EventTopTradersFallback } from "@/components/event/event-top-traders";
 import { EventTrades, EventTradesFallback } from "@/components/event/event-trades";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -141,6 +142,12 @@ async function EventPageContent({ params }: { params: Props["params"] }) {
 			)}
 
 			<EventMarketsTable markets={childMarkets} />
+
+			{event.event_slug && (
+				<Suspense fallback={<EventTopTradersFallback />}>
+					<EventTopTraders eventSlug={event.event_slug} />
+				</Suspense>
+			)}
 
 			{childMarkets.length > 0 && (
 				<Suspense fallback={<EventTradesFallback />}>

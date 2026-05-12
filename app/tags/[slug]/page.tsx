@@ -11,8 +11,10 @@ import { TagMarketsStatusListing } from "@/components/market/market-status-listi
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { TagStatsRow } from "@/components/tags/tag-stats-row";
+import { TagTopTradersListing } from "@/components/tags/tag-top-traders-listing";
 import { TagViewTabs } from "@/components/tags/tag-view-tabs";
-import { DEFAULT_TAG_VIEW, parseTagView } from "@/lib/tag-view-shared";
+import { tagToCategory } from "@/lib/tag-category";
+import { DEFAULT_TAG_VIEW, parseTagView, tagViewValues, type TagView } from "@/lib/tag-view-shared";
 import { eventResponseToRow } from "@/lib/event-table-map";
 import { marketResponseToRow } from "@/lib/market-table-map";
 import { getSiteUrl } from "@/lib/env";
@@ -116,7 +118,11 @@ async function TagPageContent({
 		defaultResolution,
 		defaultRange,
 	} = parseAnalyticsParams(resolvedSearchParams, "scoped", "30d");
-	const tagView = parseTagView(resolvedSearchParams.content);
+	const category = tagToCategory(tag);
+	const availableViews: readonly TagView[] = category
+		? tagViewValues
+		: tagViewValues.filter((view) => view !== "top-traders");
+	const tagView = parseTagView(resolvedSearchParams.content, availableViews);
 	const marketTab = parseMarketStatusTab(resolvedSearchParams.tab);
 	const eventTab = parseEventStatusTab(resolvedSearchParams.tab);
 	const canonicalSlug = tag.slug ?? slug;
@@ -187,8 +193,8 @@ async function TagPageContent({
 
 			<div className="mt-6 space-y-4">
 				<TagHeader tag={tag} tagDisplay={tagDisplay} />
-				<TagViewTabs value={tagView} />
-				{tagView === "events" ? (
+				<TagViewTabs value={tagView} availableViews={availableViews} />
+				{tagView === "events" && (
 					<TagEventsStatusListing
 						basePath={`/tags/${canonicalSlug}`}
 						baseParams={paginationBaseParams}
@@ -199,7 +205,8 @@ async function TagPageContent({
 						initialHasMore={eventsHasMore}
 						initialNextCursor={eventsNextCursor}
 					/>
-				) : (
+				)}
+				{tagView === "markets" && (
 					<TagMarketsStatusListing
 						basePath={`/tags/${canonicalSlug}`}
 						baseParams={paginationBaseParams}
@@ -210,6 +217,16 @@ async function TagPageContent({
 						initialHasMore={marketsHasMore}
 						initialNextCursor={marketsNextCursor}
 					/>
+				)}
+				{tagView === "top-traders" && category && (
+					<Suspense fallback={null}>
+						<TagTopTradersListing
+							category={category}
+							basePath={`/tags/${canonicalSlug}`}
+							baseParams={{ ...paginationBaseParams, content: "top-traders" }}
+							cursor={cursor ?? null}
+						/>
+					</Suspense>
 				)}
 			</div>
 

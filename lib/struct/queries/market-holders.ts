@@ -1,9 +1,10 @@
 import "server-only";
 
 import type {
+	GlobalEntry,
 	HolderHistoryCandle,
-	LeaderboardEntry,
 	MarketHoldersResponse,
+	TraderInfo,
 } from "@structbuild/sdk";
 
 import { getStructClient } from "@/lib/struct/client";
@@ -12,10 +13,14 @@ import {
 	logPaginationLimitReached,
 	maxPaginationRequests,
 	type PaginatedResult,
-	parseOffsetCursor,
 } from "@/lib/struct/queries/_shared";
 
 const MAX_LEADERBOARD_PAGE_SIZE = 50;
+
+export type TraderLeaderboardEntry = Omit<GlobalEntry, "trader"> & {
+	trader: TraderInfo;
+	total_trades: number;
+};
 
 export async function getMarketHolders(
 	marketSlug: string,
@@ -74,17 +79,16 @@ export async function getGlobalLeaderboard(
 	timeframe: string = "lifetime",
 	limit: number = MAX_LEADERBOARD_PAGE_SIZE,
 	cursor?: string,
-): Promise<PaginatedResult<LeaderboardEntry>> {
+): Promise<PaginatedResult<TraderLeaderboardEntry>> {
 	const client = getStructClient();
 
 	if (!client) {
 		return { data: [], hasMore: false, nextCursor: null };
 	}
 
-	const startOffset = parseOffsetCursor(cursor);
 	const tf = timeframe as "1d" | "7d" | "30d" | "lifetime";
-	const data: LeaderboardEntry[] = [];
-	let offset = startOffset;
+	const data: TraderLeaderboardEntry[] = [];
+	let paginationKey: string | undefined = cursor;
 	let hasMore = false;
 
 	try {
@@ -98,18 +102,30 @@ export async function getGlobalLeaderboard(
 			}
 
 			const chunkLimit = Math.min(MAX_LEADERBOARD_PAGE_SIZE, limit - data.length);
-			const response = await client.trader.getLeaderboard({
+			const response = await client.trader.getGlobalPnlV3({
 				timeframe: tf,
-				sort_by: "pnl",
+				sort_by: "realized_pnl_usd",
+				sort_direction: "desc",
 				limit: chunkLimit,
-				offset,
+				pagination_key: paginationKey,
 			});
 			requestsMade += 1;
-			const chunk = response.data ?? [];
-			data.push(...chunk);
-			offset += chunk.length;
-			if (chunk.length < chunkLimit) {
-				hasMore = false;
+			const chunk = (response.data ?? []) as unknown as TraderLeaderboardEntry[];
+			for (const entry of chunk) {
+				data.push({
+					...entry,
+					total_trades:
+						(entry.total_buys ?? 0)
+						+ (entry.total_sells ?? 0)
+						+ (entry.total_redemptions ?? 0)
+						+ (entry.total_merges ?? 0),
+				});
+			}
+			const nextKey = response.pagination?.pagination_key;
+			const responseHasMore = response.pagination?.has_more ?? false;
+			paginationKey = typeof nextKey === "string" && nextKey.length > 0 ? nextKey : undefined;
+			if (!responseHasMore || !paginationKey || chunk.length < chunkLimit) {
+				hasMore = responseHasMore && Boolean(paginationKey);
 				break;
 			}
 			hasMore = true;
@@ -118,7 +134,7 @@ export async function getGlobalLeaderboard(
 		return {
 			data,
 			hasMore,
-			nextCursor: hasMore ? String(startOffset + data.length) : null,
+			nextCursor: hasMore ? paginationKey ?? null : null,
 		};
 	} catch (error) {
 		logStructError(`getGlobalLeaderboard:${timeframe}`, error);

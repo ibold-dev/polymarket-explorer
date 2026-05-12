@@ -11,12 +11,6 @@ export type PaginatedResult<T> = {
 	nextCursor: string | null;
 };
 
-export function parseOffsetCursor(cursor: string | undefined): number {
-	if (!cursor) return 0;
-	const parsed = Number.parseInt(cursor, 10);
-	return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0;
-}
-
 export function logPaginationLimitReached(label: string) {
 	console.error(`Struct SDK pagination aborted after ${maxPaginationRequests} requests: ${label}`);
 }
