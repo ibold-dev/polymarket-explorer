@@ -24,43 +24,43 @@ export function formatDateShort(seconds: number | null | undefined): string {
 	})
 }
 
-export function formatDateCompact(seconds: number): string {
-	return new Date(seconds * 1000).toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-	})
+function withTimeZone(options: Intl.DateTimeFormatOptions, timeZone?: string): Intl.DateTimeFormatOptions {
+	return timeZone ? { ...options, timeZone } : options;
 }
 
-export function formatDateTimeCompact(seconds: number): string {
-	return new Date(seconds * 1000).toLocaleString("en-US", {
-		month: "short",
-		day: "numeric",
-		hour: "numeric",
-	})
+export function formatDateCompact(seconds: number, timeZone?: string): string {
+	return new Date(seconds * 1000).toLocaleDateString(
+		"en-US",
+		withTimeZone({ month: "short", day: "numeric" }, timeZone),
+	)
 }
 
-export function formatTimeCompact(seconds: number): string {
-	return new Date(seconds * 1000).toLocaleTimeString("en-US", {
-		hour: "numeric",
-	})
+export function formatDateTimeCompact(seconds: number, timeZone?: string): string {
+	return new Date(seconds * 1000).toLocaleString(
+		"en-US",
+		withTimeZone({ month: "short", day: "numeric", hour: "numeric" }, timeZone),
+	)
 }
 
-export function formatDateFull(seconds: number): string {
-	return new Date(seconds * 1000).toLocaleDateString("en-US", {
-		month: "long",
-		day: "numeric",
-		year: "numeric",
-	})
+export function formatTimeCompact(seconds: number, timeZone?: string): string {
+	return new Date(seconds * 1000).toLocaleTimeString(
+		"en-US",
+		withTimeZone({ hour: "numeric" }, timeZone),
+	)
 }
 
-export function formatDateTimeFull(seconds: number): string {
-	return new Date(seconds * 1000).toLocaleString("en-US", {
-		month: "long",
-		day: "numeric",
-		year: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-	})
+export function formatDateFull(seconds: number, timeZone?: string): string {
+	return new Date(seconds * 1000).toLocaleDateString(
+		"en-US",
+		withTimeZone({ month: "long", day: "numeric", year: "numeric" }, timeZone),
+	)
+}
+
+export function formatDateTimeFull(seconds: number, timeZone?: string): string {
+	return new Date(seconds * 1000).toLocaleString(
+		"en-US",
+		withTimeZone({ month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }, timeZone),
+	)
 }
 
 export function formatTime(seconds: number | null | undefined): string | null {

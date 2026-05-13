@@ -19,7 +19,8 @@ import {
 	type PnlPeriods,
 	type PnlStreaks,
 } from "@/lib/struct/pnl";
-import { PNL_RISK_TIMEFRAMES, PNL_TIMEFRAMES, type PnlTimeframe } from "@/lib/struct/pnl-timeframes";
+import { PNL_RISK_TIMEFRAMES } from "@/lib/struct/pnl-timeframes";
+import { resolvePnlRange, type ResolvedPnlRange } from "@/lib/struct/pnl-range";
 import {
 	getTraderOgImageAlt,
 	getTraderOgImageUrl,
@@ -30,6 +31,7 @@ import {
 	traderOgImageSize,
 } from "@/lib/trader-open-graph";
 import { loadTraderSearchParams } from "@/lib/trader-search-params.server";
+import { getServerTimezone } from "@/lib/timezone.server";
 import { getTraderAnalyticsChanges, getTraderAnalyticsDeltas, getTraderAnalyticsTimeseries } from "@/lib/struct/analytics-queries";
 import { parseAnalyticsParams } from "@/lib/struct/analytics-shared";
 import { getMarketsByConditionIds, getTraderMarketPnlV3, getTraderPnlSummary, getTraderPnlV3Changes, getTraderProfile } from "@/lib/struct/queries";
@@ -98,15 +100,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	});
 }
 
-function loadTraderInsights(address: string, timeframe: PnlTimeframe): Promise<TraderInsightsData> {
-	const { timeframe: candleTimeframe, resolution } = PNL_TIMEFRAMES[timeframe];
-	const pnlCandlesPromise = getTraderPnlCandles(address, candleTimeframe, resolution);
+function loadTraderInsights(address: string, range: ResolvedPnlRange): Promise<TraderInsightsData> {
+	const pnlCandlesPromise = getTraderPnlCandles(address, range.apiTimeframe, range.resolution, {
+		from: range.from,
+		to: range.to,
+	});
 	const dailyPnlPromise = getTraderDailyPnl(address);
 	const periodsPromise = getTraderPnlPeriods(address);
 
 	return Promise.all([pnlCandlesPromise, dailyPnlPromise, periodsPromise]).then(([pnlCandles, dailyPnl, periods]) => {
 		const streaks = computeStreaks(dailyPnl);
-		const chartAnnotations = timeframe === "all" ? getPnlChartAnnotations(pnlCandles, periods) : [];
+		const showAnnotations = range.mode === "preset" && range.timeframe === "all";
+		const chartAnnotations = showAnnotations ? getPnlChartAnnotations(pnlCandles, periods) : [];
 
 		return {
 			pnlCandles,
@@ -149,20 +154,30 @@ async function TraderInsightsSection({
 	address,
 	displayName,
 	profileImage,
-	timeframe,
+	pnlRange,
+	firstTradeAt,
 	insightsPromise,
 }: {
 	address: string;
 	displayName: string;
 	profileImage?: string | null;
-	timeframe: PnlTimeframe;
+	pnlRange: ResolvedPnlRange;
+	firstTradeAt?: number;
 	insightsPromise: Promise<TraderInsightsData>;
 }) {
 	const { pnlCandles, dailyPnl, periods, chartAnnotations } = await insightsPromise;
 
 	return (
 		<>
-			<PnlCard address={address} data={pnlCandles} displayName={displayName} profileImage={profileImage} annotations={chartAnnotations} timeframe={timeframe} />
+			<PnlCard
+				address={address}
+				data={pnlCandles}
+				displayName={displayName}
+				profileImage={profileImage}
+				annotations={chartAnnotations}
+				pnlRange={pnlRange}
+				firstTradeAt={firstTradeAt}
+			/>
 			<div className="rounded-lg bg-card p-4 sm:p-6">
 				<PnlCalendar data={dailyPnl} periods={periods} />
 			</div>
@@ -276,7 +291,7 @@ function TraderPerformanceSummaryFallback() {
 
 async function TraderOverviewSection({
 	address,
-	timeframe,
+	pnlRange,
 	profilePromise,
 	pnlSummaryPromise,
 	insightsPromise,
@@ -285,7 +300,7 @@ async function TraderOverviewSection({
 	cumulativePnlUsdPromise,
 }: {
 	address: string;
-	timeframe: PnlTimeframe;
+	pnlRange: ResolvedPnlRange;
 	profilePromise: Promise<UserProfile | null>;
 	pnlSummaryPromise: Promise<TraderPnlSummary | null>;
 	insightsPromise: Promise<TraderInsightsData>;
@@ -294,7 +309,7 @@ async function TraderOverviewSection({
 	cumulativePnlUsdPromise: Promise<number>;
 }) {
 	const [profile, pnlSummary] = await Promise.all([profilePromise, pnlSummaryPromise]);
-	const pnlRiskPromise = getTraderPnlRisk(address, PNL_RISK_TIMEFRAMES[timeframe]);
+	const pnlRiskPromise = getTraderPnlRisk(address, PNL_RISK_TIMEFRAMES[pnlRange.timeframe]);
 	const pnlChangesPromise = getTraderPnlV3Changes(address);
 
 	const displayName = getTraderDisplayName({
@@ -348,7 +363,8 @@ async function TraderOverviewSection({
 							address={address}
 							displayName={displayName}
 							profileImage={profile?.profile_image}
-							timeframe={timeframe}
+							pnlRange={pnlRange}
+							firstTradeAt={pnlSummary?.first_trade_at ?? undefined}
 							insightsPromise={insightsPromise}
 						/>
 					</Suspense>
@@ -475,13 +491,37 @@ async function TraderPageContent({
 		notFound();
 	}
 
-	const [{ tab, openPage, closedPage, activityPage, pnlTimeframe, openSortBy, openSortDirection, closedSortBy, closedSortDirection }, resolvedSearchParams] =
-		await Promise.all([loadTraderSearchParams(searchParams), searchParams]);
+	const [
+		{
+			tab,
+			openPage,
+			closedPage,
+			activityPage,
+			pnlTimeframe,
+			pnlAnchor,
+			pnlFrom,
+			pnlTo,
+			openSortBy,
+			openSortDirection,
+			closedSortBy,
+			closedSortDirection,
+		},
+		resolvedSearchParams,
+		serverTimezone,
+	] = await Promise.all([loadTraderSearchParams(searchParams), searchParams, getServerTimezone()]);
 	const { view, range, resolution, defaultResolution, defaultRange } = parseAnalyticsParams(resolvedSearchParams, "scoped", "30d");
+
+	const pnlRange = resolvePnlRange({
+		timeframe: pnlTimeframe,
+		anchor: pnlAnchor,
+		from: pnlFrom,
+		to: pnlTo,
+		tz: serverTimezone,
+	});
 
 	const profilePromise = Promise.resolve(profile);
 	const pnlSummaryPromise = Promise.resolve(pnlSummary);
-	const insightsPromise = loadTraderInsights(address, pnlTimeframe);
+	const insightsPromise = loadTraderInsights(address, pnlRange);
 	const bestTradeMarketPromise = loadBestTradeMarket(pnlSummaryPromise);
 	const worstTradeMarketPromise = loadWorstTradeMarket(address);
 	const cumulativePnlUsdPromise = getTraderCumulativePnlUsd(address);
@@ -515,7 +555,7 @@ async function TraderPageContent({
 			<Suspense fallback={<TraderOverviewFallback />}>
 				<TraderOverviewSection
 					address={address}
-					timeframe={pnlTimeframe}
+					pnlRange={pnlRange}
 					profilePromise={profilePromise}
 					pnlSummaryPromise={pnlSummaryPromise}
 					insightsPromise={insightsPromise}

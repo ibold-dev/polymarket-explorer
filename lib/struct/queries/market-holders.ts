@@ -6,7 +6,6 @@ import type {
 	HolderHistoryCandle,
 	MarketHoldersResponse,
 	PolymarketCategory,
-	TraderInfo,
 } from "@structbuild/sdk";
 
 import { getStructClient } from "@/lib/struct/client";
@@ -16,16 +15,27 @@ import {
 	maxPaginationRequests,
 	type PaginatedResult,
 } from "@/lib/struct/queries/_shared";
+import {
+	normalizeTraderLeaderboardEntry,
+	type TraderLeaderboardEntry,
+} from "@/lib/struct/trader-leaderboard";
 
 const MAX_LEADERBOARD_PAGE_SIZE = 50;
 const MAX_CATEGORY_LEADERBOARD_PAGE_SIZE = 200;
 
-export type TraderLeaderboardEntry = Omit<GlobalEntry, "trader"> & {
-	trader: TraderInfo;
-	total_trades: number;
-	best_trade_pnl_usd?: number | null;
-	worst_trade_pnl_usd?: number | null;
-};
+export type { TraderLeaderboardEntry } from "@/lib/struct/trader-leaderboard";
+
+function appendNormalizedLeaderboardEntries(
+	target: TraderLeaderboardEntry[],
+	entries: readonly (GlobalEntry | CategoryEntry)[],
+) {
+	for (const entry of entries) {
+		const normalized = normalizeTraderLeaderboardEntry(entry);
+		if (normalized) {
+			target.push(normalized);
+		}
+	}
+}
 
 export async function getMarketHolders(
 	marketSlug: string,
@@ -123,17 +133,8 @@ export async function getGlobalLeaderboard(
 				pagination_key: paginationKey,
 			});
 			requestsMade += 1;
-			const chunk = (response.data ?? []) as unknown as TraderLeaderboardEntry[];
-			for (const entry of chunk) {
-				data.push({
-					...entry,
-					total_trades:
-						(entry.total_buys ?? 0)
-						+ (entry.total_sells ?? 0)
-						+ (entry.total_redemptions ?? 0)
-						+ (entry.total_merges ?? 0),
-				});
-			}
+			const chunk = response.data ?? [];
+			appendNormalizedLeaderboardEntries(data, chunk);
 			const nextKey = response.pagination?.pagination_key;
 			const responseHasMore = response.pagination?.has_more ?? false;
 			paginationKey = typeof nextKey === "string" && nextKey.length > 0 ? nextKey : undefined;
@@ -153,67 +154,6 @@ export async function getGlobalLeaderboard(
 		logStructError(`getGlobalLeaderboard:${timeframe}`, error);
 		return { data: [], hasMore: false, nextCursor: null };
 	}
-}
-
-function mapCategoryEntry(entry: CategoryEntry): TraderLeaderboardEntry {
-	const total_buys = entry.total_buys ?? 0;
-	const total_sells = entry.total_sells ?? 0;
-	const redeem_count = entry.redeem_count ?? 0;
-	const merge_count = entry.merge_count ?? 0;
-	const trader: NonNullable<CategoryEntry["trader"]> = entry.trader ?? {
-		address: "",
-		verified_badge: false,
-	};
-
-	return {
-		trader: {
-			address: trader.address,
-			name: trader.name ?? null,
-			pseudonym: trader.pseudonym ?? null,
-			profile_image: trader.profile_image ?? null,
-			x_username: trader.x_username ?? null,
-			verified_badge: trader.verified_badge ?? false,
-		},
-		current_pnl: entry.current_pnl,
-		realized_pnl_usd: entry.realized_pnl_usd,
-		pnl_1d: null,
-		pnl_7d: null,
-		pnl_30d: null,
-		events_traded: 0,
-		markets_traded: entry.markets_traded,
-		markets_won: entry.markets_won,
-		markets_lost: entry.markets_lost,
-		market_win_rate_pct: entry.market_win_rate_pct,
-		avg_win_usd: entry.avg_win_usd,
-		avg_loss_usd: entry.avg_loss_usd,
-		profit_factor: entry.profit_factor,
-		total_buys,
-		total_sells,
-		total_redemptions: redeem_count,
-		total_merges: merge_count,
-		total_volume_usd: entry.total_volume_usd,
-		buy_volume_usd: entry.buy_volume_usd,
-		sell_volume_usd: entry.sell_volume_usd,
-		redemption_volume_usd: entry.redemption_volume_usd,
-		merge_volume_usd: entry.merge_volume_usd,
-		total_fees: entry.total_fees,
-		total_wins_usd: entry.total_wins_usd,
-		total_losses_usd: entry.total_losses_usd,
-		best_market_pnl_usd: entry.best_market_pnl_usd ?? null,
-		worst_market_pnl_usd: entry.worst_market_pnl_usd ?? null,
-		avg_hold_time_seconds: entry.avg_hold_time_seconds,
-		first_trade_at: entry.first_trade_at ?? null,
-		last_trade_at: entry.last_trade_at ?? null,
-		maker_rebate_count: 0,
-		maker_rebate_usd: 0,
-		reward_count: 0,
-		reward_usd: 0,
-		yield_count: 0,
-		yield_usd: 0,
-		total_credit_count: 0,
-		total_credit_usd: 0,
-		total_trades: total_buys + total_sells + redeem_count + merge_count,
-	} as TraderLeaderboardEntry;
 }
 
 export async function getCategoryLeaderboard(
@@ -257,9 +197,7 @@ export async function getCategoryLeaderboard(
 			});
 			requestsMade += 1;
 			const chunk = response.data ?? [];
-			for (const entry of chunk) {
-				data.push(mapCategoryEntry(entry));
-			}
+			appendNormalizedLeaderboardEntries(data, chunk);
 			const nextKey = response.pagination?.pagination_key;
 			const responseHasMore = response.pagination?.has_more ?? false;
 			paginationKey = typeof nextKey === "string" && nextKey.length > 0 ? nextKey : undefined;

@@ -169,11 +169,13 @@ function PnlTooltipContent({
 	payload,
 	showTime,
 	metric,
+	timezone,
 }: {
 	active?: boolean
 	payload?: Array<{ payload?: PnlChartPoint }>
 	showTime: boolean
 	metric: PnlChartMetric
+	timezone?: string
 }) {
 	const entry = payload?.[0]?.payload
 
@@ -187,7 +189,7 @@ function PnlTooltipContent({
 	return (
 		<div className="grid min-w-40 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
 			<div className="font-medium">
-				{showTime ? formatDateTimeFull(entry.t) : formatDateFull(entry.t)}
+				{showTime ? formatDateTimeFull(entry.t, timezone) : formatDateFull(entry.t, timezone)}
 			</div>
 			<div className="grid gap-1.5">
 				{ohlc ? (
@@ -338,7 +340,7 @@ function getCandlestickThemeColors() {
 	}
 }
 
-function PnlCandlestickChart({ data, metric }: { data: PnlDataPoint[]; metric: PnlChartOhlcMetric }) {
+function PnlCandlestickChart({ data, metric, timezone }: { data: PnlDataPoint[]; metric: PnlChartOhlcMetric; timezone?: string }) {
 	const containerRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
@@ -374,6 +376,7 @@ function PnlCandlestickChart({ data, metric }: { data: PnlDataPoint[]; metric: P
 			},
 			localization: {
 				priceFormatter: (value: number) => formatNumber(value, { currency: true }),
+				timeFormatter: (time: number) => formatDateTimeFull(time, timezone),
 			},
 		})
 		const series = chart.addSeries(CandlestickSeries, {
@@ -391,7 +394,7 @@ function PnlCandlestickChart({ data, metric }: { data: PnlDataPoint[]; metric: P
 		return () => {
 			chart.remove()
 		}
-	}, [data, metric])
+	}, [data, metric, timezone])
 
 	return <div ref={containerRef} className="h-[260px] min-h-[260px] w-full sm:h-[340px] sm:min-h-[310px]" />
 }
@@ -401,13 +404,26 @@ export function PnlChart({
 	annotations,
 	showAnnotations,
 	timeframe,
+	timezone,
+	showTooltipTime,
 }: {
 	data: PnlDataPoint[]
 	annotations?: PnlChartAnnotation[]
 	showAnnotations?: boolean
 	timeframe?: PnlTimeframe
+	timezone?: string
+	showTooltipTime?: boolean
 }) {
-	return <PnlChartContent data={data} annotations={annotations} showAnnotations={showAnnotations} timeframe={timeframe} />
+	return (
+		<PnlChartContent
+			data={data}
+			annotations={annotations}
+			showAnnotations={showAnnotations}
+			timeframe={timeframe}
+			timezone={timezone}
+			showTooltipTime={showTooltipTime}
+		/>
+	)
 }
 
 type PnlChartProps = {
@@ -415,12 +431,14 @@ type PnlChartProps = {
 	annotations?: PnlChartAnnotation[]
 	showAnnotations?: boolean
 	timeframe?: PnlTimeframe
+	timezone?: string
+	showTooltipTime?: boolean
 	action?: ReactNode
 	chartMode?: PnlChartMode
 	chartMetric?: PnlChartMetric
 }
 
-export function PnlChartContent({ data, annotations = [], showAnnotations = false, timeframe, action, chartMode = "area", chartMetric = "pnl" }: PnlChartProps) {
+export function PnlChartContent({ data, annotations = [], showAnnotations = false, timeframe, timezone, showTooltipTime, action, chartMode = "area", chartMetric = "pnl" }: PnlChartProps) {
 	if (data.length === 0) {
 		return (
 			<div className="overflow-hidden">
@@ -449,7 +467,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 	const chartData = data.map((point) => toChartPoint(point, chartMetric))
 	const hasAnnotations = annotations.length > 0
 	const visibleAnnotations = chartMode === "area" && chartMetric === "pnl" && showAnnotations ? annotations : []
-	const shouldShowTooltipTime = timeframe !== undefined
+	const shouldShowTooltipTime = showTooltipTime ?? timeframe !== undefined
 	const showMetricRange = isOhlcMetric(chartMetric)
 	const candlestickMetric = isOhlcMetric(chartMetric) ? chartMetric : "pnl"
 
@@ -543,7 +561,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 			) : null}
 			<div className="relative">
 				{chartMode === "candles" ? (
-					<PnlCandlestickChart data={data} metric={candlestickMetric} />
+					<PnlCandlestickChart data={data} metric={candlestickMetric} timezone={timezone} />
 				) : (
 					<ChartContainer config={chartConfig} className="h-[260px] min-h-[260px] w-full sm:h-[340px] sm:min-h-[310px]">
 						<AreaChart accessibilityLayer data={chartData} margin={{ left: 0, right: 60, top: 0, bottom: 0 }}>
@@ -563,7 +581,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 							tickLine={false}
 							axisLine={false}
 							tickMargin={8}
-							tickFormatter={formatDateCompact}
+							tickFormatter={(value) => formatDateCompact(Number(value), timezone)}
 							minTickGap={24}
 							tick={{ fontSize: 12 }}
 						/>
@@ -579,7 +597,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 						/>
 						<ChartTooltip
 							content={
-								<PnlTooltipContent showTime={shouldShowTooltipTime} metric={chartMetric} />
+								<PnlTooltipContent showTime={shouldShowTooltipTime} metric={chartMetric} timezone={timezone} />
 							}
 						/>
 						<Area

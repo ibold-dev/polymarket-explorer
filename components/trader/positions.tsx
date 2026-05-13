@@ -5,7 +5,7 @@ import type { ColumnDef, VisibilityState } from "@tanstack/react-table"
 import type { PositionEntry } from "@structbuild/sdk"
 import type { Route } from "next"
 import Link from "next/link"
-import { ExternalLinkIcon, InfoIcon, RefreshCwIcon } from "lucide-react"
+import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon, RefreshCwIcon } from "lucide-react"
 import { type ReactNode, useCallback, useMemo, useState, useTransition } from "react"
 import { useQueryStates } from "nuqs"
 
@@ -23,17 +23,18 @@ import { DataTable } from "../ui/data-table"
 import { SortableHeader } from "../ui/sortable-header"
 import { TooltipWrapper } from "../ui/tooltip"
 import { Button } from "../ui/button"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../ui/select"
 import { ShowUnknownMarketsToggle } from "../ui/show-unknown-markets-toggle"
 import { TraderTabs } from "./trader-tabs"
 import { formatNumber, formatPriceCents, formatDateShort, formatTime, pnlColorClass } from "@/lib/format"
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url"
 import { cn } from "@/lib/utils"
-
-function formatSharesLine(row: PositionEntry) {
-	const balance = row.current_shares_balance
-	if (balance == null) return null
-	return `${formatNumber(balance, { decimals: 2 })} shares`
-}
 
 const defaultColumnVisibility: VisibilityState = {
 	current_value: false,
@@ -43,14 +44,25 @@ const defaultColumnVisibility: VisibilityState = {
 	redemption_usd: false,
 }
 
+const sortOptions: { value: TraderPositionSortBy; label: string }[] = [
+	{ value: "realized_pnl_usd", label: "PnL ($)" },
+	{ value: "realized_pnl_pct", label: "PnL (%)" },
+	{ value: "current_value", label: "Current Value" },
+	{ value: "current_shares_balance", label: "Shares Held" },
+	{ value: "end_date", label: "Market End Date" },
+	{ value: "redeemable", label: "Redeemable" },
+	{ value: "last_trade_at", label: "Last Active" },
+	{ value: "first_trade_at", label: "First Trade" },
+]
+
+const sortOptionValues = new Set<TraderPositionSortBy>(sortOptions.map((o) => o.value))
+
 function buildColumns(
 	status: "open" | "closed",
 	currentSortBy: TraderPositionSortBy,
 	currentSortDirection: TraderSortDirection,
 	onSortChange: (sortBy: TraderPositionSortBy) => void,
 ): ColumnDef<PositionEntry, unknown>[] {
-	// The backend has no current_price sort key, so this composite column uses the closest
-	// server-supported price field for each tab.
 	const entryCurrentSortBy = status === "closed" ? "avg_exit_price" : "avg_entry_price"
 
 	return [
@@ -72,7 +84,6 @@ function buildColumns(
 				const entry = row.original
 				const isUnknownMarket = !entry.title
 				const title = entry.title || "Unknown Market"
-				const sharesLine = formatSharesLine(entry)
 				const href = entry.market_slug ? (`/markets/${entry.market_slug}` as Route) : null
 				return (
 					<div className="flex items-center gap-3">
@@ -125,10 +136,8 @@ function buildColumns(
 								{entry.redeemable ? (
 									<Badge variant="redeemable">Redeemable</Badge>
 								) : null}
-								{sharesLine ? (
-									<p className="truncate text-sm text-muted-foreground" title={sharesLine}>
-										{sharesLine}
-									</p>
+								{status === "open" && entry.current_shares_balance ? (
+									<p className="text-muted-foreground">{formatNumber(entry.current_shares_balance, { decimals: 2 })} shares</p>
 								) : null}
 							</div>
 						</div>
@@ -179,9 +188,7 @@ function buildColumns(
 					currentSortDirection={currentSortDirection}
 					onSortChange={onSortChange}
 				>
-					<span className="flex items-center gap-1.5">
-						PnL
-					</span>
+					PnL
 				</SortableHeader>
 			),
 			size: 150,
@@ -474,6 +481,20 @@ export default function TraderPositions({
 		loadPage(1, nextSortBy, nextSortDirection)
 	}, [currentSortBy, currentSortDirection, loadPage])
 
+	const handleSelectSortChange = useCallback((nextSortBy: TraderPositionSortBy) => {
+		if (nextSortBy === currentSortBy) return
+		loadPage(1, nextSortBy, "desc")
+	}, [currentSortBy, loadPage])
+
+	const handleDirectionToggle = useCallback(() => {
+		const nextDirection: TraderSortDirection = currentSortDirection === "desc" ? "asc" : "desc"
+		loadPage(1, currentSortBy, nextDirection)
+	}, [currentSortBy, currentSortDirection, loadPage])
+
+	const selectSortValue: TraderPositionSortBy | null = sortOptionValues.has(currentSortBy)
+		? currentSortBy
+		: null
+
 	const columns = useMemo(
 		() => buildColumns(status, currentSortBy, currentSortDirection, handleSortChange),
 		[handleSortChange, currentSortBy, currentSortDirection, status],
@@ -488,6 +509,43 @@ export default function TraderPositions({
 
 	const toolbarRight = (
 		<div className="flex items-center gap-3">
+			<div className="flex items-center gap-1">
+				<Select
+					value={selectSortValue}
+					onValueChange={(value) => {
+						if (value) handleSelectSortChange(value as TraderPositionSortBy)
+					}}
+				>
+					<SelectTrigger size="sm" aria-label="Sort by">
+						<span className="text-muted-foreground">Sort:</span>
+						<SelectValue placeholder="Custom">
+							{(value) => sortOptions.find((option) => option.value === value)?.label ?? "Custom"}
+						</SelectValue>
+					</SelectTrigger>
+					<SelectContent>
+						{sortOptions.map((option) => (
+							<SelectItem key={option.value} value={option.value}>
+								{option.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				<TooltipWrapper content={currentSortDirection === "desc" ? "Sorted descending" : "Sorted ascending"}>
+					<Button
+						variant="outline"
+						size="icon"
+						className="size-7"
+						onClick={handleDirectionToggle}
+						aria-label={`Toggle sort direction (currently ${currentSortDirection})`}
+					>
+						{currentSortDirection === "desc" ? (
+							<ArrowDownIcon className="size-4" />
+						) : (
+							<ArrowUpIcon className="size-4" />
+						)}
+					</Button>
+				</TooltipWrapper>
+			</div>
 			{hasUnknownMarkets ? (
 				<ShowUnknownMarketsToggle show={showUnknown} onToggle={setShowUnknown} />
 			) : null}

@@ -42,6 +42,8 @@ const defaultPnlRiskTimeframe: StructPnlPeriodTimeframe = "lifetime";
 
 type TraderPnlCandlesOptions = {
 	fillGaps?: boolean;
+	from?: number;
+	to?: number;
 };
 
 const getTraderPnlCandlesCached = cache(
@@ -63,6 +65,8 @@ const getTraderPnlCandlesCached = cache(
 				timeframe,
 				resolution,
 				...(options.fillGaps === undefined ? {} : { fill_gaps: options.fillGaps }),
+				...(options.from === undefined ? {} : { from: options.from }),
+				...(options.to === undefined ? {} : { to: options.to }),
 			});
 
 			return response.data
@@ -97,7 +101,8 @@ const getTraderPnlCandlesCached = cache(
 				return [];
 			}
 
-			logStructError(`getTraderPnlV3Candles:${address}:${timeframe}:${resolution}`, error);
+			const rangeKey = `${options.from ?? ""}:${options.to ?? ""}`;
+			logStructError(`getTraderPnlV3Candles:${address}:${timeframe}:${resolution}:${rangeKey}`, error);
 			return [];
 		}
 	},

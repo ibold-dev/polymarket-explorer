@@ -2,16 +2,22 @@ import { createParser, parseAsStringLiteral, type inferParserType } from "nuqs";
 
 import {
 	defaultTraderPositionSortBy,
+	pnlAnchorValues,
 	pnlTimeframeValues,
 	positivePageParserDef,
 	traderPositionSortByValues,
 	traderSortDirectionValues,
 	traderTabValues,
+	unixSecondsParserDef,
 } from "./trader-search-params-shared";
 
 const parseAsPositivePage = createParser<number>(positivePageParserDef).withDefault(1);
+const parseAsUnixSeconds = createParser<number>(unixSecondsParserDef);
 
 export const pnlTimeframeParser = parseAsStringLiteral(pnlTimeframeValues).withDefault("1w");
+export const pnlAnchorParser = parseAsStringLiteral(pnlAnchorValues);
+export const pnlFromParser = parseAsUnixSeconds;
+export const pnlToParser = parseAsUnixSeconds;
 
 export const traderSearchParamParsers = {
 	tab: parseAsStringLiteral(traderTabValues).withDefault("active"),
@@ -23,6 +29,9 @@ export const traderSearchParamParsers = {
 	closedSortBy: parseAsStringLiteral(traderPositionSortByValues).withDefault(defaultTraderPositionSortBy.closed),
 	closedSortDirection: parseAsStringLiteral(traderSortDirectionValues).withDefault("desc"),
 	pnlTimeframe: pnlTimeframeParser,
+	pnlAnchor: pnlAnchorParser,
+	pnlFrom: pnlFromParser,
+	pnlTo: pnlToParser,
 };
 
 export type TraderSearchParams = inferParserType<typeof traderSearchParamParsers>;

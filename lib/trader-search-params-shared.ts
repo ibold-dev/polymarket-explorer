@@ -19,6 +19,9 @@ export const traderPositionSortByValues = [
 	"first_trade_at",
 	"last_trade_at",
 	"realized_pnl_pct",
+	"current_shares_balance",
+	"end_date",
+	"redeemable",
 ] as const;
 export type TraderPositionSortBy = (typeof traderPositionSortByValues)[number];
 
@@ -30,7 +33,7 @@ export const defaultTraderPositionSortBy = {
 	closed: "last_trade_at",
 } as const satisfies Record<"open" | "closed", TraderPositionSortBy>;
 
-export { pnlTimeframeValues, type PnlTimeframe } from "@/lib/struct/pnl-timeframes";
+export { pnlTimeframeValues, pnlAnchorValues, type PnlTimeframe, type PnlAnchor } from "@/lib/struct/pnl-timeframes";
 
 export const positivePageParserDef = {
 	parse(value: string) {
@@ -41,3 +44,19 @@ export const positivePageParserDef = {
 		return String(value);
 	},
 };
+
+const MIN_PNL_UNIX_SECONDS = 1577836800;
+const MAX_PNL_UNIX_SECONDS = 4102444800;
+
+export const unixSecondsParserDef = {
+	parse(value: string) {
+		const parsed = Number.parseInt(value, 10);
+		if (!Number.isSafeInteger(parsed)) return null;
+		if (parsed < MIN_PNL_UNIX_SECONDS || parsed > MAX_PNL_UNIX_SECONDS) return null;
+		return parsed;
+	},
+	serialize(value: number) {
+		return String(value);
+	},
+};
+

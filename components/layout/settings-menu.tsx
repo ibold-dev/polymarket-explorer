@@ -1,12 +1,16 @@
 "use client";
 
 import { SettingsIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useTransition } from "react";
 
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TimezoneSelect } from "@/components/ui/timezone-select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { TooltipWrapper } from "@/components/ui/tooltip";
+import { useTimezone } from "@/lib/hooks/use-timezone";
 import {
 	VOLUME_MODE_EXPLAINER,
 	VOLUME_MODE_LABELS,
@@ -18,6 +22,15 @@ import {
 export function SettingsMenu() {
 	const { mode, setMode } = useVolumeMode();
 	const { theme, setTheme } = useTheme();
+	const { timezone, setTimezone } = useTimezone();
+	const router = useRouter();
+	const [, startTransition] = useTransition();
+
+	function handleTimezoneChange(next: string) {
+		if (next === timezone) return;
+		setTimezone(next);
+		startTransition(() => router.refresh());
+	}
 
 	return (
 		<Popover>
@@ -60,6 +73,18 @@ export function SettingsMenu() {
 							</ToggleGroupItem>
 						))}
 					</ToggleGroup>
+				</div>
+				<div className="-mx-2.5 border-t" />
+				<div className="flex items-center justify-between gap-2">
+					<p className="text-[11px] font-medium text-foreground">Timezone</p>
+					<TimezoneSelect
+						value={timezone}
+						onChange={handleTimezoneChange}
+						size="sm"
+						className="h-6 min-w-[11rem] py-0 text-[11px]"
+						contentClassName="max-h-72 min-w-[12rem]"
+						aria-label="Timezone"
+					/>
 				</div>
 				<div className="-mx-2.5 border-t" />
 				<div className="flex items-center justify-between gap-2">

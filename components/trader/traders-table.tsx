@@ -15,7 +15,7 @@ import { TooltipWrapper } from "@/components/ui/tooltip";
 import { Volume } from "@/components/ui/volume";
 import { facehashColorClasses } from "@/lib/facehash";
 import { formatNumber, pnlColorClass } from "@/lib/format";
-import type { TraderLeaderboardEntry } from "@/lib/struct/queries/market-holders";
+import type { TraderLeaderboardEntry } from "@/lib/struct/trader-leaderboard";
 import {
 	DEFAULT_TRADER_LEADERBOARD_SORT,
 	DEFAULT_TRADER_LEADERBOARD_SORT_DIRECTION,
@@ -52,8 +52,6 @@ type NumericField = Extract<
 	| "total_wins_usd"
 	| "total_losses_usd"
 	| "avg_hold_time_seconds"
-	| "best_market_pnl_usd"
-	| "worst_market_pnl_usd"
 	| "best_trade_pnl_usd"
 	| "worst_trade_pnl_usd"
 	| "maker_rebate_count"
@@ -217,10 +215,6 @@ function buildColumns(
 	rankOffset: number,
 	sortCtx: SortContext,
 ): ColumnDef<TraderLeaderboardEntry, unknown>[] {
-	const scope = sortCtx.scope;
-	const bestWinField: NumericField = scope === "category" ? "best_market_pnl_usd" : "best_trade_pnl_usd";
-	const worstLossField: NumericField = scope === "category" ? "worst_market_pnl_usd" : "worst_trade_pnl_usd";
-
 	const numericFormat = {
 		count: { decimals: 0, compact: true } as Parameters<typeof formatNumber>[1],
 		integer: { decimals: 0 } as Parameters<typeof formatNumber>[1],
@@ -318,8 +312,8 @@ function buildColumns(
 		usdWithCountColumn({ id: "redemptions", title: "Redemptions", usdField: "redemption_volume_usd", countField: "total_redemptions", sortKey: "redemption_volume_usd", size: 160 }, sortCtx),
 		usdWithCountColumn({ id: "merges", title: "Merges", usdField: "merge_volume_usd", countField: "total_merges", sortKey: "merge_volume_usd", size: 144 }, sortCtx),
 		numericColumn({ id: "fees", title: "Fees", field: "total_fees", sortKey: "total_fees", size: 112, format: numericFormat.currency }, sortCtx),
-		numericColumn({ id: "bestTradePnl", title: "Best Win", field: bestWinField, sortKey: "best_win", size: TRADER_TABLE_COLUMN_SIZES.bestTradePnl, format: numericFormat.currency, colorizePnl: true }, sortCtx),
-		numericColumn({ id: "worstLoss", title: "Worst Loss", field: worstLossField, sortKey: "worst_loss", size: 128, format: numericFormat.currency, colorizePnl: true }, sortCtx),
+		numericColumn({ id: "bestTradePnl", title: "Best Win", field: "best_trade_pnl_usd", sortKey: "best_win", size: TRADER_TABLE_COLUMN_SIZES.bestTradePnl, format: numericFormat.currency, colorizePnl: true }, sortCtx),
+		numericColumn({ id: "worstLoss", title: "Worst Loss", field: "worst_trade_pnl_usd", sortKey: "worst_loss", size: 128, format: numericFormat.currency, colorizePnl: true }, sortCtx),
 		usdWithCountColumn({ id: "makerRebates", title: "Maker Rebates", usdField: "maker_rebate_usd", countField: "maker_rebate_count", sortKey: "maker_rebate_usd", size: 160 }, sortCtx),
 		usdWithCountColumn({ id: "rewards", title: "Rewards", usdField: "reward_usd", countField: "reward_count", sortKey: "reward_usd", size: 144 }, sortCtx),
 		usdWithCountColumn({ id: "yields", title: "Yields", usdField: "yield_usd", countField: "yield_count", sortKey: "yield_usd", size: 144 }, sortCtx),
@@ -328,6 +322,13 @@ function buildColumns(
 		dateColumn({ id: "lastTradeAt", title: "Last Trade", field: "last_trade_at", sortKey: "last_trade_at", size: TRADER_TABLE_COLUMN_SIZES.lastTradeAt }, sortCtx),
 	];
 }
+
+const CATEGORY_UNAVAILABLE_COLUMN_IDS = new Set([
+	"events",
+	"makerRebates",
+	"rewards",
+	"yields",
+]);
 
 const DEFAULT_VISIBLE_COLUMN_IDS = [
 	"rank",
@@ -422,10 +423,13 @@ export function TradersTable({
 	);
 
 	const columns = useMemo(
-		() =>
-			orderColumnsByDefault(
-				buildColumns(rankOffset, { sort, direction, scope, onSortChange }),
-			),
+		() => {
+			const all = buildColumns(rankOffset, { sort, direction, scope, onSortChange });
+			const filtered = scope === "category"
+				? all.filter((col) => !col.id || !CATEGORY_UNAVAILABLE_COLUMN_IDS.has(col.id))
+				: all;
+			return orderColumnsByDefault(filtered);
+		},
 		[direction, onSortChange, rankOffset, scope, sort],
 	);
 	const defaultColumnVisibility = useMemo(() => buildDefaultColumnVisibility(columns), [columns]);

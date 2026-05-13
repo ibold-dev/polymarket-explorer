@@ -15,6 +15,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.3.0
         version: 1.3.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@date-fns/tz':
+        specifier: ^1.4.1
+        version: 1.4.1
       '@react-three/drei':
         specifier: ^10.7.7
         version: 10.7.7(@react-three/fiber@9.5.0(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(three@0.167.1))(@types/react@19.2.14)(@types/three@0.183.1)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(three@0.167.1)
@@ -22,8 +25,8 @@ importers:
         specifier: ^9.5.0
         version: 9.5.0(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(three@0.167.1)
       '@structbuild/sdk':
-        specifier: github:structbuild/struct-typescript-sdk#v0.6.0-staging.2
-        version: https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/32b0f70a348f45fc918ea2144eb9f7dbf5ed4de8
+        specifier: github:structbuild/struct-typescript-sdk#v0.6.0-staging.3
+        version: https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/9e3342ec69eb06623aee30e1982ddff2ce0aa38e
       '@tanstack/react-hotkeys':
         specifier: ^0.4.2
         version: 0.4.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -863,9 +866,9 @@ packages:
   '@standard-schema/utils@0.3.0':
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
-  '@structbuild/sdk@https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/32b0f70a348f45fc918ea2144eb9f7dbf5ed4de8':
-    resolution: {tarball: https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/32b0f70a348f45fc918ea2144eb9f7dbf5ed4de8}
-    version: 0.6.0-staging.2
+  '@structbuild/sdk@https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/9e3342ec69eb06623aee30e1982ddff2ce0aa38e':
+    resolution: {tarball: https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/9e3342ec69eb06623aee30e1982ddff2ce0aa38e}
+    version: 0.6.0-staging.3
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -4444,7 +4447,7 @@ snapshots:
 
   '@standard-schema/utils@0.3.0': {}
 
-  '@structbuild/sdk@https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/32b0f70a348f45fc918ea2144eb9f7dbf5ed4de8': {}
+  '@structbuild/sdk@https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/9e3342ec69eb06623aee30e1982ddff2ce0aa38e': {}
 
   '@swc/helpers@0.5.15':
     dependencies:
