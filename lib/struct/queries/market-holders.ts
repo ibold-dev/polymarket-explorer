@@ -98,7 +98,7 @@ export async function getGlobalLeaderboard(
 	}
 
 	const tf = timeframe as "1d" | "7d" | "30d" | "lifetime";
-	const sortBy = (sort?.sortBy ?? "realized_pnl_usd") as Parameters<typeof client.trader.getGlobalPnlV3>[0]["sort_by"];
+	const sortBy = (sort?.sortBy ?? "realized_pnl_usd") as NonNullable<Parameters<typeof client.trader.getGlobalPnlV3>[0]>["sort_by"];
 	const sortDirection = sort?.sortDirection ?? "desc";
 	const data: TraderLeaderboardEntry[] = [];
 	let paginationKey: string | undefined = cursor;
@@ -160,7 +160,10 @@ function mapCategoryEntry(entry: CategoryEntry): TraderLeaderboardEntry {
 	const total_sells = entry.total_sells ?? 0;
 	const redeem_count = entry.redeem_count ?? 0;
 	const merge_count = entry.merge_count ?? 0;
-	const trader = entry.trader ?? { address: "" };
+	const trader: NonNullable<CategoryEntry["trader"]> = entry.trader ?? {
+		address: "",
+		verified_badge: false,
+	};
 
 	return {
 		trader: {
@@ -227,7 +230,7 @@ export async function getCategoryLeaderboard(
 	}
 
 	const tf = timeframe as "1d" | "7d" | "30d" | "lifetime";
-	const sortBy = (sort?.sortBy ?? "realized_pnl_usd") as Parameters<typeof client.tags.getCategoryTopTradersV3>[0]["sort_by"];
+	const sortBy = (sort?.sortBy ?? "realized_pnl_usd") as NonNullable<Parameters<typeof client.tags.getCategoryTopTradersV3>[0]>["sort_by"];
 	const sortDirection = sort?.sortDirection ?? "desc";
 	const data: TraderLeaderboardEntry[] = [];
 	let paginationKey: string | undefined = cursor;
