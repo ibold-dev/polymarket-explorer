@@ -17,6 +17,7 @@ export type {
 } from "@/lib/struct/queries/market-trades";
 
 export {
+	getCategoryLeaderboard,
 	getGlobalLeaderboard,
 	getMarketHolders,
 	getMarketHoldersHistory,

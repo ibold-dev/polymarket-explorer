@@ -1,6 +1,6 @@
 "use client"
 
-import type { TraderOutcomePnlEntry } from "@structbuild/sdk"
+import type { PositionEntry } from "@structbuild/sdk"
 import { useCallback, useRef, useState, useTransition } from "react"
 
 import { getTraderTabPageAction } from "@/app/actions"
@@ -23,7 +23,7 @@ type TraderTabPanelClientProps =
 			pageNumber: number
 			sortBy: TraderPositionSortBy
 			sortDirection: TraderSortDirection
-			page: PaginatedResource<TraderOutcomePnlEntry, number>
+			page: PaginatedResource<PositionEntry, number>
 	  }
 	| {
 			kind: "activity"

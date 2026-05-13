@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table"
-import type { components } from "@structbuild/sdk"
+import type { PositionEntry } from "@structbuild/sdk"
 import type { Route } from "next"
 import Link from "next/link"
 import { ExternalLinkIcon, InfoIcon, RefreshCwIcon } from "lucide-react"
@@ -29,30 +29,16 @@ import { formatNumber, formatPriceCents, formatDateShort, formatTime, pnlColorCl
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url"
 import { cn } from "@/lib/utils"
 
-type TraderOutcomePnlEntry = components["schemas"]["TraderOutcomePnlEntry"]
-
-function formatSharesLine(row: TraderOutcomePnlEntry) {
-	const bought = row.total_shares_bought ?? 0
-	const sold = row.total_shares_sold ?? 0
-	const net = bought - sold
-
-	if (bought === 0 && sold === 0) {
-		return null
-	}
-
-	if (Math.abs(net) < 1e-9) {
-		return `${formatNumber(sold, { decimals: 2 })} shares traded`
-	}
-
-	return `${formatNumber(net, { decimals: 2 })} net shares`
+function formatSharesLine(row: PositionEntry) {
+	const balance = row.current_shares_balance
+	if (balance == null) return null
+	return `${formatNumber(balance, { decimals: 2 })} shares`
 }
 
 const defaultColumnVisibility: VisibilityState = {
 	current_value: false,
-	total_shares_bought: false,
-	total_shares_sold: false,
-	total_buy_usd: false,
-	total_sell_usd: false,
+	buys: false,
+	sells: false,
 	total_fees: false,
 	redemption_usd: false,
 }
@@ -62,7 +48,7 @@ function buildColumns(
 	currentSortBy: TraderPositionSortBy,
 	currentSortDirection: TraderSortDirection,
 	onSortChange: (sortBy: TraderPositionSortBy) => void,
-): ColumnDef<TraderOutcomePnlEntry, unknown>[] {
+): ColumnDef<PositionEntry, unknown>[] {
 	// The backend has no current_price sort key, so this composite column uses the closest
 	// server-supported price field for each tab.
 	const entryCurrentSortBy = status === "closed" ? "avg_exit_price" : "avg_entry_price"
@@ -136,6 +122,9 @@ function buildColumns(
 										{entry.outcome}
 									</Badge>
 								) : null}
+								{entry.redeemable ? (
+									<Badge variant="redeemable">Redeemable</Badge>
+								) : null}
 								{sharesLine ? (
 									<p className="truncate text-sm text-muted-foreground" title={sharesLine}>
 										{sharesLine}
@@ -163,7 +152,7 @@ function buildColumns(
 			size: 140,
 			cell: ({ row }) => {
 				const entry = row.original
-				const isEntryUnknown = entry.avg_entry_price === 0 || entry.avg_entry_price == null
+				const isEntryUnknown = entry.avg_entry_price == null
 
 				return (
 					<p>
@@ -175,7 +164,7 @@ function buildColumns(
 							formatPriceCents(entry.avg_entry_price)
 						)}{" "}
 						<span className="text-muted-foreground">/</span>{" "}
-						{formatPriceCents(entry.current_price ?? entry.avg_exit_price)}
+						{formatPriceCents(entry.current_price ?? entry.avg_exit_price ?? 0)}
 					</p>
 				)
 			},
@@ -230,79 +219,21 @@ function buildColumns(
 						size: 160,
 						cell: ({ row }) => {
 							const entry = row.original
-							const currentVal = entry.current_value
-							const shares = entry.current_shares_balance
-
-							if (currentVal === 0) {
-								return (
-									<div>
-										<p>{formatNumber(0, { currency: true })}</p>
-										<p className="text-sm text-muted-foreground">
-											{formatNumber(shares ?? 0, { decimals: 2 })} shares
-										</p>
-									</div>
-								)
-							}
-
-							const showSharesLine = shares != null && shares > 0
-
 							return (
 								<div>
-									<p>
-										{currentVal != null && currentVal > 0
-											? formatNumber(currentVal, { currency: true, compact: true })
-											: "—"}
+									<p>{formatNumber(entry.current_value ?? 0, { currency: true, compact: true })}</p>
+									<p className="text-sm text-muted-foreground">
+										{formatNumber(entry.current_shares_balance ?? 0, { decimals: 2 })} shares
 									</p>
-									{showSharesLine ? (
-										<p className="text-sm text-muted-foreground">
-											{formatNumber(shares, { decimals: 2 })} shares
-										</p>
-									) : null}
 								</div>
 							)
 						},
-					} satisfies ColumnDef<TraderOutcomePnlEntry, unknown>,
+					} satisfies ColumnDef<PositionEntry, unknown>,
 				]
 			: []),
 		{
-			id: "total_shares_bought",
-			meta: { title: "Bought" },
-			header: () => (
-				<SortableHeader
-					sortBy="total_shares_bought"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Bought
-				</SortableHeader>
-			),
-			size: 120,
-			cell: ({ row }) => (
-				<p>{formatNumber(row.original.total_shares_bought ?? 0, { decimals: 2 })}</p>
-			),
-		},
-		{
-			id: "total_shares_sold",
-			meta: { title: "Sold" },
-			header: () => (
-				<SortableHeader
-					sortBy="total_shares_sold"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Sold
-				</SortableHeader>
-			),
-			size: 120,
-			cell: ({ row }) => (
-				<p>{formatNumber(row.original.total_shares_sold ?? 0, { decimals: 2 })}</p>
-			),
-		},
-		{
-			id: "total_buy_usd",
-			meta: { title: "Buy Vol" },
+			id: "buys",
+			meta: { title: "Buys" },
 			header: () => (
 				<SortableHeader
 					sortBy="total_buy_usd"
@@ -310,17 +241,26 @@ function buildColumns(
 					currentSortDirection={currentSortDirection}
 					onSortChange={onSortChange}
 				>
-					Buy Vol
+					Buys
 				</SortableHeader>
 			),
-			size: 130,
-			cell: ({ row }) => (
-				<p>{formatNumber(row.original.total_buy_usd ?? 0, { currency: true, compact: true })}</p>
-			),
+			size: 160,
+			cell: ({ row }) => {
+				const usd = row.original.total_buy_usd ?? 0
+				const count = row.original.total_buys ?? 0
+				return (
+					<p className="tabular-nums">
+						<span>{formatNumber(usd, { currency: true, compact: true })}</span>
+						{count > 0 ? (
+							<span className="text-muted-foreground"> · {formatNumber(count, { decimals: 0 })}</span>
+						) : null}
+					</p>
+				)
+			},
 		},
 		{
-			id: "total_sell_usd",
-			meta: { title: "Sell Vol" },
+			id: "sells",
+			meta: { title: "Sells" },
 			header: () => (
 				<SortableHeader
 					sortBy="total_sell_usd"
@@ -328,13 +268,22 @@ function buildColumns(
 					currentSortDirection={currentSortDirection}
 					onSortChange={onSortChange}
 				>
-					Sell Vol
+					Sells
 				</SortableHeader>
 			),
-			size: 130,
-			cell: ({ row }) => (
-				<p>{formatNumber(row.original.total_sell_usd ?? 0, { currency: true, compact: true })}</p>
-			),
+			size: 160,
+			cell: ({ row }) => {
+				const usd = row.original.total_sell_usd ?? 0
+				const count = row.original.total_sells ?? 0
+				return (
+					<p className="tabular-nums">
+						<span>{formatNumber(usd, { currency: true, compact: true })}</span>
+						{count > 0 ? (
+							<span className="text-muted-foreground"> · {formatNumber(count, { decimals: 0 })}</span>
+						) : null}
+					</p>
+				)
+			},
 		},
 		{
 			id: "total_fees",
@@ -369,8 +318,8 @@ function buildColumns(
 			),
 			size: 130,
 			cell: ({ row }) => {
-				const val = row.original.redemption_usd
-				return <p>{val != null && val > 0 ? formatNumber(val, { currency: true, compact: true }) : "—"}</p>
+				const val = row.original.redemption_usd ?? 0
+				return <p>{formatNumber(val, { currency: true, compact: true })}</p>
 			},
 		},
 		{
@@ -430,7 +379,7 @@ function buildColumns(
 
 type Props = {
 	address: string
-	page: PaginatedResource<TraderOutcomePnlEntry, number>
+	page: PaginatedResource<PositionEntry, number>
 	pageNumber: number
 	status: "open" | "closed"
 	sortBy: TraderPositionSortBy

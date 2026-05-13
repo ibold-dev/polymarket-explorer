@@ -4,11 +4,12 @@ import { Separator } from "@/components/ui/separator";
 import type { PnlPeriodRecord, PnlPeriodWindow, PnlPeriods, PnlStreaks } from "@/lib/struct/pnl";
 import { formatDateCompact, formatDuration, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { MarketResponse, PnlV3ChangesResponse, PnlV3RiskResponse, TraderPnlSummary } from "@structbuild/sdk";
+import type { MarketEntry, MarketResponse, PnlV3ChangesResponse, PnlV3RiskResponse, TraderPnlSummary } from "@structbuild/sdk";
 
 type PerformanceSummaryProps = {
 	pnlSummary: TraderPnlSummary | null;
 	bestTradeMarket?: MarketResponse | null;
+	worstTradeMarket?: MarketEntry | null;
 	pnlRisk?: PnlV3RiskResponse | null;
 	pnlChanges?: PnlV3ChangesResponse | null;
 	streaks: PnlStreaks;
@@ -161,7 +162,7 @@ function TradingStatsGrid({ pnlSummary }: { pnlSummary: TraderPnlSummary | null 
 	);
 }
 
-export function PerformanceSummary({ pnlSummary, bestTradeMarket, pnlRisk, pnlChanges, streaks, periods }: PerformanceSummaryProps) {
+export function PerformanceSummary({ pnlSummary, bestTradeMarket, worstTradeMarket, pnlRisk, pnlChanges, streaks, periods }: PerformanceSummaryProps) {
 	const totalPnlRisk = pnlRisk?.total_pnl ?? null;
 
 	return (
@@ -200,6 +201,33 @@ export function PerformanceSummary({ pnlSummary, bestTradeMarket, pnlRisk, pnlCh
 					)}
 				</div>
 				{(pnlSummary?.best_trade_pnl_usd ?? 0) > 0 && bestTradeMarket && <p className="mt-1 text-sm text-muted-foreground break-words sm:truncate">{bestTradeMarket.question}</p>}
+				<Separator className="my-2" />
+			</div>
+			<div>
+				<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+					<p className="text-sm text-foreground/90 sm:text-base">Worst Trade</p>
+					{!worstTradeMarket || (worstTradeMarket.realized_pnl_usd ?? 0) >= 0 ? (
+						<span className="text-sm font-medium text-muted-foreground sm:text-base">—</span>
+					) : (
+						<div className="flex min-w-0 items-center gap-1.5 sm:justify-end">
+							{worstTradeMarket.image_url && (
+								<Image
+									src={worstTradeMarket.image_url}
+									alt={worstTradeMarket.question ?? ""}
+									width={16}
+									height={16}
+									className="size-4 rounded-sm object-cover"
+								/>
+							)}
+							<p className="text-sm font-medium text-red-500 sm:text-base">
+								{formatNumber(worstTradeMarket.realized_pnl_usd ?? 0, { currency: true, compact: true })}
+							</p>
+						</div>
+					)}
+				</div>
+				{worstTradeMarket && (worstTradeMarket.realized_pnl_usd ?? 0) < 0 && worstTradeMarket.question && (
+					<p className="mt-1 text-sm text-muted-foreground break-words sm:truncate">{worstTradeMarket.question}</p>
+				)}
 				<Separator className="my-2" />
 			</div>
 			<PeriodRows periods={periods} />

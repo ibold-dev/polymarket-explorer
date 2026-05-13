@@ -1,6 +1,6 @@
 import type { PolymarketCategory } from "@structbuild/sdk";
 
-const POLYMARKET_CATEGORIES: PolymarketCategory[] = [
+export const POLYMARKET_CATEGORIES: PolymarketCategory[] = [
 	"Politics",
 	"Sports",
 	"Crypto",
@@ -23,4 +23,10 @@ export function tagToCategory(tag: { slug?: string | null; label?: string | null
 		if (match) return match;
 	}
 	return null;
+}
+
+export function parsePolymarketCategory(value: string | string[] | undefined): PolymarketCategory | null {
+	const raw = Array.isArray(value) ? value[0] : value;
+	if (!raw) return null;
+	return lookup.get(raw.trim().toLowerCase()) ?? null;
 }

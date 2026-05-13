@@ -17,7 +17,6 @@ import type {
 	StructClient,
 	Trade,
 	Trader,
-	TraderOutcomePnlEntry,
 	TraderPnlSummary,
 	TraderWithPnl,
 	UserProfile,
@@ -236,12 +235,12 @@ async function fetchTraderPositionsPage(
 	address: string,
 	status: "open" | "closed",
 	options?: TraderPositionsOptions,
-): Promise<PaginatedResource<TraderOutcomePnlEntry, number>> {
+): Promise<PaginatedResource<PositionEntry, number>> {
 	const client = getStructClient();
 	const limit = options?.limit ?? defaultPositionsLimit;
 
 	if (!client) {
-		return emptyPage<TraderOutcomePnlEntry>(limit);
+		return emptyPage<PositionEntry>(limit);
 	}
 
 	const offset = options?.offset ?? 0;
@@ -263,7 +262,7 @@ async function fetchTraderPositionsPage(
 			sort_direction: sort_direction ?? "desc",
 		};
 		const response = await client.trader.getTraderPositionPnlV3(params);
-		const data = (response.data.slice(0, limit) as unknown) as TraderOutcomePnlEntry[];
+		const data = response.data.slice(0, limit);
 		const hasMore = response.data.length > limit;
 		const nextCursor = hasMore ? offset + data.length : null;
 		return {
@@ -274,11 +273,11 @@ async function fetchTraderPositionsPage(
 		};
 	} catch (error) {
 		if (readStatus(error) === 404) {
-			return emptyPage<TraderOutcomePnlEntry>(limit);
+			return emptyPage<PositionEntry>(limit);
 		}
 
 		logStructError(`getTraderPositionsPage:${address}:${status}`, error);
-		return emptyPage<TraderOutcomePnlEntry>(limit);
+		return emptyPage<PositionEntry>(limit);
 	}
 }
 
@@ -286,12 +285,12 @@ export async function getTraderPositionsPage(
 	address: string,
 	status: "open" | "closed",
 	options?: TraderPositionsOptions,
-): Promise<PaginatedResource<TraderOutcomePnlEntry, number>> {
+): Promise<PaginatedResource<PositionEntry, number>> {
 	const normalizedAddress = normalizeWalletAddress(address);
 	const limit = options?.limit ?? defaultPositionsLimit;
 
 	if (!normalizedAddress) {
-		return emptyPage<TraderOutcomePnlEntry>(limit);
+		return emptyPage<PositionEntry>(limit);
 	}
 
 	return fetchTraderPositionsPage(normalizedAddress, status, options);

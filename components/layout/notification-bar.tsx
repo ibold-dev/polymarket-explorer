@@ -6,7 +6,7 @@ import { useLocalStorage } from "@/lib/hooks/use-local-storage";
 
 const NOTIFICATION = {
 	version: "3",
-	message: "Struct v0.6 is live - The Most Accurate PnL for Polymarket",
+	message: "Struct v0.6 is live - The Most Accurate & Comprehensive PnL for Polymarket",
 	cta: "Learn more",
 	href: "/",
 } as const;
