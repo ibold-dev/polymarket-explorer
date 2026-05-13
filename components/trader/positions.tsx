@@ -38,8 +38,6 @@ import { cn } from "@/lib/utils"
 
 const defaultColumnVisibility: VisibilityState = {
 	current_value: false,
-	buys: false,
-	sells: false,
 	total_fees: false,
 	redemption_usd: false,
 }
@@ -290,6 +288,16 @@ function buildColumns(
 						) : null}
 					</p>
 				)
+			},
+		},
+		{
+			id: "merge_usd",
+			meta: { title: "Merge" },
+			header: () => <span>Merge</span>,
+			size: 130,
+			cell: ({ row }) => {
+				const val = row.original.merge_usd ?? 0
+				return <p>{formatNumber(val, { currency: true, compact: true })}</p>
 			},
 		},
 		{

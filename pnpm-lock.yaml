@@ -4,10 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@types/react': 19.2.14
-  '@types/react-dom': 19.2.3
-
 importers:
 
   .:
@@ -25,8 +21,8 @@ importers:
         specifier: ^9.5.0
         version: 9.5.0(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(three@0.167.1)
       '@structbuild/sdk':
-        specifier: github:structbuild/struct-typescript-sdk#v0.6.0-staging.3
-        version: https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/9e3342ec69eb06623aee30e1982ddff2ce0aa38e
+        specifier: github:structbuild/struct-typescript-sdk#v0.6.0-staging.4
+        version: https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/a45b14cd91c6d06bfd9e5f4dfa939923b7e4c995
       '@tanstack/react-hotkeys':
         specifier: ^0.4.2
         version: 0.4.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -274,7 +270,7 @@ packages:
     resolution: {integrity: sha512-FwpKqZbPz14AITp1CVgf4AjhKPe1OeeVKSBMdgD10zbFlj3QSWelmtCMLi2+/PFZZcIm3l87G7rwtCZJwHyXWA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
-      '@types/react': 19.2.14
+      '@types/react': ^17 || ^18 || ^19
       react: ^17 || ^18 || ^19
       react-dom: ^17 || ^18 || ^19
     peerDependenciesMeta:
@@ -284,7 +280,7 @@ packages:
   '@base-ui/utils@0.2.6':
     resolution: {integrity: sha512-yQ+qeuqohwhsNpoYDqqXaLllYAkPCP4vYdDrVo8FQXaAPfHWm1pG/Vm+jmGTA5JFS0BAIjookyapuJFY8F9PIw==}
     peerDependencies:
-      '@types/react': 19.2.14
+      '@types/react': ^17 || ^18 || ^19
       react: ^17 || ^18 || ^19
       react-dom: ^17 || ^18 || ^19
     peerDependenciesMeta:
@@ -866,9 +862,9 @@ packages:
   '@standard-schema/utils@0.3.0':
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
-  '@structbuild/sdk@https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/9e3342ec69eb06623aee30e1982ddff2ce0aa38e':
-    resolution: {tarball: https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/9e3342ec69eb06623aee30e1982ddff2ce0aa38e}
-    version: 0.6.0-staging.3
+  '@structbuild/sdk@https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/a45b14cd91c6d06bfd9e5f4dfa939923b7e4c995':
+    resolution: {tarball: https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/a45b14cd91c6d06bfd9e5f4dfa939923b7e4c995}
+    version: 0.6.0-staging.4
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -1053,12 +1049,12 @@ packages:
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
-      '@types/react': 19.2.14
+      '@types/react': ^19.2.0
 
   '@types/react-reconciler@0.28.9':
     resolution: {integrity: sha512-HHM3nxyUZ3zAylX8ZEyrDNd2XZOnQ0D5XfunJF5FLQnZbHHYq4UWvW1QfelQNXv1ICNkwYhfxjwfnqivYB6bFg==}
     peerDependencies:
-      '@types/react': 19.2.14
+      '@types/react': '*'
 
   '@types/react@19.2.14':
     resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
@@ -1967,7 +1963,7 @@ packages:
   facehash@0.1.0:
     resolution: {integrity: sha512-tv/QVZjLvEXHssqBaJECq+kRLFwwhd017PKk8ucT7aLingL2OZ5zEqKwPMHmT9+YQO92MVFWGZQP6vxV+P5vrQ==}
     peerDependencies:
-      '@types/react': 19.2.14
+      '@types/react': ''
       next: '>=15'
       react: '>=18 <20'
       react-dom: '>=18 <20'
@@ -3050,7 +3046,7 @@ packages:
   react-redux@9.2.0:
     resolution: {integrity: sha512-ROY9fvHhwOD9ySfrF0wmvu//bKCQ6AeZZq1nJNtbDC+kk5DuSuNX/n6YWYF/SYy7bSba4D4FSz8DJeKY/S/r+g==}
     peerDependencies:
-      '@types/react': 19.2.14
+      '@types/react': ^18.2.25 || ^19
       react: ^18.0 || ^19
       redux: ^5.0.0
     peerDependenciesMeta:
@@ -3659,7 +3655,7 @@ packages:
     resolution: {integrity: sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw==}
     engines: {node: '>=12.7.0'}
     peerDependencies:
-      '@types/react': 19.2.14
+      '@types/react': '>=16.8'
       immer: '>=9.0.6'
       react: '>=16.8'
     peerDependenciesMeta:
@@ -3674,7 +3670,7 @@ packages:
     resolution: {integrity: sha512-i77ae3aZq4dhMlRhJVCYgMLKuSiZAaUPAct2AksxQ+gOtimhGMdXljRT21P5BNpeT4kXlLIckvkPM029OljD7g==}
     engines: {node: '>=12.20.0'}
     peerDependencies:
-      '@types/react': 19.2.14
+      '@types/react': '>=18.0.0'
       immer: '>=9.0.6'
       react: '>=18.0.0'
       use-sync-external-store: '>=1.2.0'
@@ -4447,7 +4443,7 @@ snapshots:
 
   '@standard-schema/utils@0.3.0': {}
 
-  '@structbuild/sdk@https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/9e3342ec69eb06623aee30e1982ddff2ce0aa38e': {}
+  '@structbuild/sdk@https://codeload.github.com/structbuild/struct-typescript-sdk/tar.gz/a45b14cd91c6d06bfd9e5f4dfa939923b7e4c995': {}
 
   '@swc/helpers@0.5.15':
     dependencies:

@@ -15,7 +15,7 @@
     "@date-fns/tz": "^1.4.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
-    "@structbuild/sdk": "github:structbuild/struct-typescript-sdk#v0.6.0-staging.3",
+    "@structbuild/sdk": "github:structbuild/struct-typescript-sdk#v0.6.0-staging.4",
     "@tanstack/react-hotkeys": "^0.4.2",
     "@tanstack/react-table": "^8.21.3",
     "@vercel/analytics": "^2.0.1",
@@ -53,10 +53,8 @@
     "tailwindcss": "^4.1.17",
     "typescript": "5.9.3"
   },
-  "pnpm": {
-    "overrides": {
-      "@types/react": "19.2.14",
-      "@types/react-dom": "19.2.3"
-    }
+  "overrides": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3"
   }
 }

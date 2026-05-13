@@ -34,13 +34,12 @@ import { loadTraderSearchParams } from "@/lib/trader-search-params.server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { getTraderAnalyticsChanges, getTraderAnalyticsDeltas, getTraderAnalyticsTimeseries } from "@/lib/struct/analytics-queries";
 import { parseAnalyticsParams } from "@/lib/struct/analytics-shared";
-import { getMarketsByConditionIds, getTraderMarketPnlV3, getTraderPnlSummary, getTraderPnlV3Changes, getTraderProfile } from "@/lib/struct/queries";
-import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
+import { getTraderPnlSummary, getTraderPnlV3Changes, getTraderProfile } from "@/lib/struct/queries";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildPageMetadata } from "@/lib/site-metadata";
 import { getTraderDisplayName, normalizeWalletAddress } from "@/lib/utils";
-import type { MarketEntry, MarketResponse, PnlV3ChangesResponse, PnlV3RiskResponse, TraderPnlSummary, UserProfile } from "@structbuild/sdk";
+import type { PnlV3ChangesResponse, PnlV3RiskResponse, GlobalEntry, UserProfile } from "@structbuild/sdk";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -123,33 +122,6 @@ function loadTraderInsights(address: string, range: ResolvedPnlRange): Promise<T
 	});
 }
 
-function loadBestTradeMarket(pnlSummaryPromise: Promise<TraderPnlSummary | null>): Promise<MarketResponse | null> {
-	return pnlSummaryPromise.then(async (pnlSummary) => {
-		const bestTradeConditionId = pnlSummary?.best_trade_condition_id;
-
-		if (!bestTradeConditionId) {
-			return null;
-		}
-
-		const markets = await getMarketsByConditionIds([bestTradeConditionId]);
-		return markets?.find((market) => market.condition_id === bestTradeConditionId) ?? null;
-	});
-}
-
-async function loadWorstTradeMarket(address: string): Promise<MarketEntry | null> {
-	const page = await getTraderMarketPnlV3(address, {
-		sort_by: "realized_pnl_usd",
-		sort_direction: "asc",
-		limit: 1,
-	});
-	const entry = page.data[0];
-	if (!entry || (entry.realized_pnl_usd ?? 0) >= 0) {
-		return null;
-	}
-	const normalizedImageUrl = normalizePolymarketS3ImageUrl(entry.image_url);
-	return normalizedImageUrl === entry.image_url ? entry : { ...entry, image_url: normalizedImageUrl ?? null };
-}
-
 async function TraderInsightsSection({
 	address,
 	displayName,
@@ -200,7 +172,7 @@ function TraderInsightsFallback() {
 						<div className="h-8 w-24 animate-pulse rounded-md bg-muted" />
 					</div>
 				</div>
-				<div className="h-[220px] animate-pulse rounded-md bg-muted sm:h-[280px]" />
+				<div className="h-[320px] animate-pulse rounded-md bg-muted sm:h-[420px]" />
 			</div>
 			<div className="rounded-lg bg-card p-4 sm:p-6">
 				<div className="mb-4 h-4 w-24 animate-pulse rounded bg-muted" />
@@ -240,22 +212,16 @@ function TraderHeaderFallback() {
 async function TraderPerformanceSummarySection({
 	pnlSummary,
 	insightsPromise,
-	bestTradeMarketPromise,
-	worstTradeMarketPromise,
 	pnlRiskPromise,
 	pnlChangesPromise,
 }: {
-	pnlSummary: TraderPnlSummary | null;
+	pnlSummary: GlobalEntry | null;
 	insightsPromise: Promise<TraderInsightsData>;
-	bestTradeMarketPromise: Promise<MarketResponse | null>;
-	worstTradeMarketPromise: Promise<MarketEntry | null>;
 	pnlRiskPromise: Promise<PnlV3RiskResponse | null>;
 	pnlChangesPromise: Promise<PnlV3ChangesResponse | null>;
 }) {
-	const [{ streaks, periods }, bestTradeMarket, worstTradeMarket, pnlRisk, pnlChanges] = await Promise.all([
+	const [{ streaks, periods }, pnlRisk, pnlChanges] = await Promise.all([
 		insightsPromise,
-		bestTradeMarketPromise,
-		worstTradeMarketPromise,
 		pnlRiskPromise,
 		pnlChangesPromise,
 	]);
@@ -263,8 +229,6 @@ async function TraderPerformanceSummarySection({
 	return (
 		<PerformanceSummary
 			pnlSummary={pnlSummary}
-			bestTradeMarket={bestTradeMarket}
-			worstTradeMarket={worstTradeMarket}
 			pnlRisk={pnlRisk}
 			pnlChanges={pnlChanges}
 			streaks={streaks}
@@ -295,17 +259,13 @@ async function TraderOverviewSection({
 	profilePromise,
 	pnlSummaryPromise,
 	insightsPromise,
-	bestTradeMarketPromise,
-	worstTradeMarketPromise,
 	cumulativePnlUsdPromise,
 }: {
 	address: string;
 	pnlRange: ResolvedPnlRange;
 	profilePromise: Promise<UserProfile | null>;
-	pnlSummaryPromise: Promise<TraderPnlSummary | null>;
+	pnlSummaryPromise: Promise<GlobalEntry | null>;
 	insightsPromise: Promise<TraderInsightsData>;
-	bestTradeMarketPromise: Promise<MarketResponse | null>;
-	worstTradeMarketPromise: Promise<MarketEntry | null>;
 	cumulativePnlUsdPromise: Promise<number>;
 }) {
 	const [profile, pnlSummary] = await Promise.all([profilePromise, pnlSummaryPromise]);
@@ -376,8 +336,6 @@ async function TraderOverviewSection({
 						<TraderPerformanceSummarySection
 							pnlSummary={pnlSummary}
 							insightsPromise={insightsPromise}
-							bestTradeMarketPromise={bestTradeMarketPromise}
-							worstTradeMarketPromise={worstTradeMarketPromise}
 							pnlRiskPromise={pnlRiskPromise}
 							pnlChangesPromise={pnlChangesPromise}
 						/>
@@ -404,7 +362,7 @@ async function TraderDnaSection({
 	displayName,
 	profileImage,
 }: {
-	pnlSummaryPromise: Promise<TraderPnlSummary | null>;
+	pnlSummaryPromise: Promise<GlobalEntry | null>;
 	cumulativePnlUsdPromise: Promise<number>;
 	address: string;
 	displayName: string;
@@ -522,8 +480,6 @@ async function TraderPageContent({
 	const profilePromise = Promise.resolve(profile);
 	const pnlSummaryPromise = Promise.resolve(pnlSummary);
 	const insightsPromise = loadTraderInsights(address, pnlRange);
-	const bestTradeMarketPromise = loadBestTradeMarket(pnlSummaryPromise);
-	const worstTradeMarketPromise = loadWorstTradeMarket(address);
 	const cumulativePnlUsdPromise = getTraderCumulativePnlUsd(address);
 	const tabDataPromise = loadTraderTabPanelData({
 		address,
@@ -559,8 +515,6 @@ async function TraderPageContent({
 					profilePromise={profilePromise}
 					pnlSummaryPromise={pnlSummaryPromise}
 					insightsPromise={insightsPromise}
-					bestTradeMarketPromise={bestTradeMarketPromise}
-					worstTradeMarketPromise={worstTradeMarketPromise}
 					cumulativePnlUsdPromise={cumulativePnlUsdPromise}
 				/>
 			</Suspense>

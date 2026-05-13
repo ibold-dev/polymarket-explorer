@@ -17,7 +17,6 @@ import type {
 	StructClient,
 	Trade,
 	Trader,
-	TraderPnlSummary,
 	TraderWithPnl,
 	UserProfile,
 } from "@structbuild/sdk";
@@ -163,7 +162,7 @@ export async function getTraderProfile(address: string): Promise<UserProfile | n
 	}
 }
 
-async function fetchTraderPnlSummary(address: string): Promise<TraderPnlSummary> {
+async function fetchTraderPnlSummary(address: string): Promise<GlobalEntry> {
 	const client = getStructClient();
 
 	if (!client) {
@@ -177,7 +176,7 @@ async function fetchTraderPnlSummary(address: string): Promise<TraderPnlSummary>
 			throw new TraderDataUnavailableError("Trader PnL summary was empty");
 		}
 
-		return response.data as unknown as TraderPnlSummary;
+		return response.data;
 	} catch (error) {
 		if (readStatus(error) === 404) {
 			throw new TraderDataUnavailableError("Trader PnL summary was not found");
@@ -187,7 +186,7 @@ async function fetchTraderPnlSummary(address: string): Promise<TraderPnlSummary>
 	}
 }
 
-export async function getTraderPnlSummary(address: string): Promise<TraderPnlSummary | null> {
+export async function getTraderPnlSummary(address: string): Promise<GlobalEntry | null> {
 	const normalizedAddress = normalizeWalletAddress(address);
 
 	if (!normalizedAddress) {

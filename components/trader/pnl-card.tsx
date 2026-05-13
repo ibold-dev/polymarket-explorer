@@ -1,13 +1,14 @@
 "use client"
 
-import { startTransition, useRef, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 
 import { ChartSettingsButton, PnlChartContent, type PnlChartMetric, type PnlChartMode } from "@/components/trader/pnl-chart"
 import { PnlRangeDialog } from "@/components/trader/pnl-range-dialog"
+import { PnlTimeframeSelector } from "@/components/trader/pnl-timeframe-selector"
 import { PnlShareDialog } from "@/components/trader/pnl-share-dialog"
 import { ShareIdentityHeader } from "@/components/trader/share-identity-header"
-import { Button } from "@/components/ui/button"
 import { useLocalStorage } from "@/lib/hooks/use-local-storage"
+import { usePnlPeriodWindow } from "@/lib/hooks/use-pnl-period-window"
 import { useTimezone } from "@/lib/hooks/use-timezone"
 import type { PnlChartAnnotation, PnlDataPoint } from "@/lib/struct/pnl"
 import type { ResolvedPnlRange } from "@/lib/struct/pnl-range"
@@ -30,20 +31,34 @@ export function PnlCard({ data, displayName, address, profileImage, annotations 
 	const [chartMode, setChartMode] = useState<PnlChartMode>("area")
 	const [chartMetric, setChartMetric] = useState<PnlChartMetric>("pnl")
 	const [showAnnotations, setShowAnnotations] = useLocalStorage(SHOW_HIGHLIGHTS_STORAGE_KEY, false)
+	const [periodWindow] = usePnlPeriodWindow()
 	const { timezone: clientTimezone } = useTimezone()
 	const timezone = clientTimezone ?? pnlRange.timezone
+
+	const windowAnnotations = useMemo(
+		() => annotations.filter((annotation) => annotation.window === periodWindow),
+		[annotations, periodWindow],
+	)
 	const hasAnnotations = annotations.length > 0
 
 	const annotationsEligible = pnlRange.mode === "preset" && pnlRange.timeframe === "all"
 	const showChartAnnotations = annotationsEligible && showAnnotations
 	const showTooltipTime = pnlRange.resolution !== "1d"
+	const highlightsAvailable = hasAnnotations && annotationsEligible
+
+	const handleHighlightsChange = useCallback(
+		(next: boolean) => {
+			setShowAnnotations(next)
+		},
+		[setShowAnnotations],
+	)
 
 	return (
 		<div ref={cardRef} className={cn("group/share-card rounded-lg bg-card p-4 sm:p-6")}>
 			<ShareIdentityHeader address={address} displayName={displayName} profileImage={profileImage} />
 			<PnlChartContent
 				data={data}
-				annotations={annotations}
+				annotations={windowAnnotations}
 				showAnnotations={showChartAnnotations}
 				timeframe={pnlRange.timeframe}
 				timezone={timezone}
@@ -52,16 +67,7 @@ export function PnlCard({ data, displayName, address, profileImage, annotations 
 				chartMetric={chartMetric}
 				action={
 					<div className="flex w-full flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end">
-						{hasAnnotations && annotationsEligible ? (
-							<Button
-								variant={showAnnotations ? "secondary" : "ghost"}
-								size="xs"
-								aria-pressed={showAnnotations}
-								onClick={() => startTransition(() => setShowAnnotations((current) => !current))}
-							>
-								Highlights
-							</Button>
-						) : null}
+						<PnlTimeframeSelector active={pnlRange.mode === "preset" ? pnlRange.timeframe : null} />
 						<PnlRangeDialog
 							mode={pnlRange.mode}
 							timeframe={pnlRange.timeframe}
@@ -76,6 +82,9 @@ export function PnlCard({ data, displayName, address, profileImage, annotations 
 							onChartModeChange={setChartMode}
 							chartMetric={chartMetric}
 							onChartMetricChange={setChartMetric}
+							highlightsAvailable={highlightsAvailable}
+							highlightsActive={showAnnotations}
+							onHighlightsChange={handleHighlightsChange}
 						/>
 						<PnlShareDialog address={address} displayName={displayName} targetRef={cardRef} />
 					</div>

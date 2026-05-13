@@ -1,4 +1,4 @@
-import type { TraderPnlSummary } from "@structbuild/sdk";
+import type { GlobalEntry } from "@structbuild/sdk";
 
 import { formatDuration, formatNumber } from "@/lib/format";
 
@@ -42,7 +42,7 @@ export type TraderDna = {
 };
 
 export type TraderDnaInputs = {
-	summary: TraderPnlSummary;
+	summary: GlobalEntry;
 	cumulativePnlUsd: number;
 };
 
@@ -81,7 +81,7 @@ function pickNum(value: number | null | undefined): number {
 	return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
-function txnCount(summary: TraderPnlSummary): number {
+function txnCount(summary: GlobalEntry): number {
 	return (
 		pickNum(summary.total_buys) +
 		pickNum(summary.total_sells) +
@@ -90,7 +90,7 @@ function txnCount(summary: TraderPnlSummary): number {
 	);
 }
 
-function avgTradeSize(summary: TraderPnlSummary): number {
+function avgTradeSize(summary: GlobalEntry): number {
 	const count = txnCount(summary);
 	if (count <= 0) return 0;
 	return pickNum(summary.total_volume_usd) / count;
@@ -181,7 +181,7 @@ function toScores(axes: TraderAxis[]): Scores {
 	}, {} as Scores);
 }
 
-function classify(scores: Scores, summary: TraderPnlSummary): TraderArchetype {
+function classify(scores: Scores, summary: GlobalEntry): TraderArchetype {
 	const totalTrades = txnCount(summary);
 
 	if (totalTrades < 5) {

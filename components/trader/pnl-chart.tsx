@@ -10,7 +10,7 @@ import {
 	type UTCTimestamp,
 } from "lightweight-charts"
 import { ChartArea, ChartCandlestick, Settings2Icon } from "lucide-react"
-import { Area, AreaChart, CartesianGrid, Line, ReferenceDot, XAxis, YAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, Line, ReferenceArea, ReferenceDot, XAxis, YAxis } from "recharts"
 
 import {
 	ChartContainer,
@@ -60,35 +60,60 @@ const chartMetricOptions = [
 
 const annotationConfig = {
 	best: {
-		label: "Best day",
 		color: "#10b981",
-		bgRgba: "rgba(16, 185, 129, 0.20)",
-		badgeVariant: "positive",
+		bandFill: "rgba(16, 185, 129, 0.12)",
+		bandStroke: "rgba(16, 185, 129, 0.45)",
 		badgeClassName: "border-emerald-500/20 bg-emerald-500/10",
 		valueClassName: "text-emerald-600 dark:text-emerald-400",
-		labelPosition: "top",
 	},
 	worst: {
-		label: "Worst day",
 		color: "#ef4444",
-		bgRgba: "rgba(239, 68, 68, 0.20)",
-		badgeVariant: "negative",
+		bandFill: "rgba(239, 68, 68, 0.12)",
+		bandStroke: "rgba(239, 68, 68, 0.45)",
 		badgeClassName: "border-red-500/20 bg-red-500/10",
 		valueClassName: "text-red-600 dark:text-red-400",
-		labelPosition: "bottom",
 	},
 } satisfies Record<
 	PnlChartAnnotation["kind"],
 	{
-		label: string
 		color: string
-		bgRgba: string
-		badgeVariant: "positive" | "negative"
+		bandFill: string
+		bandStroke: string
 		badgeClassName: string
 		valueClassName: string
-		labelPosition: "top" | "bottom"
 	}
 >
+
+const windowLabels = {
+	day: "day",
+	week: "week",
+	month: "month",
+} satisfies Record<PnlChartAnnotation["window"], string>
+
+function getAnnotationLabel(annotation: PnlChartAnnotation): string {
+	const prefix = annotation.kind === "best" ? "Best" : "Worst"
+	return `${prefix} ${windowLabels[annotation.window]}`
+}
+
+function annotationKey(annotation: PnlChartAnnotation): string {
+	return `${annotation.kind}-${annotation.window}-${annotation.from}`
+}
+
+function AnnotationBadge({ annotation }: { annotation: PnlChartAnnotation }) {
+	const tone = annotationConfig[annotation.kind]
+
+	return (
+		<div
+			className={cn("inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs backdrop-blur-md", tone.badgeClassName)}
+		>
+			<span className={cn("font-medium", tone.valueClassName)}>{getAnnotationLabel(annotation)}</span>
+			<span className="text-foreground/80">{annotation.date}</span>
+			<span className={cn("font-medium", tone.valueClassName)}>
+				{formatNumber(annotation.change, { currency: true, compact: true })}
+			</span>
+		</div>
+	)
+}
 
 type AnnotationDotShapeProps = {
 	annotationKind: PnlChartAnnotation["kind"]
@@ -268,11 +293,17 @@ export function ChartSettingsButton({
 	onChartModeChange,
 	chartMetric,
 	onChartMetricChange,
+	highlightsAvailable = false,
+	highlightsActive = false,
+	onHighlightsChange,
 }: {
 	chartMode: PnlChartMode
 	onChartModeChange: (value: PnlChartMode) => void
 	chartMetric: PnlChartMetric
 	onChartMetricChange: (value: PnlChartMetric) => void
+	highlightsAvailable?: boolean
+	highlightsActive?: boolean
+	onHighlightsChange?: (next: boolean) => void
 }) {
 	function handleChartModeChange(nextMode: PnlChartMode) {
 		onChartModeChange(nextMode)
@@ -317,6 +348,25 @@ export function ChartSettingsButton({
 							)
 						})}
 					</div>
+					{highlightsAvailable && onHighlightsChange ? (
+						<div className="grid gap-1.5 border-t pt-2">
+							<div className="px-1 text-xs text-muted-foreground">Overlays</div>
+							<button
+								type="button"
+								onClick={() => onHighlightsChange(!highlightsActive)}
+								aria-pressed={highlightsActive}
+								className={cn(
+									"flex items-center justify-between rounded-sm px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted",
+									highlightsActive ? "bg-muted text-foreground" : "text-muted-foreground",
+								)}
+							>
+								<span>Best / worst period</span>
+								<span className={cn("text-[10px] font-medium", highlightsActive ? "text-emerald-500" : "text-muted-foreground")}>
+									{highlightsActive ? "ON" : "OFF"}
+								</span>
+							</button>
+						</div>
+					) : null}
 				</div>
 			</PopoverContent>
 		</Popover>
@@ -396,7 +446,7 @@ function PnlCandlestickChart({ data, metric, timezone }: { data: PnlDataPoint[];
 		}
 	}, [data, metric, timezone])
 
-	return <div ref={containerRef} className="h-[260px] min-h-[260px] w-full sm:h-[340px] sm:min-h-[310px]" />
+	return <div ref={containerRef} className="h-[320px] min-h-[320px] w-full sm:h-[420px] sm:min-h-[390px]" />
 }
 
 export function PnlChart({
@@ -453,7 +503,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 						</div>
 					) : null}
 				</div>
-				<div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground sm:h-[340px]">
+				<div className="flex h-[320px] items-center justify-center text-sm text-muted-foreground sm:h-[420px]">
 					No PnL data available
 				</div>
 			</div>
@@ -499,22 +549,9 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 								showAnnotations ? "opacity-100" : "opacity-0 pointer-events-none"
 							)}
 						>
-							{annotations.map((annotation) => {
-								const tone = annotationConfig[annotation.kind]
-
-								return (
-									<div
-										key={`${annotation.kind}-${annotation.t}`}
-										className={cn("inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs backdrop-blur-md", tone.badgeClassName)}
-									>
-										<span className={cn("font-medium", tone.valueClassName)}>{tone.label}</span>
-										<span className="text-foreground/80">{annotation.date}</span>
-										<span className={cn("font-medium", tone.valueClassName)}>
-											{formatNumber(annotation.dailyPnl, { currency: true, compact: true })}
-										</span>
-									</div>
-								)
-							})}
+							{annotations.map((annotation) => (
+								<AnnotationBadge key={annotationKey(annotation)} annotation={annotation} />
+							))}
 						</div>
 					) : null}
 					{action ? (
@@ -539,22 +576,9 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 								showAnnotations ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"
 							)}
 						>
-							{annotations.map((annotation) => {
-								const tone = annotationConfig[annotation.kind]
-
-								return (
-									<div
-										key={`${annotation.kind}-${annotation.t}`}
-										className={cn("inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs backdrop-blur-md", tone.badgeClassName)}
-									>
-										<span className={cn("font-medium", tone.valueClassName)}>{tone.label}</span>
-										<span className="text-foreground/80">{annotation.date}</span>
-										<span className={cn("font-medium", tone.valueClassName)}>
-											{formatNumber(annotation.dailyPnl, { currency: true, compact: true })}
-										</span>
-									</div>
-								)
-							})}
+							{annotations.map((annotation) => (
+								<AnnotationBadge key={annotationKey(annotation)} annotation={annotation} />
+							))}
 						</div>
 					</div>
 				</div>
@@ -563,7 +587,7 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 				{chartMode === "candles" ? (
 					<PnlCandlestickChart data={data} metric={candlestickMetric} timezone={timezone} />
 				) : (
-					<ChartContainer config={chartConfig} className="h-[260px] min-h-[260px] w-full sm:h-[340px] sm:min-h-[310px]">
+					<ChartContainer config={chartConfig} className="h-[320px] min-h-[320px] w-full sm:h-[420px] sm:min-h-[390px]">
 						<AreaChart accessibilityLayer data={chartData} margin={{ left: 0, right: 60, top: 0, bottom: 0 }}>
 						<defs>
 							<linearGradient id="pnlRangeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -616,6 +640,24 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 								activeDot={false}
 							/>
 						) : null}
+						{visibleAnnotations
+							.filter((annotation) => annotation.window !== "day")
+							.map((annotation) => {
+								const tone = annotationConfig[annotation.kind]
+								return (
+									<ReferenceArea
+										key={annotationKey(annotation)}
+										x1={annotation.from}
+										x2={annotation.to}
+										fill={tone.bandFill}
+										fillOpacity={1}
+										stroke={tone.bandStroke}
+										strokeOpacity={1}
+										strokeWidth={1}
+										ifOverflow="visible"
+									/>
+								)
+							})}
 						<Line
 							dataKey="metric"
 							type="monotone"
@@ -623,23 +665,24 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 							stroke="var(--color-pnl)"
 							strokeWidth={2}
 						/>
-						{visibleAnnotations.map((annotation) => {
-							const tone = annotationConfig[annotation.kind]
-
-							return (
-								<ReferenceDot
-									key={`${annotation.kind}-${annotation.t}`}
-									x={annotation.t}
-									y={annotation.p}
-									r={6}
-									fill={tone.color}
-									stroke="var(--color-background)"
-									strokeWidth={2.5}
-									ifOverflow="visible"
-									shape={(props) => <AnnotationDotShape {...props} annotationKind={annotation.kind} />}
-								/>
-							)
-						})}
+						{visibleAnnotations
+							.filter((annotation) => annotation.window === "day")
+							.map((annotation) => {
+								const tone = annotationConfig[annotation.kind]
+								return (
+									<ReferenceDot
+										key={annotationKey(annotation)}
+										x={annotation.from}
+										y={annotation.p}
+										r={6}
+										fill={tone.color}
+										stroke="var(--color-background)"
+										strokeWidth={2.5}
+										ifOverflow="visible"
+										shape={(props) => <AnnotationDotShape {...props} annotationKind={annotation.kind} />}
+									/>
+								)
+							})}
 						</AreaChart>
 					</ChartContainer>
 				)}

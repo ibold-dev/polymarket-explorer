@@ -26,7 +26,6 @@ import {
 } from "@/lib/trader-search-params"
 import {
 	pnlAnchorValues,
-	pnlTimeframeValues,
 	type PnlAnchor,
 	type PnlTimeframe,
 } from "@/lib/struct/pnl-timeframes"
@@ -103,17 +102,7 @@ export function PnlRangeDialog({ mode, timeframe, anchor, from, to, timezone: se
 		return Number.isNaN(date.getTime()) ? undefined : date
 	}, [firstTradeAt])
 
-	const label = pnlRangeChipLabel({ mode, timeframe, anchor, from, to, timezone })
-
-	function applyPreset(nextTimeframe: PnlTimeframe) {
-		setParams({
-			pnlTimeframe: nextTimeframe,
-			pnlAnchor: null,
-			pnlFrom: null,
-			pnlTo: null,
-		})
-		setOpen(false)
-	}
+	const label = mode === "preset" ? "Custom" : pnlRangeChipLabel({ mode, timeframe, anchor, from, to, timezone })
 
 	function applyAnchor(nextAnchor: PnlAnchor) {
 		setParams({
@@ -178,20 +167,6 @@ export function PnlRangeDialog({ mode, timeframe, anchor, from, to, timezone: se
 				</DialogHeader>
 
 				<div className="grid gap-4 px-4 pt-4 pb-3">
-					<Section title="Quick range">
-						<div className="inline-flex h-8 items-center self-start rounded-md border border-border/60 bg-muted/40 p-0.5">
-							{pnlTimeframeValues.map((value) => (
-								<SegmentButton
-									key={value}
-									active={mode === "preset" && timeframe === value}
-									onClick={() => applyPreset(value)}
-								>
-									{value.toUpperCase()}
-								</SegmentButton>
-							))}
-						</div>
-					</Section>
-
 					<Section title="Start of">
 						<div className="grid grid-cols-4 gap-1.5">
 							{pnlAnchorValues.map((value) => (
@@ -263,32 +238,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 			<SectionTitle>{title}</SectionTitle>
 			{children}
 		</div>
-	)
-}
-
-function SegmentButton({
-	active,
-	onClick,
-	children,
-}: {
-	active: boolean
-	onClick: () => void
-	children: ReactNode
-}) {
-	return (
-		<button
-			type="button"
-			onClick={onClick}
-			aria-pressed={active}
-			className={cn(
-				"w-full rounded-sm px-3 text-xs font-medium leading-7 transition-colors",
-				active
-					? "bg-foreground/20 text-foreground shadow-sm ring-1 ring-border/60"
-					: "text-muted-foreground hover:text-foreground",
-			)}
-		>
-			{children}
-		</button>
 	)
 }
 

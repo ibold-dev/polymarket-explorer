@@ -216,9 +216,11 @@ export const emptyPnlPeriods: PnlPeriods = {
 
 export type PnlChartAnnotation = {
 	kind: "best" | "worst";
+	window: PnlPeriodWindow;
 	date: string;
-	dailyPnl: number;
-	t: number;
+	change: number;
+	from: number;
+	to: number;
 	p: number;
 };
 
@@ -319,35 +321,46 @@ export function computeStreaks(data: DailyPnlEntry[]): PnlStreaks {
 }
 
 export function getPnlChartAnnotations(candles: PnlDataPoint[], periods: PnlPeriods): PnlChartAnnotation[] {
-	const pnlByTimestamp = new Map<number, number>();
-	for (const candle of candles) {
-		pnlByTimestamp.set(candle.t, candle.p);
+	if (candles.length === 0) return [];
+
+	const sortedCandles = [...candles].sort((a, b) => a.t - b.t);
+
+	function findCumulativePnlAt(timestamp: number): number | null {
+		let candidate: PnlDataPoint | null = null;
+		for (const candle of sortedCandles) {
+			if (candle.t > timestamp) break;
+			candidate = candle;
+		}
+		return candidate?.p ?? null;
 	}
 
 	const annotations: PnlChartAnnotation[] = [];
-	const dayRecords = [
-		{ kind: "best" as const, day: periods.totalPnl.day.best },
-		{ kind: "worst" as const, day: periods.totalPnl.day.worst },
-	];
+	const windows: PnlPeriodWindow[] = ["day", "week", "month"];
 
-	for (const { kind, day } of dayRecords) {
-		if (!day) continue;
-		if (kind === "best" && day.change <= 0) continue;
-		if (kind === "worst" && day.change >= 0) continue;
+	for (const window of windows) {
+		const extremes = periods.totalPnl[window];
+		for (const kind of ["best", "worst"] as const) {
+			const period = extremes[kind];
+			if (!period) continue;
+			if (kind === "best" && period.change <= 0) continue;
+			if (kind === "worst" && period.change >= 0) continue;
 
-		const cumulativePnl = pnlByTimestamp.get(day.from);
-		if (cumulativePnl === undefined) continue;
+			const cumulativePnl = findCumulativePnlAt(period.from);
+			if (cumulativePnl === null) continue;
 
-		annotations.push({
-			kind,
-			date: day.date,
-			dailyPnl: day.change,
-			t: day.from,
-			p: cumulativePnl,
-		});
+			annotations.push({
+				kind,
+				window,
+				date: period.date,
+				change: period.change,
+				from: period.from,
+				to: period.to,
+				p: cumulativePnl,
+			});
+		}
 	}
 
-	annotations.sort((a, b) => a.t - b.t);
+	annotations.sort((a, b) => a.from - b.from);
 	return annotations;
 }
 
