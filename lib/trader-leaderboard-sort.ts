@@ -133,8 +133,9 @@ export function resolveLeaderboardSortField(
 	sort: TraderLeaderboardSortKey,
 	scope: LeaderboardScope,
 ): string {
-	if (sort === "best_win") return scope === "category" ? "best_market_pnl_usd" : "best_trade_pnl_usd";
-	if (sort === "worst_loss") return scope === "category" ? "worst_market_pnl_usd" : "worst_trade_pnl_usd";
+	if (sort === "best_win") return "best_trade_pnl_usd";
+	if (sort === "worst_loss") return "worst_trade_pnl_usd";
+	if (sort === "unrealized_pnl") return "open_positions_value";
 	if (scope === "category" && CATEGORY_SORT_OVERRIDES[sort]) {
 		return CATEGORY_SORT_OVERRIDES[sort] as string;
 	}
