@@ -32,7 +32,8 @@ export function formatBuilderCodeDisplay(code: string, length: number = 4) {
 	return trimmed;
 }
 
-export function normalizeWalletAddress(value: string) {
+export function normalizeWalletAddress(value: string | null | undefined) {
+	if (typeof value !== "string") return null;
 	const trimmed = value.trim();
 	return isWalletAddress(trimmed) ? trimmed.toLowerCase() : null;
 }
