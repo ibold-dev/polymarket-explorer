@@ -4,7 +4,7 @@ import type {
 	CategoryEntry,
 	GlobalEntry,
 	HolderHistoryCandle,
-	MarketHoldersResponse,
+	MarketHoldersV3Response,
 	PolymarketCategory,
 } from "@structbuild/sdk";
 
@@ -40,7 +40,7 @@ function appendNormalizedLeaderboardEntries(
 export async function getMarketHolders(
 	marketSlug: string,
 	limit: number = 10,
-): Promise<MarketHoldersResponse | null> {
+): Promise<MarketHoldersV3Response | null> {
 	const client = getStructClient();
 
 	if (!client) {
@@ -48,7 +48,7 @@ export async function getMarketHolders(
 	}
 
 	try {
-		const response = await client.holders.getMarketHolders({
+		const response = await client.holders.getMarketHoldersV3({
 			market_slug: marketSlug,
 			limit,
 			include_pnl: true,

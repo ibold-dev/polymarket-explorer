@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Holder, OutcomeHolders } from "@structbuild/sdk";
+import type { HolderV3, OutcomeHoldersV3 } from "@structbuild/sdk";
 
 import { DataTable } from "@/components/ui/data-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +13,7 @@ import { formatNumber, formatPriceCents } from "@/lib/format";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { cn, getTraderDisplayName } from "@/lib/utils";
 
-type HolderRow = Holder & { rank: number };
+type HolderRow = HolderV3 & { rank: number };
 
 function toNumber(value: string | number | null | undefined): number | null {
 	if (value == null) return null;
@@ -90,7 +90,7 @@ const columns: ColumnDef<HolderRow, unknown>[] = [
 		header: "Realized PnL",
 		size: 140,
 		cell: ({ row }) => {
-			const pnl = toNumber(row.original.pnl?.realized_sell_pnl_usd);
+			const pnl = row.original.pnl?.realized_pnl_usd ?? null;
 			if (pnl == null) return <span className="text-muted-foreground">—</span>;
 			return (
 				<span
@@ -159,7 +159,7 @@ const defaultColumnVisibility = {
 	fees: false,
 };
 
-export function MarketHoldersClient({ outcomes }: { outcomes: OutcomeHolders[] }) {
+export function MarketHoldersClient({ outcomes }: { outcomes: OutcomeHoldersV3[] }) {
 	const defaultValue = outcomes[0]?.position_id ?? "0";
 	const [activeOutcomeId, setActiveOutcomeId] = useState(defaultValue);
 
