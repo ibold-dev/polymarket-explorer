@@ -514,6 +514,7 @@ async function TraderPageContent({
 				<TraderOverviewSection
 					address={address}
 					pnlRange={pnlRange}
+					pnlFillGaps={pnlFillGaps}
 					profilePromise={profilePromise}
 					pnlSummaryPromise={pnlSummaryPromise}
 					insightsPromise={insightsPromise}
