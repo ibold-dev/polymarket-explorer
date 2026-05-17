@@ -258,14 +258,14 @@ export default function TraderActivity({ address, page, pageNumber, tabs, onRefr
 		const middleSpan = Math.max(columnCount - 2, 1);
 		return (
 			<TableRow className="bg-card text-foreground/90 hover:bg-card">
-				<TableCell className="px-4 py-2">
+				<TableCell>
 					{trade.confirmed_at != null ? (
 						<TimeAgo timestamp={trade.confirmed_at} className="text-sm text-muted-foreground" />
 					) : (
 						<p className="text-sm text-muted-foreground">—</p>
 					)}
 				</TableCell>
-				<TableCell className="px-4 py-2" colSpan={middleSpan}>
+				<TableCell colSpan={middleSpan}>
 					<div className="flex items-center gap-3">
 						<div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
 							<Icon className="size-5 text-foreground/70" />
@@ -277,7 +277,7 @@ export default function TraderActivity({ address, page, pageNumber, tabs, onRefr
 						</p>
 					</div>
 				</TableCell>
-				<TableCell className="px-4 py-2">
+				<TableCell>
 					<div className="flex justify-end">
 						<TooltipWrapper content="View on Polygonscan">
 							<a href={`https://polygonscan.com/tx/${trade.hash}`} target="_blank" rel="noopener noreferrer">

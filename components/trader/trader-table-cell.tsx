@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { facehashColorClasses } from "@/lib/facehash";
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
-import { cn, getTraderDisplayName, normalizeWalletAddress, truncateAddress } from "@/lib/utils";
+import { cn, getTraderDisplayName, normalizeWalletAddress } from "@/lib/utils";
 
 type TraderTableCellProps = {
 	trader: {
@@ -58,9 +58,8 @@ export function TraderTableCell({
 					name={address}
 				/>
 			)}
-			<span className="min-w-0 flex-1">
-				<span className={cn("block truncate font-medium", maxNameWidthClassName)}>{displayName}</span>
-				<span className="block truncate text-xs text-muted-foreground">{truncateAddress(address)}</span>
+			<span className={cn("block min-w-0 flex-1 truncate font-medium", maxNameWidthClassName)}>
+				{displayName}
 			</span>
 		</Link>
 	);

@@ -11,8 +11,23 @@ export function truncateAddress(address?: string | null, length: number = 6) {
 	return `${address.slice(0, length)}...${address.slice(-length)}`;
 }
 
+function realTraderName(value: string | null | undefined) {
+	const trimmed = value?.trim();
+	if (!trimmed) return null;
+	if (isWalletAddress(trimmed)) return null;
+	return trimmed;
+}
+
 export function getTraderDisplayName(trader: { address?: string; name?: string | null; pseudonym?: string | null }) {
-	return trader.name ?? trader.pseudonym ?? truncateAddress(trader.address);
+	return (
+		realTraderName(trader.name) ??
+		realTraderName(trader.pseudonym) ??
+		truncateAddress(trader.address)
+	);
+}
+
+export function hasTraderDisplayName(trader: { name?: string | null; pseudonym?: string | null }) {
+	return realTraderName(trader.name) !== null || realTraderName(trader.pseudonym) !== null;
 }
 
 export function isWalletAddress(value: string) {

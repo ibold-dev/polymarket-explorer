@@ -308,15 +308,7 @@ async function TraderOverviewSection({
 				address={address}
 				displayName={displayName}
 				profileImage={profile?.profile_image}
-				firstTradeAt={pnlSummary?.first_trade_at}
-				lastTradeAt={pnlSummary?.last_trade_at}
-				totalBuys={pnlSummary?.total_buys}
-				totalSells={pnlSummary?.total_sells}
-				totalRedemptions={pnlSummary?.total_redemptions}
-				totalMerges={pnlSummary?.total_merges}
-				totalVolumeUsd={pnlSummary?.total_volume_usd}
-				totalFeesUsd={pnlSummary?.total_fees}
-				openPositionsValueUsd={(pnlSummary as (GlobalEntry & { open_positions_value?: number | null }) | null)?.open_positions_value}
+				pnlSummary={pnlSummary}
 			/>
 			<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
 				<div className="min-w-0 space-y-6 lg:w-2/3">

@@ -3,8 +3,10 @@ import Link from "next/link";
 import {
 	ArrowUpRightIcon,
 	BarChart3Icon,
+	CalendarIcon,
 	CoinsIcon,
 	CpuIcon,
+	HammerIcon,
 	HashIcon,
 	LineChartIcon,
 	TrophyIcon,
@@ -24,37 +26,49 @@ const ITEMS: ExploreItem[] = [
 	{
 		href: "/markets" as Route,
 		label: "Markets",
-		description: "Browse active or closed markets.",
+		description: "Browse every market with volume, liquidity, and price history.",
 		Icon: BarChart3Icon,
+	},
+	{
+		href: "/events" as Route,
+		label: "Events",
+		description: "Explore events grouping related markets into a single outcome set.",
+		Icon: CalendarIcon,
 	},
 	{
 		href: "/traders" as Route,
 		label: "Traders",
-		description: "Top traders by PnL or volume.",
+		description: "Rank traders by PnL, volume, and activity across the platform.",
 		Icon: TrophyIcon,
+	},
+	{
+		href: "/builders" as Route,
+		label: "Builders",
+		description: "Apps and integrators routing flow into Polymarket markets.",
+		Icon: HammerIcon,
 	},
 	{
 		href: "/tags" as Route,
 		label: "Categories",
-		description: "Browse markets by category.",
+		description: "Browse markets grouped by topic, theme, and category tags.",
 		Icon: HashIcon,
 	},
 	{
 		href: "/analytics" as Route,
 		label: "Analytics",
-		description: "Historical analytics data.",
+		description: "Historical analytics on volume, trades, and platform growth.",
 		Icon: LineChartIcon,
 	},
 	{
 		href: "/rewards" as Route,
 		label: "Rewards",
-		description: "Markets with active liquidity rewards.",
+		description: "Markets paying active liquidity rewards to qualifying makers.",
 		Icon: CoinsIcon,
 	},
 	{
 		href: "https://www.struct.to/rest-api" as Route,
 		label: "API Access",
-		description: "The API powering this platform.",
+		description: "The Struct REST API powering every page in this explorer.",
 		Icon: CpuIcon,
 	},
 ];
@@ -63,9 +77,8 @@ export function HomeExploreGrid() {
 	return (
 		<section aria-label="Explore the platform" className="space-y-4">
 			<h2 className="text-xl font-medium text-foreground">Explore the platform</h2>
-			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:grid-cols-3">
-			{ITEMS.map(({ href, label, description, Icon }, index) => {
-				const isOrphan = index === ITEMS.length - 1 && ITEMS.length % 2 === 1;
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 xl:grid-cols-4">
+			{ITEMS.map(({ href, label, description, Icon }) => {
 				return (
 					<Link
 						key={href}
@@ -73,7 +86,6 @@ export function HomeExploreGrid() {
 						prefetch={false}
 						className={cn(
 							"group relative flex flex-col justify-between gap-4 overflow-hidden rounded-lg bg-card p-4 md:p-5 ring-1 ring-foreground/10 transition-colors hover:bg-accent",
-							isOrphan && "col-span-2 md:col-span-1",
 						)}
 					>
 						<div className="flex items-center justify-between">

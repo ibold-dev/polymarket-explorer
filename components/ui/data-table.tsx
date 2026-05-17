@@ -243,7 +243,7 @@ function DataTableView<TData>({
 							{table.getHeaderGroups().map((headerGroup) => (
 								<TableRow key={headerGroup.id} className="bg-card text-muted-foreground hover:bg-card">
 									{headerGroup.headers.map((header) => (
-										<TableHead key={header.id} className="px-4 py-2 font-medium">
+										<TableHead key={header.id} className="font-medium">
 											{header.isPlaceholder
 												? null
 												: flexRender(header.column.columnDef.header, header.getContext())}
@@ -265,7 +265,6 @@ function DataTableView<TData>({
 											<TableCell
 												key={cell.id}
 												className={cn(
-													"px-4 py-2",
 													(cell.column.columnDef.meta as { cellClassName?: string } | undefined)
 														?.cellClassName,
 												)}
