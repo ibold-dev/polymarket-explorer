@@ -89,7 +89,8 @@ export function formatTimeAgo(timestampSeconds: number): string {
 }
 
 export function pnlColorClass(value: number): string {
-	return value >= 0 ? "text-emerald-500" : "text-red-500"
+	if (value === 0) return "text-muted-foreground"
+	return value > 0 ? "text-emerald-500" : "text-red-500"
 }
 
 export function formatDuration(seconds: number): string {

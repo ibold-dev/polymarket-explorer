@@ -356,22 +356,6 @@ export async function getTraderTradesPage(
 	return fetchTraderTradesPage(normalizedAddress, options);
 }
 
-export const getTraderWhitelist = cache(async (): Promise<string[]> => {
-	const client = getStructClient();
-
-	if (!client) {
-		return [];
-	}
-
-	try {
-		const response = await client.trader.getTraderWhitelistV3();
-		return response.data.traders ?? [];
-	} catch (error) {
-		logStructError("getTraderWhitelist", error);
-		return [];
-	}
-});
-
 export type PnlV3Timeframe = "1d" | "7d" | "30d" | "lifetime";
 export type PnlV3SortDirection = "asc" | "desc";
 

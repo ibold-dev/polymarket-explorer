@@ -34,7 +34,7 @@ function PnlChangeBadges({ changes }: { changes: PnlV3ChangesResponse["changes"]
 						? "text-emerald-500"
 						: change < 0
 							? "text-red-500"
-							: "text-foreground";
+							: "text-muted-foreground";
 
 				return (
 					<span key={window} className="min-w-0 whitespace-nowrap">

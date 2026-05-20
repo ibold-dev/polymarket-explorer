@@ -156,7 +156,7 @@ const columns: ColumnDef<TradeRow, unknown>[] = [
 			const isPositive = usdAmount != null && usdAmount > 0;
 			const isNegative = usdAmount != null && usdAmount < 0;
 			return (
-				<p className={cn(isPositive ? "text-emerald-500" : isNegative ? "text-red-500" : "")}>
+				<p className={cn(isPositive ? "text-emerald-500" : isNegative ? "text-red-500" : "text-muted-foreground")}>
 					{isPositive ? "+" : ""}
 					{formatNumber(usdAmount, { currency: true, compact: true })}
 				</p>

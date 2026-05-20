@@ -72,7 +72,7 @@ function RadarTooltip({ active, payload }: RadarTooltipProps) {
 			</p>
 			<p className="mt-0.5 text-muted-foreground">
 				<span className="text-foreground">PnL</span>{" "}
-				<span className={`font-mono tabular-nums ${row.pnl > 0 ? "text-emerald-500" : row.pnl < 0 ? "text-red-500" : "text-foreground"}`}>
+				<span className={`font-mono tabular-nums ${row.pnl > 0 ? "text-emerald-500" : row.pnl < 0 ? "text-red-500" : "text-muted-foreground"}`}>
 					{formatNumber(row.pnl, { currency: true, compact: true })}
 				</span>
 			</p>

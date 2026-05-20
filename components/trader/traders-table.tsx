@@ -360,6 +360,7 @@ function buildColumns(
 
 const CATEGORY_UNAVAILABLE_COLUMN_IDS = new Set([
 	"events",
+	"openPositions",
 	"makerRebates",
 	"rewards",
 	"yields",
