@@ -135,6 +135,11 @@ function buildColumns(
 								</p>
 							)}
 							<div className="flex flex-wrap items-center gap-1.5">
+								{status === "closed" && entry.won != null ? (
+									<Badge variant={entry.won ? "positive" : "negative"}>
+										{entry.won ? "Won" : "Lost"}
+									</Badge>
+								) : null}
 								{entry.outcome ? (
 									<Badge
 										variant={
