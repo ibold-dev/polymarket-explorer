@@ -72,7 +72,7 @@ const columns: ColumnDef<TradeRow, unknown>[] = [
 			const title = question ?? "Unknown Market";
 			const href = marketSlug ? (`/markets/${marketSlug}` as Route) : null;
 			return (
-				<div className="flex items-center gap-3">
+				<div className="flex max-w-[480px] items-center gap-3">
 					{imageUrl ? (
 						<Image
 							className="size-10 shrink-0 rounded-md object-cover"

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { SearchDialog } from "@/components/search/search-dialog";
+import { UserMenu } from "@/components/auth/user-menu";
 import { MobileNav } from "./mobile-nav";
 import { NAV_ITEMS } from "./nav-items";
 import { SettingsMenu } from "./settings-menu";
@@ -33,6 +34,7 @@ export function Header() {
 				<div className="flex shrink-0 items-center gap-2">
 					<SearchDialog />
 					<SettingsMenu />
+					<UserMenu />
 					<Suspense fallback={<MobileNavFallback />}>
 						<MobileNav />
 					</Suspense>

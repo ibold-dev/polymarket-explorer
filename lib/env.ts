@@ -43,3 +43,26 @@ export function getSiteUrl() {
     return new URL(defaultSiteUrl);
   }
 }
+
+const defaultAuthBaseUrl = "https://struct.to";
+
+function isAllowedAuthHost(hostname: string): boolean {
+  return (
+    hostname === "struct.to" ||
+    hostname.endsWith(".struct.to") ||
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost")
+  );
+}
+
+export function getAuthBaseUrl() {
+  const configured = readString(process.env.NEXT_PUBLIC_AUTH_URL);
+  if (configured) {
+    try {
+      if (isAllowedAuthHost(new URL(configured).hostname)) return configured;
+    } catch {
+      return defaultAuthBaseUrl;
+    }
+  }
+  return defaultAuthBaseUrl;
+}
