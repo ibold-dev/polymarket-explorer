@@ -4,6 +4,14 @@ import type { PaginatedResource } from "@/lib/struct/types";
 
 export const defaultPageSize = 24;
 export const maxPaginationRequests = 1000;
+export const maxOffset = 3500;
+
+export function maxReachablePage(pageSize: number): number {
+	if (!Number.isInteger(pageSize) || pageSize <= 0) {
+		return 1;
+	}
+	return Math.floor(maxOffset / pageSize) + 1;
+}
 
 export type PaginatedResult<T> = {
 	data: T[];

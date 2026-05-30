@@ -18,6 +18,7 @@ import {
 	defaultPageSize,
 	logPaginationLimitReached,
 	maxPaginationRequests,
+	maxReachablePage,
 	type PaginatedResult,
 } from "@/lib/struct/queries/_shared";
 
@@ -119,7 +120,10 @@ export async function getTagPageCount(
 	}
 
 	const totalTags = await getTagCount();
-	const upperPageCount = Math.max(1, Math.ceil(Math.max(0, totalTags) / pageSize));
+	const upperPageCount = Math.min(
+		maxReachablePage(pageSize),
+		Math.max(1, Math.ceil(Math.max(0, totalTags) / pageSize)),
+	);
 	const client = getStructClient();
 
 	if (!client || upperPageCount <= 1) {
