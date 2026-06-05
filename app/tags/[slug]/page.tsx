@@ -7,15 +7,18 @@ import type { Tag } from "@structbuild/sdk";
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
 import { TagBuildersSection } from "@/components/builders/tag-builders-section";
 import { TagEventsStatusListing } from "@/components/event/tag-events-status-listing";
+import { SectionAnchor } from "@/components/layout/section-anchor";
+import type { SubheaderSlot } from "@/components/layout/section-subheader-bar";
 import { TagMarketsStatusListing } from "@/components/market/market-status-listing";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
+import { TagSectionSubheader } from "@/components/tags/tag-section-subheader";
 import { TagStatsRow } from "@/components/tags/tag-stats-row";
 import { TagTopTradersListing } from "@/components/tags/tag-top-traders-listing";
 import { TagViewTabs } from "@/components/tags/tag-view-tabs";
 import { TabTeaser } from "@/components/ui/tabs";
 import { tagToCategory } from "@/lib/tag-category";
-import { DEFAULT_TAG_VIEW, parseTagView, tagViewValues, type TagView } from "@/lib/tag-view-shared";
+import { DEFAULT_TAG_VIEW, parseTagView, tagViewValues, viewLabels, type TagView } from "@/lib/tag-view-shared";
 import { eventResponseToRow } from "@/lib/event-table-map";
 import { marketResponseToRow } from "@/lib/market-table-map";
 import { getSiteUrl } from "@/lib/env";
@@ -86,11 +89,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default function TagPage({ params, searchParams }: Props) {
 	return (
-		<div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-			<Suspense fallback={<TagPageFallback />}>
-				<TagPageContent params={params} searchParams={searchParams} />
-			</Suspense>
-		</div>
+		<Suspense fallback={<TagPageFallback />}>
+			<TagPageContent params={params} searchParams={searchParams} />
+		</Suspense>
 	);
 }
 
@@ -181,90 +182,107 @@ async function TagPageContent({
 				},
 	};
 
+	const subheaderSlots: SubheaderSlot[] = [
+		{ type: "anchor", id: "tag-overview", label: "Overview" },
+		{
+			type: "tabs",
+			id: "tag-content",
+			tabs: availableViews.map((view) => ({ value: view, label: viewLabels[view] })),
+		},
+		{ type: "anchor", id: "tag-analytics", label: "Analytics" },
+		{ type: "anchor", id: "tag-builders", label: "Builders" },
+	];
+
 	return (
 		<>
-			<Breadcrumbs
-				items={[
-					{ label: "Home", href: "/" },
-					{ label: "Tags", href: "/tags" },
-					{ label: tagDisplay, href: `/tags/${canonicalSlug}` },
-				]}
-			/>
-			<JsonLd data={jsonLd} />
-
-			<div className="mt-6 space-y-4">
-				<TagHeader tag={tag} tagDisplay={tagDisplay} />
-				<TagViewTabs
-					value={tagView}
-					availableViews={availableViews}
-					teasers={
-						(tag.unique_traders ?? 0) > 0
-							? {
-									"top-traders": (
-										<TabTeaser>{formatNumber(tag.unique_traders, { compact: true })}</TabTeaser>
-									),
-								}
-							: undefined
-					}
+			<TagSectionSubheader slots={subheaderSlots} value={tagView} />
+			<div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-6 sm:px-6 sm:pt-6 sm:pb-8">
+				<Breadcrumbs
+					items={[
+						{ label: "Home", href: "/" },
+						{ label: "Tags", href: "/tags" },
+						{ label: tagDisplay, href: `/tags/${canonicalSlug}` },
+					]}
 				/>
-				{tagView === "events" && (
-					<TagEventsStatusListing
-						basePath={`/tags/${canonicalSlug}`}
-						baseParams={paginationBaseParams}
-						tagSlug={canonicalSlug}
-						initialEvents={events.map(eventResponseToRow)}
-						initialTab={eventTab}
-						initialCursor={cursor ?? null}
-						initialHasMore={eventsHasMore}
-						initialNextCursor={eventsNextCursor}
+				<JsonLd data={jsonLd} />
+
+				<SectionAnchor id="tag-overview" className="mt-6">
+					<TagHeader tag={tag} tagDisplay={tagDisplay} />
+				</SectionAnchor>
+
+				<SectionAnchor id="tag-content" className="mt-4 space-y-4">
+					<TagViewTabs
+						value={tagView}
+						availableViews={availableViews}
+						teasers={
+							(tag.unique_traders ?? 0) > 0
+								? {
+										"top-traders": (
+											<TabTeaser>{formatNumber(tag.unique_traders, { compact: true })}</TabTeaser>
+										),
+									}
+								: undefined
+						}
 					/>
-				)}
-				{tagView === "markets" && (
-					<TagMarketsStatusListing
-						basePath={`/tags/${canonicalSlug}`}
-						baseParams={paginationBaseParams}
-						tagLabel={tag.label}
-						initialMarkets={markets.map(marketResponseToRow)}
-						initialTab={marketTab}
-						initialCursor={cursor ?? null}
-						initialHasMore={marketsHasMore}
-						initialNextCursor={marketsNextCursor}
-					/>
-				)}
-				{tagView === "top-traders" && category && (
-					<Suspense fallback={null}>
-						<TagTopTradersListing
-							category={category}
+					{tagView === "events" && (
+						<TagEventsStatusListing
 							basePath={`/tags/${canonicalSlug}`}
-							baseParams={{ ...paginationBaseParams, content: "top-traders" }}
-							cursor={cursor ?? null}
+							baseParams={paginationBaseParams}
+							tagSlug={canonicalSlug}
+							initialEvents={events.map(eventResponseToRow)}
+							initialTab={eventTab}
+							initialCursor={cursor ?? null}
+							initialHasMore={eventsHasMore}
+							initialNextCursor={eventsNextCursor}
 						/>
+					)}
+					{tagView === "markets" && (
+						<TagMarketsStatusListing
+							basePath={`/tags/${canonicalSlug}`}
+							baseParams={paginationBaseParams}
+							tagLabel={tag.label}
+							initialMarkets={markets.map(marketResponseToRow)}
+							initialTab={marketTab}
+							initialCursor={cursor ?? null}
+							initialHasMore={marketsHasMore}
+							initialNextCursor={marketsNextCursor}
+						/>
+					)}
+					{tagView === "top-traders" && category && (
+						<Suspense fallback={null}>
+							<TagTopTradersListing
+								category={category}
+								basePath={`/tags/${canonicalSlug}`}
+								baseParams={{ ...paginationBaseParams, content: "top-traders" }}
+								cursor={cursor ?? null}
+							/>
+						</Suspense>
+					)}
+				</SectionAnchor>
+
+				<SectionAnchor id="tag-analytics" className="mt-8">
+					<AnalyticsSection
+						title="Analytics"
+						range={range}
+						view={analyticsView}
+						resolution={resolution}
+						defaultResolution={defaultResolution}
+						defaultRange={defaultRange}
+						allowedComponents={SCOPED_VOLUME_COMPONENTS}
+						pathname={`/tags/${canonicalSlug}`}
+						fetchers={{
+							deltas: () => getTagAnalyticsDeltas(tagKey, range, resolution),
+							timeseries: () => getTagAnalyticsTimeseries(tagKey, range, resolution),
+							changes: () => getTagAnalyticsChanges(tagKey, range),
+						}}
+					/>
+				</SectionAnchor>
+
+				<SectionAnchor id="tag-builders" className="mt-8">
+					<Suspense fallback={null}>
+						<TagBuildersSection tagLabel={tag.label} />
 					</Suspense>
-				)}
-			</div>
-
-			<div className="mt-8">
-				<AnalyticsSection
-					title="Analytics"
-					range={range}
-					view={analyticsView}
-					resolution={resolution}
-					defaultResolution={defaultResolution}
-					defaultRange={defaultRange}
-					allowedComponents={SCOPED_VOLUME_COMPONENTS}
-					pathname={`/tags/${canonicalSlug}`}
-					fetchers={{
-						deltas: () => getTagAnalyticsDeltas(tagKey, range, resolution),
-						timeseries: () => getTagAnalyticsTimeseries(tagKey, range, resolution),
-						changes: () => getTagAnalyticsChanges(tagKey, range),
-					}}
-				/>
-			</div>
-
-			<div className="mt-8">
-				<Suspense fallback={null}>
-					<TagBuildersSection tagLabel={tag.label} />
-				</Suspense>
+				</SectionAnchor>
 			</div>
 		</>
 	);
@@ -272,12 +290,14 @@ async function TagPageContent({
 
 function TagPageFallback() {
 	return (
-		<div className="mt-6 space-y-4">
-			<div>
-				<div className="h-7 w-32 animate-pulse rounded bg-muted" />
-				<div className="mt-2 h-4 w-52 animate-pulse rounded bg-muted" />
+		<div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-6 sm:px-6 sm:pt-6 sm:pb-8">
+			<div className="mt-6 space-y-4">
+				<div>
+					<div className="h-7 w-32 animate-pulse rounded bg-muted" />
+					<div className="mt-2 h-4 w-52 animate-pulse rounded bg-muted" />
+				</div>
+				<div className="h-64 rounded-lg bg-card" />
 			</div>
-			<div className="h-64 rounded-lg bg-card" />
 		</div>
 	);
 }

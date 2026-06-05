@@ -18,6 +18,8 @@ import {
 } from "@/components/builders/builders-stacked-chart";
 import { SortableBuildersTable } from "@/components/builders/sortable-builders-table";
 import { BUILDERS_SKELETON_COLUMNS } from "@/components/builders/builders-table-columns";
+import { AnchorSectionNav } from "@/components/layout/anchor-section-nav";
+import { SectionAnchor } from "@/components/layout/section-anchor";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton";
@@ -92,6 +94,14 @@ const BUILDER_GLOBAL_TAG_SORT_OPTIONS = [
 	"avg_vol_per_user",
 ] as const satisfies readonly BuilderSortBy[];
 
+const BUILDERS_NAV_ITEMS = [
+	{ id: "builders-overview", label: "Overview" },
+	{ id: "builders-breakdown", label: "Breakdown" },
+	{ id: "builders-leaderboard", label: "Leaderboard" },
+	{ id: "builders-activity", label: "Activity" },
+	{ id: "builders-tags", label: "Tags" },
+];
+
 type BuilderGlobalTagSort = (typeof BUILDER_GLOBAL_TAG_SORT_OPTIONS)[number];
 
 function parseBuilderGlobalTagSort(
@@ -113,11 +123,14 @@ export default async function BuildersPage({ searchParams }: Props) {
 	await connection();
 
 	return (
-		<div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-			<Suspense fallback={<BuildersIndexFallback />}>
-				<BuildersIndexContent searchParams={searchParams} />
-			</Suspense>
-		</div>
+		<>
+			<AnchorSectionNav items={BUILDERS_NAV_ITEMS} />
+			<div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+				<Suspense fallback={<BuildersIndexFallback />}>
+					<BuildersIndexContent searchParams={searchParams} />
+				</Suspense>
+			</div>
+		</>
 	);
 }
 
@@ -183,61 +196,71 @@ async function BuildersIndexContent({ searchParams }: Props) {
 					<BuildersHeaderControls timeframe={timeframe} resolution={resolution} />
 				</div>
 
-				<BuildersGlobalStats row={globalRow} changes={globalChanges} />
+				<SectionAnchor id="builders-overview">
+					<BuildersGlobalStats row={globalRow} changes={globalChanges} />
+				</SectionAnchor>
 
-				<Suspense fallback={<BuildersStackedChartFallback />}>
-					<BuildersStackedSection
+				<SectionAnchor id="builders-breakdown">
+					<Suspense fallback={<BuildersStackedChartFallback />}>
+						<BuildersStackedSection
+							timeframe={timeframe}
+							resolution={resolution}
+							metric={stackedMetric}
+						/>
+					</Suspense>
+				</SectionAnchor>
+
+				<SectionAnchor id="builders-leaderboard">
+					<SortableBuildersTable
+						builders={builders}
+						sort={sort}
 						timeframe={timeframe}
-						resolution={resolution}
-						metric={stackedMetric}
+						pageIndex={page - 1}
+						pageSize={BUILDERS_PAGE_SIZE}
+						hasNextPage={hasMore}
+						rankOffset={offset}
+						toolbarLeft={
+							<h2 className="text-lg font-medium text-foreground/90">
+								Builder leaderboard
+							</h2>
+						}
 					/>
-				</Suspense>
+				</SectionAnchor>
 
-				<SortableBuildersTable
-					builders={builders}
-					sort={sort}
-					timeframe={timeframe}
-					pageIndex={page - 1}
-					pageSize={BUILDERS_PAGE_SIZE}
-					hasNextPage={hasMore}
-					rankOffset={offset}
-					toolbarLeft={
-						<h2 className="text-lg font-medium text-foreground/90">
-							Builder leaderboard
-						</h2>
-					}
-				/>
+				<SectionAnchor id="builders-activity">
+					<AnalyticsSection
+						title="Builder activity"
+						range={analytics.range}
+						view={analytics.view}
+						resolution={analytics.resolution}
+						defaultResolution={analytics.defaultResolution}
+						defaultRange={analytics.defaultRange}
+						pathname="/builders"
+						fetchers={{
+							deltas: () => getBuilderGlobalAnalyticsDeltas(analytics.range, analytics.resolution),
+							timeseries: () =>
+								getBuilderGlobalAnalyticsTimeseries(analytics.range, analytics.resolution),
+							changes: () => getBuilderGlobalAnalyticsChanges(analytics.range),
+						}}
+						appendMetrics={[
+							"builderFees",
+							"newUsers",
+							"avgRevenuePerUser",
+							"avgVolumePerUser",
+							"fees",
+							"uniqueTraders",
+							"avgTradeSize",
+						]}
+						metricPlacements={BUILDER_ANALYTICS_METRIC_PLACEMENTS}
+						allowedComponents={BUILDER_ANALYTICS_COMPONENTS}
+					/>
+				</SectionAnchor>
 
-				<AnalyticsSection
-					title="Builder activity"
-					range={analytics.range}
-					view={analytics.view}
-					resolution={analytics.resolution}
-					defaultResolution={analytics.defaultResolution}
-					defaultRange={analytics.defaultRange}
-					pathname="/builders"
-					fetchers={{
-						deltas: () => getBuilderGlobalAnalyticsDeltas(analytics.range, analytics.resolution),
-						timeseries: () =>
-							getBuilderGlobalAnalyticsTimeseries(analytics.range, analytics.resolution),
-						changes: () => getBuilderGlobalAnalyticsChanges(analytics.range),
-					}}
-					appendMetrics={[
-						"builderFees",
-						"newUsers",
-						"avgRevenuePerUser",
-						"avgVolumePerUser",
-						"fees",
-						"uniqueTraders",
-						"avgTradeSize",
-					]}
-					metricPlacements={BUILDER_ANALYTICS_METRIC_PLACEMENTS}
-					allowedComponents={BUILDER_ANALYTICS_COMPONENTS}
-				/>
-
-				<Suspense fallback={<BuildersGlobalTagsFallback />}>
-					<BuildersGlobalTags rows={globalTags.data} sort={tagSort} timeframe={timeframe} />
-				</Suspense>
+				<SectionAnchor id="builders-tags">
+					<Suspense fallback={<BuildersGlobalTagsFallback />}>
+						<BuildersGlobalTags rows={globalTags.data} sort={tagSort} timeframe={timeframe} />
+					</Suspense>
+				</SectionAnchor>
 			</div>
 		</>
 	);

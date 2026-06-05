@@ -2,16 +2,10 @@ import type { PolymarketCategory } from "@structbuild/sdk"
 
 import type {
 	TraderCategorySortBy,
-	TraderExitMode,
 	TraderMarketSortBy,
 	TraderPositionSortBy,
 	TraderSortDirection,
 	TraderTab,
-} from "@/lib/trader-search-params-shared"
-import {
-	exitModeForTab,
-	rankedPositionSortBy,
-	rankedPositionSortDirection,
 } from "@/lib/trader-search-params-shared"
 import {
 	defaultTraderTablePageSize,
@@ -57,13 +51,6 @@ type TraderTabPanelData =
 			sortDirection: TraderSortDirection
 			page: Awaited<ReturnType<typeof getTraderMarketsPage>>
 	  }
-	| {
-			kind: "ranked-positions"
-			address: string
-			mode: TraderExitMode
-			pageNumber: number
-			page: Awaited<ReturnType<typeof getTraderPositionsPage>>
-	  }
 
 type LoadTraderTabPanelDataProps = {
 	address: string
@@ -73,8 +60,6 @@ type LoadTraderTabPanelDataProps = {
 	activityPage: number
 	categoriesPage: number
 	marketsPage: number
-	winsPage: number
-	lossesPage: number
 	openSortBy: TraderPositionSortBy
 	openSortDirection: TraderSortDirection
 	closedSortBy: TraderPositionSortBy
@@ -94,8 +79,6 @@ export function loadTraderTabPanelData({
 	activityPage,
 	categoriesPage,
 	marketsPage,
-	winsPage,
-	lossesPage,
 	openSortBy,
 	openSortDirection,
 	closedSortBy,
@@ -108,23 +91,6 @@ export function loadTraderTabPanelData({
 }: LoadTraderTabPanelDataProps): Promise<TraderTabPanelData> {
 	const pageSize = defaultTraderTablePageSize
 	const categoryOption = category ? { category } : {}
-
-	const rankedMode = exitModeForTab(currentTab)
-	if (rankedMode) {
-		const rankedPageNumber = rankedMode === "wins" ? winsPage : lossesPage
-		return getTraderPositionsPage(address, "closed", {
-			limit: pageSize,
-			offset: (rankedPageNumber - 1) * pageSize,
-			sort_by: rankedPositionSortBy,
-			sort_direction: rankedPositionSortDirection[rankedMode],
-		}).then((page) => ({
-			kind: "ranked-positions" as const,
-			address,
-			mode: rankedMode,
-			pageNumber: rankedPageNumber,
-			page,
-		}))
-	}
 
 	switch (currentTab) {
 		case "closed":
@@ -225,10 +191,6 @@ export function TraderTabPanelFallback({
 				? "Loading categories"
 				: currentTab === "markets"
 					? "Loading markets"
-					: currentTab === "wins"
-				? "Loading best wins"
-				: currentTab === "losses"
-					? "Loading worst losses"
 					: currentTab === "closed"
 						? "Loading closed positions"
 						: "Loading open positions"

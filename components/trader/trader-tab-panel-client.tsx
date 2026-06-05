@@ -1,20 +1,17 @@
 "use client"
 
 import type { CategoryEntry, MarketEntry, PolymarketCategory, PositionEntry } from "@structbuild/sdk"
-import { useCallback, useRef, useState, useTransition } from "react"
+import type { ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 
 import { getTraderTabPageAction } from "@/app/actions"
+import { useTabBridge } from "@/components/layout/tab-bridge"
 import type {
 	TraderCategorySortBy,
-	TraderExitMode,
 	TraderMarketSortBy,
 	TraderPositionSortBy,
 	TraderSortDirection,
 	TraderTab,
-} from "@/lib/trader-search-params-shared"
-import {
-	rankedPositionSortBy,
-	rankedPositionSortDirection,
 } from "@/lib/trader-search-params-shared"
 import type { PaginatedResource } from "@/lib/struct/types"
 import type { TradeRow } from "./types"
@@ -57,19 +54,11 @@ type TraderTabPanelClientProps =
 			sortDirection: TraderSortDirection
 			page: PaginatedResource<MarketEntry, number>
 	  }
-	| {
-			kind: "ranked-positions"
-			address: string
-			mode: TraderExitMode
-			pageNumber: number
-			page: PaginatedResource<PositionEntry, number>
-	  }
 
 function tabForPanelData(props: TraderTabPanelClientProps): TraderTab {
 	if (props.kind === "activity") return "activity"
 	if (props.kind === "categories") return "categories"
 	if (props.kind === "markets") return "markets"
-	if (props.kind === "ranked-positions") return props.mode
 
 	return props.status === "closed" ? "closed" : "active"
 }
@@ -93,6 +82,7 @@ function replaceTraderTabUrl(tab: TraderTab) {
 export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 	const [isPending, startTransition] = useTransition()
 	const requestIdRef = useRef(0)
+	const bridge = useTabBridge()
 	const [panelState, setPanelState] = useState(() => ({
 		sourceProps: props,
 		data: props,
@@ -143,6 +133,14 @@ export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 		}
 	}, [currentData.address, currentTab, props])
 
+	useEffect(() => {
+		bridge?.registerHandler("trader-positions", handleTabChange as (tab: string) => void)
+	}, [bridge, handleTabChange])
+
+	useEffect(() => {
+		bridge?.reportActive("trader-positions", currentTab)
+	}, [bridge, currentTab])
+
 	const tabs = (
 		<TraderTabs
 			value={currentTab}
@@ -151,8 +149,10 @@ export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 		/>
 	)
 
+	let content: ReactNode
+
 	if (currentData.kind === "activity") {
-		return (
+		content = (
 			<TraderActivity
 				address={currentData.address}
 				page={currentData.page}
@@ -161,10 +161,8 @@ export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 				onRefresh={handleRefresh}
 			/>
 		)
-	}
-
-	if (currentData.kind === "categories") {
-		return (
+	} else if (currentData.kind === "categories") {
+		content = (
 			<TraderCategories
 				address={currentData.address}
 				page={currentData.page}
@@ -175,10 +173,8 @@ export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 				onRefresh={handleRefresh}
 			/>
 		)
-	}
-
-	if (currentData.kind === "markets") {
-		return (
+	} else if (currentData.kind === "markets") {
+		content = (
 			<TraderMarkets
 				address={currentData.address}
 				page={currentData.page}
@@ -189,35 +185,21 @@ export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 				onRefresh={handleRefresh}
 			/>
 		)
-	}
-
-	if (currentData.kind === "ranked-positions") {
-		return (
+	} else {
+		content = (
 			<TraderPositions
 				address={currentData.address}
 				page={currentData.page}
 				pageNumber={currentData.pageNumber}
-				status="closed"
-				sortBy={rankedPositionSortBy}
-				sortDirection={rankedPositionSortDirection[currentData.mode]}
-				ranked={currentData.mode}
+				status={currentData.status}
+				sortBy={currentData.sortBy}
+				sortDirection={currentData.sortDirection}
+				category={currentData.category}
 				tabs={tabs}
 				onRefresh={handleRefresh}
 			/>
 		)
 	}
 
-	return (
-		<TraderPositions
-			address={currentData.address}
-			page={currentData.page}
-			pageNumber={currentData.pageNumber}
-			status={currentData.status}
-			sortBy={currentData.sortBy}
-			sortDirection={currentData.sortDirection}
-			category={currentData.category}
-			tabs={tabs}
-			onRefresh={handleRefresh}
-		/>
-	)
+	return content
 }

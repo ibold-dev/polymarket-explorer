@@ -4,6 +4,7 @@ import { PnlCalendar } from "@/components/trader/pnl-calendar";
 import { PnlCard } from "@/components/trader/pnl-card";
 import { TraderDnaCard } from "@/components/trader/trader-dna-card";
 import { TraderTabPanel, TraderTabPanelFallback, loadTraderTabPanelData } from "@/components/trader/trader-tab-panel";
+import { TraderHighlightsFallback, TraderHighlightsSection, loadTraderHighlightsData } from "@/components/trader/trader-highlights";
 import { TraderHeader } from "@/components/trader/trader-header";
 import {
 	computeStreaks,
@@ -37,6 +38,9 @@ import { getServerTimezone } from "@/lib/timezone.server";
 import { getTraderAnalyticsChanges, getTraderAnalyticsDeltas, getTraderAnalyticsTimeseries } from "@/lib/struct/analytics-queries";
 import { parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/struct/analytics-shared";
 import { getTraderCategoryPnlV3, getTraderPnlSummary, getTraderPnlV3Changes, getTraderProfile } from "@/lib/struct/queries";
+import { SectionAnchor } from "@/components/layout/section-anchor";
+import type { SubheaderSlot } from "@/components/layout/section-subheader-bar";
+import { BridgeSectionSubheader, TabBridgeProvider } from "@/components/layout/tab-bridge";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildPageMetadata } from "@/lib/site-metadata";
@@ -51,6 +55,14 @@ type Props = {
 	params: Promise<{ address: string }>;
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+const TRADER_SUBHEADER_ITEMS = [
+	{ value: "active", label: "Open" },
+	{ value: "closed", label: "Closed" },
+	{ value: "activity", label: "Activity" },
+	{ value: "categories", label: "Categories" },
+	{ value: "markets", label: "Markets" },
+] as const;
 
 type TraderInsightsData = {
 	pnlCandles: PnlDataPoint[];
@@ -426,16 +438,9 @@ function TraderOverviewFallback() {
 
 export default function TraderPage({ params, searchParams }: Props) {
 	return (
-		<div className="flex w-full justify-center">
-			<div className="flex w-full max-w-7xl flex-col gap-6 px-4 pb-10 sm:gap-8 sm:px-6 sm:pb-12">
-				<Suspense fallback={<TraderPageFallback />}>
-					<TraderPageContent
-						params={params}
-						searchParams={searchParams}
-					/>
-				</Suspense>
-			</div>
-		</div>
+		<Suspense fallback={<TraderPageFallback />}>
+			<TraderPageContent params={params} searchParams={searchParams} />
+		</Suspense>
 	);
 }
 
@@ -474,6 +479,7 @@ async function TraderPageContent({
 			marketsPage,
 			winsPage,
 			lossesPage,
+			highlights,
 			pnlTimeframe,
 			pnlAnchor,
 			pnlFrom,
@@ -514,8 +520,6 @@ async function TraderPageContent({
 		activityPage,
 		categoriesPage,
 		marketsPage,
-		winsPage,
-		lossesPage,
 		openSortBy,
 		openSortDirection,
 		closedSortBy,
@@ -527,68 +531,109 @@ async function TraderPageContent({
 		category: positionsCategory ?? undefined,
 	});
 
+	const highlightsPageNumber = highlights === "wins" ? winsPage : lossesPage;
+	const highlightsPromise = loadTraderHighlightsData({
+		address,
+		mode: highlights,
+		pageNumber: highlightsPageNumber,
+	});
+
 	const displayName = getTraderDisplayName({
 		address,
 		name: profile?.name,
 		pseudonym: profile?.pseudonym,
 	});
 
+	const subheaderSlots: SubheaderSlot[] = [
+		{ type: "anchor", id: "trader-overview", label: "Overview" },
+		{ type: "tabs", id: "trader-positions", tabs: [...TRADER_SUBHEADER_ITEMS] },
+		{
+			type: "tabs",
+			id: "trader-highlights",
+			tabs: [
+				{ value: "wins", label: "Best Wins" },
+				{ value: "losses", label: "Worst Losses" },
+			],
+		},
+		{ type: "anchor", id: "trader-analytics", label: "Analytics" },
+	];
+
 	return (
-		<>
-			<Breadcrumbs
-				items={[
-					{ label: "Home", href: "/" },
-					{ label: "Traders", href: "/traders" },
-					{ label: displayName, href: `/traders/${address}` },
-				]}
-			/>
-			<Suspense fallback={<TraderOverviewFallback />}>
-				<TraderOverviewSection
-					address={address}
-					pnlRange={pnlRange}
-					pnlFillGaps={pnlFillGaps}
-					profilePromise={profilePromise}
-					pnlSummaryPromise={pnlSummaryPromise}
-					insightsPromise={insightsPromise}
-					cumulativePnlUsdPromise={cumulativePnlUsdPromise}
-				/>
-			</Suspense>
+		<TabBridgeProvider initial={{ "trader-positions": tab, "trader-highlights": highlights }}>
+			<BridgeSectionSubheader slots={subheaderSlots} />
+			<div className="flex w-full justify-center">
+				<div className="flex w-full max-w-7xl flex-col gap-6 px-4 pt-4 pb-10 sm:gap-8 sm:px-6 sm:pt-6 sm:pb-12">
+					<Breadcrumbs
+						items={[
+							{ label: "Home", href: "/" },
+							{ label: "Traders", href: "/traders" },
+							{ label: displayName, href: `/traders/${address}` },
+						]}
+					/>
+					<SectionAnchor id="trader-overview">
+						<Suspense fallback={<TraderOverviewFallback />}>
+							<TraderOverviewSection
+								address={address}
+								pnlRange={pnlRange}
+								pnlFillGaps={pnlFillGaps}
+								profilePromise={profilePromise}
+								pnlSummaryPromise={pnlSummaryPromise}
+								insightsPromise={insightsPromise}
+								cumulativePnlUsdPromise={cumulativePnlUsdPromise}
+							/>
+						</Suspense>
+					</SectionAnchor>
 
-			<div>
-				<Suspense fallback={<TraderTabPanelFallback currentTab={tab} />}>
-					<TraderTabPanel tabDataPromise={tabDataPromise} />
-				</Suspense>
-			</div>
+					<SectionAnchor id="trader-positions">
+						<Suspense fallback={<TraderTabPanelFallback currentTab={tab} />}>
+							<TraderTabPanel tabDataPromise={tabDataPromise} />
+						</Suspense>
+					</SectionAnchor>
 
-			<div className="mt-8">
-				<AnalyticsSection
-					title="Analytics"
-					range={range}
-					view={view}
-					resolution={resolution}
-					defaultResolution={defaultResolution}
-					defaultRange={defaultRange}
-					excludeMetrics={["uniqueTraders", "makersTakers"]}
-					appendMetrics={["fees", "tradeTypes"]}
-					allowedComponents={SCOPED_VOLUME_COMPONENTS}
-					pathname={`/traders/${address}`}
-					fetchers={{
-						deltas: () => getTraderAnalyticsDeltas(address, range, resolution),
-						timeseries: () => getTraderAnalyticsTimeseries(address, range, resolution),
-						changes: () => getTraderAnalyticsChanges(address, range),
-					}}
-				/>
+					<SectionAnchor id="trader-highlights" className="mt-8">
+						<Suspense fallback={<TraderHighlightsFallback />}>
+							<TraderHighlightsSection
+								address={address}
+								mode={highlights}
+								pageNumber={highlightsPageNumber}
+								dataPromise={highlightsPromise}
+							/>
+						</Suspense>
+					</SectionAnchor>
+
+					<SectionAnchor id="trader-analytics" className="mt-8">
+						<AnalyticsSection
+							title="Analytics"
+							range={range}
+							view={view}
+							resolution={resolution}
+							defaultResolution={defaultResolution}
+							defaultRange={defaultRange}
+							excludeMetrics={["uniqueTraders", "makersTakers"]}
+							appendMetrics={["fees", "tradeTypes"]}
+							allowedComponents={SCOPED_VOLUME_COMPONENTS}
+							pathname={`/traders/${address}`}
+							fetchers={{
+								deltas: () => getTraderAnalyticsDeltas(address, range, resolution),
+								timeseries: () => getTraderAnalyticsTimeseries(address, range, resolution),
+								changes: () => getTraderAnalyticsChanges(address, range),
+							}}
+						/>
+					</SectionAnchor>
+				</div>
 			</div>
-		</>
+		</TabBridgeProvider>
 	);
 }
 
 function TraderPageFallback() {
 	return (
-		<>
-			<div className="h-4 w-48 animate-pulse rounded bg-muted" />
-			<TraderOverviewFallback />
-			<div className="h-64 rounded-lg bg-card" />
-		</>
+		<div className="flex w-full justify-center">
+			<div className="flex w-full max-w-7xl flex-col gap-6 px-4 pt-4 pb-10 sm:gap-8 sm:px-6 sm:pt-6 sm:pb-12">
+				<div className="h-4 w-48 animate-pulse rounded bg-muted" />
+				<TraderOverviewFallback />
+				<div className="h-64 rounded-lg bg-card" />
+			</div>
+		</div>
 	);
 }

@@ -71,7 +71,6 @@ import { parsePolymarketCategory } from "@/lib/tag-category";
 import {
 	maxTraderPageNumber,
 	defaultTraderPositionSortBy,
-	exitModeForTab,
 	rankedPositionSortBy,
 	rankedPositionSortDirection,
 	defaultTraderCategorySortBy,
@@ -317,25 +316,6 @@ export async function getTraderTabPageAction({
 }) {
 	const params = new URLSearchParams(search);
 	const safeTab = parseTraderTab(tab);
-
-	const rankedMode = exitModeForTab(safeTab);
-	if (rankedMode) {
-		const pageNumber = parseTraderPageSearchParam(params, rankedMode === "wins" ? "winsPage" : "lossesPage");
-		const page = await getTraderPositionsPage(address, "closed", {
-			limit: defaultTraderTablePageSize,
-			offset: (pageNumber - 1) * defaultTraderTablePageSize,
-			sort_by: rankedPositionSortBy,
-			sort_direction: rankedPositionSortDirection[rankedMode],
-		});
-
-		return {
-			kind: "ranked-positions" as const,
-			address,
-			mode: rankedMode,
-			pageNumber,
-			page,
-		};
-	}
 
 	if (safeTab === "activity") {
 		const pageNumber = parseTraderPageSearchParam(params, "activityPage");

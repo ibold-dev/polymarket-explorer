@@ -19,6 +19,8 @@ import { BuilderStatsRow } from "@/components/builders/builder-stats-row";
 import { BuilderTagBreakdown } from "@/components/builders/builder-tag-breakdown";
 import { BuilderPageHeader } from "@/components/builders/builder-page-header";
 import { BuilderTopTraders } from "@/components/builders/builder-top-traders";
+import { AnchorSectionNav } from "@/components/layout/anchor-section-nav";
+import { SectionAnchor } from "@/components/layout/section-anchor";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import {
@@ -68,6 +70,15 @@ const BUILDER_ANALYTICS_METRIC_PLACEMENTS = [
 	{ metric: "shares", after: "yesNoCount" },
 	{ metric: "buyDistribution", after: "shares" },
 ] as const;
+
+const BUILDER_NAV_ITEMS = [
+	{ id: "builder-overview", label: "Overview" },
+	{ id: "builder-analytics", label: "Analytics" },
+	{ id: "builder-breakdown", label: "Breakdown" },
+	{ id: "builder-top-traders", label: "Top Traders" },
+	{ id: "builder-history", label: "History" },
+	{ id: "builder-trades", label: "Trades" },
+];
 
 type Props = {
 	params: Promise<{ code: string }>;
@@ -123,11 +134,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default function BuilderPage({ params, searchParams }: Props) {
 	return (
-		<div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-			<Suspense fallback={<BuilderPageFallback />}>
-				<BuilderPageContent params={params} searchParams={searchParams} />
-			</Suspense>
-		</div>
+		<>
+			<AnchorSectionNav items={BUILDER_NAV_ITEMS} />
+			<div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+				<Suspense fallback={<BuilderPageFallback />}>
+					<BuilderPageContent params={params} searchParams={searchParams} />
+				</Suspense>
+			</div>
+		</>
 	);
 }
 
@@ -190,24 +204,28 @@ async function BuilderPageContent({
 			<JsonLd data={jsonLd} />
 
 			<div className="mt-6 space-y-6">
-				<div className="flex flex-col gap-6 mb-10">
-					<BuilderPageHeader builderCode={builderCode} metadata={pageHeaderMetadata} />
-				</div>
-
-				<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-					<h2 className="text-lg font-medium text-foreground/90">Analytics</h2>
-					<div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-						{view === "deltas" ? (
-							<AnalyticsRangeToggle range={range} defaultRange={defaultRange} />
-						) : null}
-						<AnalyticsResolutionToggle
-							range={range}
-							resolution={resolution}
-							defaultResolution={defaultResolution}
-						/>
-						<AnalyticsViewToggle view={view} />
+				<SectionAnchor id="builder-overview">
+					<div className="flex flex-col gap-6 mb-10">
+						<BuilderPageHeader builderCode={builderCode} metadata={pageHeaderMetadata} />
 					</div>
-				</div>
+				</SectionAnchor>
+
+				<SectionAnchor id="builder-analytics">
+					<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+						<h2 className="text-lg font-medium text-foreground/90">Analytics</h2>
+						<div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+							{view === "deltas" ? (
+								<AnalyticsRangeToggle range={range} defaultRange={defaultRange} />
+							) : null}
+							<AnalyticsResolutionToggle
+								range={range}
+								resolution={resolution}
+								defaultResolution={defaultResolution}
+							/>
+							<AnalyticsViewToggle view={view} />
+						</div>
+					</div>
+				</SectionAnchor>
 				<BuilderStatsRow row={builder} fees={fees} />
 				<AnalyticsSection
 					range={range}
@@ -228,21 +246,29 @@ async function BuilderPageContent({
 					metricPlacements={BUILDER_ANALYTICS_METRIC_PLACEMENTS}
 				/>
 
-				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-					<BuilderConcentrationCard data={concentration} />
-					<BuilderTagBreakdown rows={tagBreakdown} />
-				</div>
+				<SectionAnchor id="builder-breakdown">
+					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+						<BuilderConcentrationCard data={concentration} />
+						<BuilderTagBreakdown rows={tagBreakdown} />
+					</div>
+				</SectionAnchor>
 
-				<BuilderTopTraders rows={topTraders} />
+				<SectionAnchor id="builder-top-traders">
+					<BuilderTopTraders rows={topTraders} />
+				</SectionAnchor>
 
-				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-					<BuilderRetentionHeatmap rows={retention} />
-					<BuilderFeeHistory entries={feeHistory} />
-				</div>
+				<SectionAnchor id="builder-history">
+					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+						<BuilderRetentionHeatmap rows={retention} />
+						<BuilderFeeHistory entries={feeHistory} />
+					</div>
+				</SectionAnchor>
 
-				<Suspense fallback={<BuilderRecentTradesFallback />}>
-					<BuilderRecentTrades builderCode={builderCode} pageNumber={tradesPage} />
-				</Suspense>
+				<SectionAnchor id="builder-trades">
+					<Suspense fallback={<BuilderRecentTradesFallback />}>
+						<BuilderRecentTrades builderCode={builderCode} pageNumber={tradesPage} />
+					</Suspense>
+				</SectionAnchor>
 			</div>
 		</>
 	);

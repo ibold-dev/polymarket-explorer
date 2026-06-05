@@ -623,20 +623,21 @@ export default function TraderPositions({
 					</TooltipWrapper>
 				</div>
 			) : null}
-			<Button
-				variant="outline"
-				size="sm"
-				onClick={() => {
-					if (!onRefresh) return
-					startTransition(async () => {
-						await onRefresh()
-					})
-				}}
-				disabled={isPending || !onRefresh}
-			>
-				<RefreshCwIcon data-icon="inline-start" />
-				Refresh
-			</Button>
+			{onRefresh ? (
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => {
+						startTransition(async () => {
+							await onRefresh()
+						})
+					}}
+					disabled={isPending}
+				>
+					<RefreshCwIcon data-icon="inline-start" />
+					Refresh
+				</Button>
+			) : null}
 		</div>
 	)
 

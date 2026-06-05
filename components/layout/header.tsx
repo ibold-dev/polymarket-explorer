@@ -6,6 +6,8 @@ import { MobileNav } from "./mobile-nav";
 import { NAV_ITEMS } from "./nav-items";
 import { SettingsMenu } from "./settings-menu";
 import { StructLogoMark } from "../ui/svgs/struct-logo";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 
 export function Header() {
 	return (
@@ -24,7 +26,11 @@ export function Header() {
 								href={item.href}
 								prefetch={false}
 								target={item.external ? "_blank" : undefined}
-								className="rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								className={
+									item.primary
+										? cn(buttonVariants({ variant: "default", size: "sm" }))
+										: "rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								}
 							>
 								{item.label}
 							</Link>

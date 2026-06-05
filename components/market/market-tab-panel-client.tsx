@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 
 import { getMarketTabPageAction } from "@/app/actions";
+import { useTabBridge } from "@/components/layout/tab-bridge";
 import { ChartCard } from "@/components/market/chart-card";
 import { MarketHoldersClient } from "@/components/market/market-holders-client";
 import { MarketHoldersHistoryClient } from "@/components/market/market-holders-history-client";
@@ -97,6 +98,7 @@ export function MarketTabPanelClient({
 }) {
 	const [isPending, startTransition] = useTransition();
 	const requestIdRef = useRef(0);
+	const bridge = useTabBridge();
 	const [panelState, setPanelState] = useState(() => ({
 		sourceData: initialData,
 		data: initialData,
@@ -134,6 +136,14 @@ export function MarketTabPanelClient({
 			}
 		});
 	}, [currentData.conditionId, currentData.slug, currentTab, initialData]);
+
+	useEffect(() => {
+		bridge?.registerHandler("market-activity", handleTabChange as (tab: string) => void);
+	}, [bridge, handleTabChange]);
+
+	useEffect(() => {
+		bridge?.reportActive("market-activity", currentTab);
+	}, [bridge, currentTab]);
 
 	return (
 		<div className="space-y-4">

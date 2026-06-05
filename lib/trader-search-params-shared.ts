@@ -1,14 +1,9 @@
-export const traderTabValues = ["active", "closed", "activity", "categories", "markets", "wins", "losses"] as const;
+export const traderTabValues = ["active", "closed", "activity", "categories", "markets"] as const;
 export const maxTraderPageNumber = 1000;
 export type TraderTab = (typeof traderTabValues)[number];
 
-export type TraderExitMode = "wins" | "losses";
-
-export function exitModeForTab(tab: TraderTab): TraderExitMode | null {
-	if (tab === "wins") return "wins";
-	if (tab === "losses") return "losses";
-	return null;
-}
+export const traderExitModeValues = ["wins", "losses"] as const;
+export type TraderExitMode = (typeof traderExitModeValues)[number];
 
 export const traderPositionSortByValues = [
 	"title",
