@@ -37,7 +37,6 @@ export {
 	getTagCount,
 	getTagPageCount,
 	getTagsPaginated,
-	searchTags,
 } from "@/lib/struct/queries/market-tags";
 
 export type { PaginatedResult } from "@/lib/struct/queries/_shared";
