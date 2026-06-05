@@ -881,7 +881,7 @@ export async function getRewardsMarkets(): Promise<MarketResponse[]> {
 		const response = await client.markets.getMarkets({
 			has_rewards: true,
 			status: "open",
-			limit,
+			limit: 25,
 		});
 		return response.data
 			.filter(
