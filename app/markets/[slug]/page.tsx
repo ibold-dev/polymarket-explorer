@@ -96,7 +96,7 @@ function truncateQuestion(question: string, maxLength: number = 60) {
 export default function MarketPage({ params, searchParams }: Props) {
 	return (
 		<div className="flex w-full justify-center">
-			<div className="flex w-full max-w-7xl flex-col gap-4 px-4 pb-10 sm:gap-6 sm:px-6 sm:pb-12">
+			<div className="flex w-full max-w-7xl flex-col gap-4 px-4 pt-6 pb-10 sm:gap-6 sm:px-6 sm:pt-8 sm:pb-12">
 				<Suspense fallback={<MarketPageFallback />}>
 					<MarketPageContent params={params} searchParams={searchParams} />
 				</Suspense>
