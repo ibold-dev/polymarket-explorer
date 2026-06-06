@@ -199,83 +199,101 @@ function snapExitsToChart(exits: PnlChartExit[], chartData: PnlChartPoint[]): Ex
 		})
 }
 
-function ExitBubblePopoverContent({ exit, timezone }: { exit: PnlChartExit; timezone?: string }) {
+function ExitClusterList({ exits, timezone }: { exits: PnlChartExit[]; timezone?: string }) {
+	const net = exits.reduce((sum, exit) => sum + exit.pnlUsd, 0)
+
+	return (
+		<div className="flex flex-col overflow-hidden rounded-lg">
+			{exits.length > 1 ? (
+				<div className="flex items-center justify-between gap-4 border-b px-3 py-2">
+					<span className="text-xs font-medium text-muted-foreground">{exits.length} exits</span>
+					<span className={cn("text-xs font-medium tabular-nums", pnlColorClass(net))}>
+						Net {formatNumber(net, { currency: true, compact: true })}
+					</span>
+				</div>
+			) : null}
+			<div className="max-h-72 overflow-y-auto overscroll-contain">
+				{exits.map((exit, index) => (
+					<ExitClusterRow
+						key={`${exit.t}-${exit.marketSlug ?? exit.question}-${index}`}
+						exit={exit}
+						timezone={timezone}
+					/>
+				))}
+			</div>
+		</div>
+	)
+}
+
+function ExitClusterRow({ exit, timezone }: { exit: PnlChartExit; timezone?: string }) {
 	const isWin = exit.pnlUsd >= 0
 	const href = exit.marketSlug ? `https://polymarket.com/market/${exit.marketSlug}` : null
 	const image = exit.imageUrl ? normalizePolymarketS3ImageUrl(exit.imageUrl) : null
+	const className = "flex items-start gap-2.5 px-3 py-2.5"
 
-	return (
-		<div className="grid gap-2.5">
-			<div className="flex items-start gap-2.5">
-				{image ? (
-					<img className="size-10 shrink-0 rounded-md object-cover" alt="" src={image} />
-				) : (
-					<div className="size-10 shrink-0 rounded-md bg-muted" />
-				)}
-				<p className="min-w-0 flex-1 text-sm font-medium leading-snug">{exit.question}</p>
-			</div>
-			<div className="flex flex-wrap items-center gap-1.5">
-				{exit.outcome ? (
-					<Badge
-						variant={
-							exit.outcomeIndex === 0 ? "positive" : exit.outcomeIndex === 1 ? "negative" : "secondary"
-						}
-					>
-						{exit.outcome}
-					</Badge>
-				) : null}
-				<Badge variant="outline">{exitCloseLabel(exit.reason)}</Badge>
-			</div>
-			<div className="grid gap-1.5 border-t pt-2 text-xs">
-				<ExitPopoverRow label="Realized PnL" valueClassName={pnlColorClass(exit.pnlUsd)}>
-					{formatNumber(exit.pnlUsd, { currency: true, compact: true })}
-					{exit.pnlPct != null ? (
-						<span className="text-muted-foreground"> ({formatNumber(exit.pnlPct, { percent: true })})</span>
-					) : null}
-				</ExitPopoverRow>
-				<ExitPopoverRow label="Invested">
-					{formatNumber(exit.costBasisUsd, { currency: true, compact: true })}
-				</ExitPopoverRow>
-				<ExitPopoverRow label="Closed">{formatDateFull(exit.t, timezone)}</ExitPopoverRow>
-			</div>
-			{href ? (
-				<a
-					href={href}
-					target="_blank"
-					rel="noopener noreferrer"
+	const content = (
+		<>
+			{image ? (
+				<img
 					className={cn(
-						"text-xs font-medium underline-offset-4 hover:underline",
-						isWin ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
+						"size-9 shrink-0 rounded-md border-2 object-cover",
+						isWin ? "border-emerald-500" : "border-red-500",
 					)}
-				>
-					View on Polymarket
-				</a>
-			) : null}
-		</div>
+					alt=""
+					src={image}
+				/>
+			) : (
+				<div
+					className={cn(
+						"size-9 shrink-0 rounded-md border-2 bg-muted",
+						isWin ? "border-emerald-500" : "border-red-500",
+					)}
+				/>
+			)}
+			<div className="min-w-0 flex-1">
+				<p className="truncate text-xs font-medium leading-snug">{exit.question}</p>
+				<div className="mt-1 flex flex-wrap items-center gap-1.5">
+					{exit.outcome ? (
+						<Badge
+							variant={
+								exit.outcomeIndex === 0 ? "positive" : exit.outcomeIndex === 1 ? "negative" : "secondary"
+							}
+						>
+							{exit.outcome}
+						</Badge>
+					) : null}
+					<Badge variant="outline">{exitCloseLabel(exit.reason)}</Badge>
+					<span className="text-[10px] text-muted-foreground">{formatDateFull(exit.t, timezone)}</span>
+				</div>
+			</div>
+			<div className="shrink-0 text-right">
+				<p className={cn("text-xs font-medium tabular-nums", pnlColorClass(exit.pnlUsd))}>
+					{formatNumber(exit.pnlUsd, { currency: true, compact: true })}
+				</p>
+				{exit.pnlPct != null ? (
+					<p className="text-[10px] tabular-nums text-muted-foreground">
+						{formatNumber(exit.pnlPct, { percent: true })}
+					</p>
+				) : null}
+			</div>
+		</>
 	)
+
+	if (href) {
+		return (
+			<a href={href} target="_blank" rel="noopener noreferrer" className={cn(className, "transition-colors hover:bg-muted")}>
+				{content}
+			</a>
+		)
+	}
+
+	return <div className={className}>{content}</div>
 }
 
-function ExitPopoverRow({
-	label,
-	valueClassName,
-	children,
-}: {
-	label: string
-	valueClassName?: string
-	children: ReactNode
-}) {
-	return (
-		<div className="flex items-center justify-between gap-4">
-			<span className="text-muted-foreground">{label}</span>
-			<span className={cn("font-medium tabular-nums text-foreground", valueClassName)}>{children}</span>
-		</div>
-	)
-}
-
-const EXIT_BUBBLE_HIT_SIZE = 48
 const EXIT_STACK_PITCH = 26
 const EXIT_CLUSTER_THRESHOLD = EXIT_BUBBLE_SIZE
-const EXIT_STACK_MAX_VISIBLE = 5
+const EXIT_STACK_OVERLAP = EXIT_BUBBLE_SIZE - EXIT_STACK_PITCH
+const EXIT_PREVIEW_MAX = 3
 const EXIT_BUBBLE_MARGIN = EXIT_BUBBLE_SIZE / 2
 const EXIT_BUBBLE_EDGE_PADDING = 8
 const EXIT_PLOT_INSET_RIGHT = 60
@@ -294,15 +312,22 @@ type ExitPosition = {
 	cy: number
 }
 
-type StackedBubble =
-	| { type: "exit"; exit: PnlChartExit; cx: number; cy: number }
-	| { type: "overflow"; count: number; tone: "win" | "loss" | "mixed"; cx: number; cy: number }
+type ExitClusterData = {
+	exits: PnlChartExit[]
+	tone: "win" | "loss" | "mixed"
+	cx: number
+	cy: number
+}
 
-function stackExitPositions(positions: ExitPosition[], bounds: ChartBounds | null): StackedBubble[] {
+function previewRowCount(total: number): number {
+	return total <= EXIT_PREVIEW_MAX ? total : EXIT_PREVIEW_MAX
+}
+
+function groupExitClusters(positions: ExitPosition[], bounds: ChartBounds | null): ExitClusterData[] {
 	if (positions.length === 0) return []
 
 	const sorted = [...positions].sort((a, b) => a.cx - b.cx)
-	const stacked: StackedBubble[] = []
+	const clusters: ExitClusterData[] = []
 
 	let cluster: ExitPosition[] = []
 	let anchorCx = sorted[0].cx
@@ -313,38 +338,24 @@ function stackExitPositions(positions: ExitPosition[], bounds: ChartBounds | nul
 		const avgCx = cluster.reduce((sum, pos) => sum + pos.cx, 0) / cluster.length
 		const avgCy = cluster.reduce((sum, pos) => sum + pos.cy, 0) / cluster.length
 
-		const byMagnitude = [...cluster].sort((a, b) => Math.abs(b.exit.pnlUsd) - Math.abs(a.exit.pnlUsd))
-		const kept = byMagnitude.slice(0, EXIT_STACK_MAX_VISIBLE).sort((a, b) => b.exit.pnlUsd - a.exit.pnlUsd)
-		const overflowCount = cluster.length - kept.length
-
+		const exits = cluster.map((pos) => pos.exit).sort((a, b) => b.pnlUsd - a.pnlUsd)
 		const wins = cluster.filter((pos) => pos.exit.pnlUsd >= 0).length
 		const tone: "win" | "loss" | "mixed" = wins === cluster.length ? "win" : wins === 0 ? "loss" : "mixed"
 
-		const rows = kept.length + (overflowCount > 0 ? 1 : 0)
-		const offset = (rows - 1) / 2
+		const rows = previewRowCount(exits.length)
+		const stackHeight = rows * EXIT_BUBBLE_SIZE - (rows - 1) * EXIT_STACK_OVERLAP
+		const halfHeight = stackHeight / 2
 
-		const cx = bounds
-			? Math.min(Math.max(avgCx, bounds.left + EXIT_BUBBLE_MARGIN), bounds.right - EXIT_BUBBLE_MARGIN)
-			: avgCx
-
-		let shiftY = 0
+		let cx = avgCx
+		let cy = avgCy
 		if (bounds) {
-			const stackTop = avgCy - offset * EXIT_STACK_PITCH
-			const stackBottom = avgCy + (rows - 1 - offset) * EXIT_STACK_PITCH
-			const minAllowed = bounds.top + EXIT_BUBBLE_MARGIN + EXIT_BUBBLE_EDGE_PADDING
-			const maxAllowed = bounds.bottom - EXIT_BUBBLE_MARGIN - EXIT_BUBBLE_EDGE_PADDING
-			if (stackTop < minAllowed) shiftY = minAllowed - stackTop
-			else if (stackBottom > maxAllowed) shiftY = maxAllowed - stackBottom
+			cx = Math.min(Math.max(avgCx, bounds.left + EXIT_BUBBLE_MARGIN), bounds.right - EXIT_BUBBLE_MARGIN)
+			const minAllowed = bounds.top + EXIT_BUBBLE_EDGE_PADDING + halfHeight
+			const maxAllowed = bounds.bottom - EXIT_BUBBLE_EDGE_PADDING - halfHeight
+			cy = Math.min(Math.max(avgCy, minAllowed), maxAllowed)
 		}
 
-		kept.forEach((pos, index) => {
-			stacked.push({ type: "exit", exit: pos.exit, cx, cy: avgCy + (index - offset) * EXIT_STACK_PITCH + shiftY })
-		})
-
-		if (overflowCount > 0) {
-			stacked.push({ type: "overflow", count: overflowCount, tone, cx, cy: avgCy + (kept.length - offset) * EXIT_STACK_PITCH + shiftY })
-		}
-
+		clusters.push({ exits, tone, cx, cy })
 		cluster = []
 	}
 
@@ -358,7 +369,7 @@ function stackExitPositions(positions: ExitPosition[], bounds: ChartBounds | nul
 	}
 	flush()
 
-	return stacked
+	return clusters
 }
 
 function ExitScaleProbe({
@@ -392,66 +403,79 @@ function ExitScaleProbe({
 	return null
 }
 
-function ExitBubble({ exit, timezone, style }: { exit: PnlChartExit; timezone?: string; style?: CSSProperties }) {
+function ExitPreviewBubble({ exit, style }: { exit: PnlChartExit; style?: CSSProperties }) {
 	const isWin = exit.pnlUsd >= 0
 	const image = exit.imageUrl ? normalizePolymarketS3ImageUrl(exit.imageUrl) : null
+
+	return (
+		<span
+			className={cn(
+				"block overflow-hidden rounded-full border-2 bg-card shadow-md",
+				isWin ? "border-emerald-500" : "border-red-500",
+			)}
+			style={{ width: EXIT_BUBBLE_SIZE, height: EXIT_BUBBLE_SIZE, ...style }}
+		>
+			{image ? (
+				<img src={image} alt="" className="size-full object-cover" />
+			) : (
+				<span className={cn("block size-full", isWin ? "bg-emerald-500/20" : "bg-red-500/20")} />
+			)}
+		</span>
+	)
+}
+
+function ExitCountBubble({ count, tone, style }: { count: number; tone: "win" | "loss" | "mixed"; style?: CSSProperties }) {
+	return (
+		<span
+			className={cn(
+				"flex items-center justify-center rounded-full border-2 bg-card text-[11px] font-semibold tabular-nums shadow-md",
+				tone === "win"
+					? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
+					: tone === "loss"
+						? "border-red-500 text-red-600 dark:text-red-400"
+						: "border-border text-muted-foreground",
+			)}
+			style={{ width: EXIT_BUBBLE_SIZE, height: EXIT_BUBBLE_SIZE, ...style }}
+		>
+			+{count}
+		</span>
+	)
+}
+
+function ExitCluster({ cluster, timezone, style }: { cluster: ExitClusterData; timezone?: string; style?: CSSProperties }) {
+	const { exits, tone } = cluster
+	const showAll = exits.length <= EXIT_PREVIEW_MAX
+	const previewExits = showAll ? exits : exits.slice(0, EXIT_PREVIEW_MAX - 1)
+	const remaining = exits.length - previewExits.length
+	const rows = previewExits.length + (remaining > 0 ? 1 : 0)
 
 	return (
 		<div className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2" style={style}>
 			<Popover>
 				<PopoverTrigger
-					openOnHover
-					delay={250}
-					closeDelay={120}
 					render={
 						<button
 							type="button"
-							aria-label={`${isWin ? "Winning" : "Losing"} exit: ${exit.question}`}
-							className="group pointer-events-auto flex items-center justify-center outline-none"
-							style={{ width: EXIT_BUBBLE_HIT_SIZE, height: EXIT_BUBBLE_HIT_SIZE }}
+							aria-label={exits.length === 1 ? `Exit: ${exits[0].question}` : `${exits.length} exits`}
+							className="group pointer-events-auto flex flex-col items-center outline-none transition-transform hover:scale-105 focus-visible:scale-105"
 						>
-							<span
-								className={cn(
-									"block overflow-hidden rounded-full border-2 bg-card shadow-md transition-transform group-hover:scale-110 group-focus-visible:scale-110",
-									isWin ? "border-emerald-500" : "border-red-500",
-								)}
-								style={{ width: EXIT_BUBBLE_SIZE, height: EXIT_BUBBLE_SIZE }}
-							>
-								{image ? (
-									<img src={image} alt="" className="size-full object-cover" />
-								) : (
-									<span className={cn("block size-full", isWin ? "bg-emerald-500/20" : "bg-red-500/20")} />
-								)}
-							</span>
+							{previewExits.map((exit, index) => (
+								<ExitPreviewBubble
+									key={`${exit.t}-${exit.marketSlug ?? exit.question}-${index}`}
+									exit={exit}
+									style={{ marginTop: index === 0 ? 0 : -EXIT_STACK_OVERLAP, zIndex: rows - index }}
+								/>
+							))}
+							{remaining > 0 ? (
+								<ExitCountBubble count={remaining} tone={tone} style={{ marginTop: -EXIT_STACK_OVERLAP, zIndex: 0 }} />
+							) : null}
 						</button>
 					}
 				/>
-				<PopoverContent align="center" side="top" className="w-64">
-					<ExitBubblePopoverContent exit={exit} timezone={timezone} />
+				<PopoverContent align="center" side="top" className="w-72 p-0">
+					<ExitClusterList exits={exits} timezone={timezone} />
 				</PopoverContent>
 			</Popover>
-		</div>
-	)
-}
-
-function ExitOverflowBubble({ count, tone, style }: { count: number; tone: "win" | "loss" | "mixed"; style?: CSSProperties }) {
-	return (
-		<div className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2" style={style}>
-			<div className="flex items-center justify-center" style={{ width: EXIT_BUBBLE_HIT_SIZE, height: EXIT_BUBBLE_HIT_SIZE }}>
-				<span
-					className={cn(
-						"flex items-center justify-center rounded-full border-2 bg-card text-[11px] font-semibold tabular-nums shadow-md",
-						tone === "win"
-							? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
-							: tone === "loss"
-								? "border-red-500 text-red-600 dark:text-red-400"
-								: "border-border text-muted-foreground",
-					)}
-					style={{ width: EXIT_BUBBLE_SIZE, height: EXIT_BUBBLE_SIZE }}
-				>
-					+{count}
-				</span>
-			</div>
 		</div>
 	)
 }
@@ -1207,23 +1231,14 @@ export function PnlChartContent({ data, annotations = [], showAnnotations = fals
 					</ChartContainer>
 					{exitPositions.length > 0 ? (
 						<div className="pointer-events-none absolute inset-0">
-							{stackExitPositions(exitPositions, exitBounds).map((pos, index) =>
-								pos.type === "exit" ? (
-									<ExitBubble
-										key={`exit-${index}-${pos.exit.t}-${pos.exit.marketSlug ?? pos.exit.question}`}
-										exit={pos.exit}
-										timezone={timezone}
-										style={{ left: pos.cx, top: pos.cy }}
-									/>
-								) : (
-									<ExitOverflowBubble
-										key={`exit-overflow-${index}-${Math.round(pos.cx)}`}
-										count={pos.count}
-										tone={pos.tone}
-										style={{ left: pos.cx, top: pos.cy }}
-									/>
-								),
-							)}
+							{groupExitClusters(exitPositions, exitBounds).map((cluster, index) => (
+								<ExitCluster
+									key={`exit-cluster-${index}-${Math.round(cluster.cx)}`}
+									cluster={cluster}
+									timezone={timezone}
+									style={{ left: cluster.cx, top: cluster.cy }}
+								/>
+							))}
 						</div>
 					) : null}
 					</>
