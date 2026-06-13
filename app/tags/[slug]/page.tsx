@@ -28,11 +28,6 @@ import {
 	buildPageMetadata,
 	SITE_NAME,
 } from "@/lib/site-metadata";
-import {
-	getTagAnalyticsChanges,
-	getTagAnalyticsDeltas,
-	getTagAnalyticsTimeseries,
-} from "@/lib/struct/analytics-queries";
 import { DEFAULT_ANALYTICS_VIEW, parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/struct/analytics-shared";
 import { parseEventStatusTab } from "@/lib/event-search-params-shared";
 import { parseMarketStatusTab } from "@/lib/market-search-params-shared";
@@ -297,14 +292,10 @@ async function TagPageContent({
 						resolution={resolution}
 						defaultResolution={defaultResolution}
 						defaultRange={defaultRange}
-						allowedComponents={SCOPED_VOLUME_COMPONENTS}
-						pathname={`/tags/${canonicalSlug}`}
-						fetchers={{
-							deltas: () => getTagAnalyticsDeltas(tagKey, range, resolution),
-							timeseries: () => getTagAnalyticsTimeseries(tagKey, range, resolution),
-							changes: () => getTagAnalyticsChanges(tagKey, range),
-						}}
-					/>
+							allowedComponents={SCOPED_VOLUME_COMPONENTS}
+							pathname={`/tags/${canonicalSlug}`}
+							source={{ kind: "tag", tag: tagKey }}
+						/>
 				</SectionAnchor>
 
 				<SectionAnchor id="tag-builders" className="mt-8">

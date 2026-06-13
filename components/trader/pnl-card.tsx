@@ -8,11 +8,10 @@ import { PnlRangeDialog } from "@/components/trader/pnl-range-dialog"
 import { PnlTimeframeSelector } from "@/components/trader/pnl-timeframe-selector"
 import { PnlShareDialog } from "@/components/trader/pnl-share-dialog"
 import { ShareIdentityHeader } from "@/components/trader/share-identity-header"
+import { useTraderPnlView } from "@/components/trader/trader-pnl-provider"
 import { useLocalStorage } from "@/lib/hooks/use-local-storage"
 import { usePnlPeriodWindow } from "@/lib/hooks/use-pnl-period-window"
 import { useTimezone } from "@/lib/hooks/use-timezone"
-import type { PnlChartAnnotation, PnlChartExit, PnlDataPoint } from "@/lib/struct/pnl"
-import type { ResolvedPnlRange } from "@/lib/struct/pnl-range"
 import { pnlFillGapsParser } from "@/lib/trader-search-params"
 import { cn } from "@/lib/utils"
 
@@ -23,18 +22,22 @@ const FILL_GAPS_STORAGE_KEY = "polymarket-explorer:pnl-card:fill-gaps"
 const TOOLTIP_FIELDS_STORAGE_KEY = "polymarket-explorer:pnl-card:tooltip-fields"
 
 type PnlCardProps = {
-	data: PnlDataPoint[]
 	displayName: string
 	address: string
 	profileImage?: string | null
-	annotations?: PnlChartAnnotation[]
-	exits?: PnlChartExit[]
-	pnlRange: ResolvedPnlRange
-	pnlFillGaps: boolean
 	firstTradeAt?: number
 }
 
-export function PnlCard({ data, displayName, address, profileImage, annotations = [], exits = [], pnlRange, pnlFillGaps, firstTradeAt }: PnlCardProps) {
+export function PnlCard({ displayName, address, profileImage, firstTradeAt }: PnlCardProps) {
+	const pnlView = useTraderPnlView()
+	const {
+		candles: data,
+		annotations,
+		exits,
+		range: pnlRange,
+		fillGaps: pnlFillGaps,
+		update: updatePnlView,
+	} = pnlView
 	const cardRef = useRef<HTMLDivElement>(null)
 	const [chartMode, setChartMode] = useState<PnlChartMode>("area")
 	const [chartMetric, setChartMetric] = useState<PnlChartMetric>("pnl")
@@ -50,7 +53,7 @@ export function PnlCard({ data, displayName, address, profileImage, annotations 
 	const [, setFillGaps] = useQueryState("pnlFillGaps", {
 		...pnlFillGapsParser,
 		history: "push",
-		shallow: false,
+		shallow: true,
 		scroll: false,
 		startTransition: startFillGapsTransition,
 	})
@@ -67,8 +70,9 @@ export function PnlCard({ data, displayName, address, profileImage, annotations 
 		}
 		if (storedFillGaps !== pnlFillGaps) {
 			setFillGaps(storedFillGaps ? true : null)
+			updatePnlView({ fillGaps: storedFillGaps })
 		}
-	}, [storedFillGaps, pnlFillGaps, setFillGaps, setStoredFillGaps])
+	}, [storedFillGaps, pnlFillGaps, setFillGaps, setStoredFillGaps, updatePnlView])
 
 	const windowAnnotations = useMemo(
 		() => annotations.filter((annotation) => annotation.window === periodWindow),
@@ -106,10 +110,10 @@ export function PnlCard({ data, displayName, address, profileImage, annotations 
 
 	const handleFillGapsChange = useCallback(
 		(next: boolean) => {
+			if (pnlView.isPending) return
 			setStoredFillGaps(next)
-			setFillGaps(next ? true : null)
 		},
-		[setFillGaps, setStoredFillGaps],
+		[pnlView.isPending, setStoredFillGaps],
 	)
 
 	const handleTooltipFieldChange = useCallback(
@@ -152,7 +156,16 @@ export function PnlCard({ data, displayName, address, profileImage, annotations 
 				tooltipFields={tooltipFields}
 				action={
 					<div className="flex w-full flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end">
-						<PnlTimeframeSelector active={pnlRange.mode === "preset" ? pnlRange.timeframe : null} />
+						<PnlTimeframeSelector
+							active={pnlRange.mode === "preset" ? pnlRange.timeframe : null}
+							pending={pnlView.isPending}
+							onChange={(timeframe) => pnlView.update({
+								timeframe,
+								anchor: null,
+								from: null,
+								to: null,
+							})}
+						/>
 						<PnlRangeDialog
 							mode={pnlRange.mode}
 							timeframe={pnlRange.timeframe}
@@ -161,6 +174,9 @@ export function PnlCard({ data, displayName, address, profileImage, annotations 
 							to={pnlRange.to}
 							timezone={timezone}
 							firstTradeAt={firstTradeAt}
+							pending={pnlView.isPending}
+							onRangeChange={(range) => pnlView.update(range)}
+							onTimezoneChange={(timezone) => pnlView.update({ timezone })}
 						/>
 						<PnlShareDialog address={address} displayName={displayName} targetRef={cardRef} />
 					</div>

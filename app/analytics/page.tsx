@@ -10,11 +10,6 @@ import {
 } from "@/components/builders/builders-global-stats";
 import { buildPageMetadata } from "@/lib/site-metadata";
 import {
-	getAnalyticsChanges,
-	getAnalyticsDeltas,
-	getAnalyticsTimeseries,
-} from "@/lib/struct/analytics-queries";
-import {
 	parseAnalyticsParams,
 	ANALYTICS_RANGE_LABELS,
 } from "@/lib/struct/analytics-shared";
@@ -118,12 +113,8 @@ async function AnalyticsPageContent({ searchParams }: Props) {
 			defaultResolution={defaultResolution}
 			headingLevel="h1"
 			pathname="/analytics"
+			source={{ kind: "global" }}
 			appendMetrics={["incentives", "yesNoShares"]}
-			fetchers={{
-				deltas: () => getAnalyticsDeltas(range, resolution),
-				timeseries: () => getAnalyticsTimeseries(range, resolution),
-				changes: () => getAnalyticsChanges(range),
-			}}
 		/>
 	);
 }

@@ -30,13 +30,15 @@ const RANGE_PARAMS = {
 
 type PnlTimeframeSelectorProps = {
 	active: PnlTimeframe | null
+	pending?: boolean
+	onChange?: (timeframe: PnlTimeframe) => void
 }
 
-export function PnlTimeframeSelector({ active }: PnlTimeframeSelectorProps) {
-	const [isPending, startTransition] = useTransition()
+export function PnlTimeframeSelector({ active, pending = false, onChange }: PnlTimeframeSelectorProps) {
+	const [isUrlPending, startTransition] = useTransition()
 	const [, setParams] = useQueryStates(RANGE_PARAMS, {
 		history: "push",
-		shallow: false,
+		shallow: true,
 		scroll: false,
 		startTransition,
 	})
@@ -50,24 +52,27 @@ export function PnlTimeframeSelector({ active }: PnlTimeframeSelectorProps) {
 			pnlFrom: null,
 			pnlTo: null,
 		})
+		onChange?.(next)
 	}
 
 	return (
 		<div
 			className={cn(
 				"inline-flex h-7 items-center rounded-md border border-border/60 bg-muted/40 p-0.5",
-				isPending && "opacity-70",
+				(isUrlPending || pending) && "opacity-70",
 			)}
 		>
 			{pnlTimeframeValues.map((value) => {
 				const isActive = value === active
 				const label = TIMEFRAME_LABELS[value]
+				const disabled = isUrlPending || pending
 				return (
 					<TooltipWrapper key={value} content={label}>
 						<button
 							type="button"
 							aria-pressed={isActive}
 							aria-label={label}
+							disabled={disabled}
 							onClick={() => applyTimeframe(value)}
 							className={cn(
 								"rounded-sm px-2 text-xs font-medium leading-6 transition-colors",

@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import type { ReactNode } from "react";
-import type { Event, EventMetricsResponse } from "@structbuild/sdk";
+import type { Event } from "@structbuild/sdk";
 
 import { MarketDescription } from "@/components/market/market-description";
 import { MarketTags } from "@/components/market/market-tags";
@@ -36,21 +36,20 @@ function StatCard({ label, value }: { label: string; value: ReactNode }) {
 type EventHeaderProps = {
 	event: Event;
 	slug: string;
-	metrics: EventMetricsResponse | null;
 };
 
-export function EventHeader({ event, slug, metrics }: EventHeaderProps) {
+export function EventHeader({ event, slug }: EventHeaderProps) {
 	const polymarketSlug = event.event_slug ?? slug;
 	const polymarketUrl = `https://polymarket.com/event/${polymarketSlug}`;
 	const title = event.title ?? slug.replace(/-/g, " ");
 	const tags = (event.tags ?? []).map((t) => t.label).filter((l): l is string => typeof l === "string" && l.length > 0);
 
 	const lifetimeMetrics = event.metrics?.lifetime;
-	const volumeUsd = metrics?.volume_usd ?? lifetimeMetrics?.volume ?? null;
-	const sharesVolume = metrics?.shares_volume ?? lifetimeMetrics?.shares_volume ?? null;
-	const txns = metrics?.txns ?? lifetimeMetrics?.txns ?? null;
-	const traders = metrics?.unique_traders ?? lifetimeMetrics?.unique_traders ?? null;
-	const fees = metrics?.fees ?? lifetimeMetrics?.fees ?? null;
+	const volumeUsd = lifetimeMetrics?.volume ?? null;
+	const sharesVolume = lifetimeMetrics?.shares_volume ?? null;
+	const txns = lifetimeMetrics?.txns ?? null;
+	const traders = lifetimeMetrics?.unique_traders ?? null;
+	const fees = lifetimeMetrics?.fees ?? null;
 
 	return (
 		<div className="bg-card rounded-lg p-6 flex min-w-0 flex-col gap-5">

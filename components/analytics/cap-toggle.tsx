@@ -10,9 +10,13 @@ import { Toggle } from "@/components/ui/toggle";
 export function AnalyticsCapToggle({
 	cap,
 	defaultCap = false,
+	pending,
+	onNavigate,
 }: {
 	cap: boolean;
 	defaultCap?: boolean;
+	pending?: boolean;
+	onNavigate?: (args: { href: Route; cap: boolean }) => void;
 }) {
 	const router = useRouter();
 	const pathname = usePathname();
@@ -29,6 +33,10 @@ export function AnalyticsCapToggle({
 		}
 		const query = params.toString();
 		const href = (query ? `${pathname}?${query}` : pathname) as Route;
+		if (onNavigate) {
+			onNavigate({ href, cap: pressed });
+			return;
+		}
 		startTransition(() => {
 			router.replace(href, { scroll: false });
 		});
@@ -40,8 +48,9 @@ export function AnalyticsCapToggle({
 			onPressedChange={handleChange}
 			variant="outline"
 			size="sm"
+			disabled={isPending || pending}
 			aria-label="Cap charts to market end time"
-			data-pending={isPending ? "" : undefined}
+			data-pending={isPending || pending ? "" : undefined}
 			className="data-[pending]:opacity-70"
 		>
 			Cap to end

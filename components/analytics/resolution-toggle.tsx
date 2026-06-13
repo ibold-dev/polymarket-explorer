@@ -1,6 +1,6 @@
 "use client";
 
-import { AnalyticsUrlToggle } from "@/components/analytics/url-toggle";
+import { AnalyticsUrlToggle, type AnalyticsNavigateHandler } from "@/components/analytics/url-toggle";
 import {
 	ANALYTICS_RESOLUTION_DESCRIPTIONS,
 	ANALYTICS_RESOLUTION_LABELS,
@@ -13,9 +13,11 @@ type Props = {
 	range: AnalyticsRange;
 	resolution: AnalyticsResolution;
 	defaultResolution: AnalyticsResolution;
+	pending?: boolean;
+	onNavigate?: AnalyticsNavigateHandler<AnalyticsResolution>;
 };
 
-export function AnalyticsResolutionToggle({ range, resolution, defaultResolution }: Props) {
+export function AnalyticsResolutionToggle({ range, resolution, defaultResolution, pending, onNavigate }: Props) {
 	const options = RESOLUTION_OPTIONS_BY_RANGE[range];
 	if (options.length === 0) return null;
 	return (
@@ -27,6 +29,8 @@ export function AnalyticsResolutionToggle({ range, resolution, defaultResolution
 			descriptions={ANALYTICS_RESOLUTION_DESCRIPTIONS}
 			defaultValue={defaultResolution}
 			ariaLabelPrefix="Show bucket"
+			pending={pending}
+			onNavigate={onNavigate}
 		/>
 	);
 }

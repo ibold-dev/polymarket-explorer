@@ -27,11 +27,6 @@ import { getSiteUrl } from "@/lib/env";
 import { parsePageParam } from "@/lib/pagination";
 import { buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
 import {
-	getBuilderGlobalAnalyticsChanges,
-	getBuilderGlobalAnalyticsDeltas,
-	getBuilderGlobalAnalyticsTimeseries,
-} from "@/lib/struct/analytics-queries";
-import {
 	parseAnalyticsParams,
 	type AnalyticsResolution,
 	type VolumeComponentId,
@@ -236,12 +231,7 @@ async function BuildersIndexContent({ searchParams }: Props) {
 						defaultResolution={analytics.defaultResolution}
 						defaultRange={analytics.defaultRange}
 						pathname="/builders"
-						fetchers={{
-							deltas: () => getBuilderGlobalAnalyticsDeltas(analytics.range, analytics.resolution),
-							timeseries: () =>
-								getBuilderGlobalAnalyticsTimeseries(analytics.range, analytics.resolution),
-							changes: () => getBuilderGlobalAnalyticsChanges(analytics.range),
-						}}
+						source={{ kind: "builderGlobal" }}
 						appendMetrics={[
 							"builderFees",
 							"newUsers",

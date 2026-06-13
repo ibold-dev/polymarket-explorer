@@ -1,78 +1,116 @@
 "use client";
 
 import posthog from "posthog-js";
+import { useCallback, useRef, useState, useTransition } from "react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, type ReactNode } from "react";
+import { getHomeActivityDataAction } from "@/app/actions";
+import { BestTradesListClient } from "@/components/home/best-trades-list-client";
+import { HomeRefreshButton } from "@/components/home/home-refresh-button";
+import { RecentTradesTable } from "@/components/home/recent-trades-table";
+import { MarketsTable } from "@/components/market/markets-table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { HomeActivityData, HomeActivityTab } from "@/lib/home-activity";
 
-type HomeActivityTab = "trades" | "trending" | "bestTrades" | "markets";
-
-export function HomeTabsBar() {
+export function HomeTabsBar({ pending = false }: { pending?: boolean }) {
 	return (
 		<TabsList
 			variant="text"
 			className="flex w-full max-w-full min-w-0 justify-start gap-5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 		>
-			<TabsTrigger className="text-lg! sm:text-xl!" value="trades">
-				Recent Trades
-			</TabsTrigger>
-			<TabsTrigger className="text-lg! sm:text-xl!" value="trending">
-				Trending Markets
-			</TabsTrigger>
-			<TabsTrigger className="text-lg! sm:text-xl!" value="bestTrades">
-				Best Wins
-			</TabsTrigger>
-			<TabsTrigger className="text-lg! sm:text-xl!" value="markets">
-				New Markets
-			</TabsTrigger>
+			<TabsTrigger className="text-lg! sm:text-xl!" value="trades" disabled={pending}>Recent Trades</TabsTrigger>
+			<TabsTrigger className="text-lg! sm:text-xl!" value="trending" disabled={pending}>Trending Markets</TabsTrigger>
+			<TabsTrigger className="text-lg! sm:text-xl!" value="bestTrades" disabled={pending}>Best Wins</TabsTrigger>
+			<TabsTrigger className="text-lg! sm:text-xl!" value="markets" disabled={pending}>New Markets</TabsTrigger>
 		</TabsList>
 	);
 }
 
-export function HomeActivityTabs({
-	trades,
-	trending,
-	bestTrades,
-	markets,
+function HomeActivityContent({
+	data,
+	onRefresh,
 }: {
-	trades: ReactNode;
-	trending: ReactNode;
-	bestTrades: ReactNode;
-	markets: ReactNode;
+	data: HomeActivityData;
+	onRefresh: () => Promise<void>;
 }) {
-	const [tab, setTab] = useState<HomeActivityTab>("trades");
+	switch (data.kind) {
+		case "trending":
+			return (
+				<MarketsTable
+					markets={data.markets}
+					storageKey="home-trending-markets"
+					paginationMode="none"
+					sortingMode="client"
+					homeToolbarGrid
+					toolbarAfterTimeframe={<HomeRefreshButton onRefresh={onRefresh} />}
+				/>
+			);
+		case "bestTrades":
+			return <BestTradesListClient key="best-trades" initialTrades={data.trades} initialTimeframe="1d" limit={12} />;
+		case "markets":
+			return (
+				<MarketsTable
+					markets={data.markets}
+					storageKey="home-new-markets"
+					paginationMode="none"
+					homeToolbarGrid
+					toolbarAfterTimeframe={<HomeRefreshButton onRefresh={onRefresh} />}
+				/>
+			);
+		case "trades":
+		default:
+			return (
+				<RecentTradesTable
+					trades={data.trades}
+					homeToolbarGrid
+					toolbarAfterTimeframe={<HomeRefreshButton onRefresh={onRefresh} />}
+				/>
+			);
+	}
+}
+
+function HomeActivityFallback() {
+	return <div className="h-72 animate-pulse rounded-lg bg-muted sm:h-96" />;
+}
+
+export function HomeActivityTabs({ initialData }: { initialData: HomeActivityData }) {
+	const [tab, setTab] = useState<HomeActivityTab>(initialData.kind);
+	const [data, setData] = useState<HomeActivityData>(initialData);
+	const [isPending, startTransition] = useTransition();
+	const requestIdRef = useRef(0);
+
+	const loadTab = useCallback(async (nextTab: HomeActivityTab) => {
+		const requestId = requestIdRef.current + 1;
+		requestIdRef.current = requestId;
+		const result = await getHomeActivityDataAction(nextTab);
+		if (requestIdRef.current === requestId) setData(result);
+	}, []);
+
+	const refresh = useCallback(() => loadTab(tab), [loadTab, tab]);
 
 	return (
 		<Tabs
 			value={tab}
 			onValueChange={(value) => {
 				const next = value as HomeActivityTab;
-				if (next !== tab) {
-					posthog.capture("home_activity_tab_changed", {
-						tab: next,
-						previous_tab: tab,
-					});
-				}
+				if (next === tab) return;
+				posthog.capture("home_activity_tab_changed", { tab: next, previous_tab: tab });
 				setTab(next);
+				startTransition(() => loadTab(next));
 			}}
 			className="gap-3"
+			aria-busy={isPending}
 		>
 			<div className="grid gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
 				<div className="min-w-0">
-					<HomeTabsBar />
+					<HomeTabsBar pending={isPending} />
 				</div>
-				<TabsContent value="markets" keepMounted className="contents [&[hidden]]:hidden">
-					{markets}
-				</TabsContent>
-				<TabsContent value="bestTrades" keepMounted className="contents [&[hidden]]:hidden">
-					{bestTrades}
-				</TabsContent>
-				<TabsContent value="trending" keepMounted className="contents [&[hidden]]:hidden">
-					{trending}
-				</TabsContent>
-				<TabsContent value="trades" keepMounted className="contents [&[hidden]]:hidden">
-					{trades}
-				</TabsContent>
+				<div className="contents transition-opacity data-[pending]:opacity-70" data-pending={isPending ? "" : undefined}>
+					{isPending || data.kind !== tab ? (
+						<HomeActivityFallback />
+					) : (
+						<HomeActivityContent data={data} onRefresh={refresh} />
+					)}
+				</div>
 			</div>
 		</Tabs>
 	);
