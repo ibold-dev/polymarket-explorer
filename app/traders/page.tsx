@@ -16,8 +16,7 @@ import { buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
 import { getCategoryLeaderboard, getGlobalLeaderboard } from "@/lib/struct/market-queries";
 import { parsePolymarketCategory } from "@/lib/tag-category";
 import {
-	DEFAULT_TRADER_LEADERBOARD_SORT,
-	DEFAULT_TRADER_LEADERBOARD_SORT_DIRECTION,
+	buildLeaderboardSearchParams,
 	getLeaderboardSortLabel,
 	parseTraderLeaderboardSort,
 	parseTraderLeaderboardSortDirection,
@@ -119,10 +118,8 @@ async function TradersPageContent({ searchParams }: Props) {
 			<PaginationNav
 				basePath="/traders"
 				baseParams={{
-					...(timeframe ? { timeframe } : {}),
+					...buildLeaderboardSearchParams({ timeframe, sort, direction }),
 					...(category ? { category } : {}),
-					...(sort !== DEFAULT_TRADER_LEADERBOARD_SORT ? { sort } : {}),
-					...(direction !== DEFAULT_TRADER_LEADERBOARD_SORT_DIRECTION ? { dir: direction } : {}),
 				}}
 				page={page}
 				cursor={cursor ?? null}

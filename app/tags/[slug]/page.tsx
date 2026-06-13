@@ -38,6 +38,12 @@ import { parseEventStatusTab } from "@/lib/event-search-params-shared";
 import { parseMarketStatusTab } from "@/lib/market-search-params-shared";
 import { getEventsByTag } from "@/lib/struct/queries/events";
 import { getTagBySlug, getMarketsByTag } from "@/lib/struct/market-queries";
+import {
+	buildLeaderboardSearchParams,
+	parseTraderLeaderboardSort,
+	parseTraderLeaderboardSortDirection,
+} from "@/lib/trader-leaderboard-sort";
+import { parseTraderTimeframe } from "@/lib/trader-timeframes";
 
 type Props = {
 	params: Promise<{ slug: string }>;
@@ -127,6 +133,12 @@ async function TagPageContent({
 	const tagView = parseTagView(resolvedSearchParams.content, availableViews);
 	const marketTab = parseMarketStatusTab(resolvedSearchParams.tab);
 	const eventTab = parseEventStatusTab(resolvedSearchParams.tab);
+	const traderTimeframe = parseTraderTimeframe(resolvedSearchParams.timeframe);
+	const traderSort = parseTraderLeaderboardSort(resolvedSearchParams.sort, "category");
+	const traderDirection = parseTraderLeaderboardSortDirection(resolvedSearchParams.dir);
+	const pageParam =
+		typeof resolvedSearchParams.page === "string" ? Number.parseInt(resolvedSearchParams.page, 10) : 1;
+	const page = Number.isSafeInteger(pageParam) && pageParam >= 1 ? pageParam : 1;
 	const canonicalSlug = tag.slug ?? slug;
 	const tagKey = tag.slug ?? tag.label;
 	const [marketsResult, eventsResult] = await Promise.all([
@@ -182,6 +194,22 @@ async function TagPageContent({
 				},
 	};
 
+	const viewTabs = (
+		<TagViewTabs
+			value={tagView}
+			availableViews={availableViews}
+			teasers={
+				(tag.unique_traders ?? 0) > 0
+					? {
+							"top-traders": (
+								<TabTeaser>{formatNumber(tag.unique_traders, { compact: true })}</TabTeaser>
+							),
+						}
+					: undefined
+			}
+		/>
+	);
+
 	const subheaderSlots: SubheaderSlot[] = [
 		{ type: "anchor", id: "tag-overview", label: "Overview" },
 		{
@@ -211,19 +239,7 @@ async function TagPageContent({
 				</SectionAnchor>
 
 				<SectionAnchor id="tag-content" className="mt-4 space-y-4">
-					<TagViewTabs
-						value={tagView}
-						availableViews={availableViews}
-						teasers={
-							(tag.unique_traders ?? 0) > 0
-								? {
-										"top-traders": (
-											<TabTeaser>{formatNumber(tag.unique_traders, { compact: true })}</TabTeaser>
-										),
-									}
-								: undefined
-						}
-					/>
+					{tagView !== "top-traders" && viewTabs}
 					{tagView === "events" && (
 						<TagEventsStatusListing
 							basePath={`/tags/${canonicalSlug}`}
@@ -252,9 +268,22 @@ async function TagPageContent({
 						<Suspense fallback={null}>
 							<TagTopTradersListing
 								category={category}
-								basePath={`/tags/${canonicalSlug}`}
-								baseParams={{ ...paginationBaseParams, content: "top-traders" }}
+								timeframe={traderTimeframe}
+								sort={traderSort}
+								direction={traderDirection}
 								cursor={cursor ?? null}
+								page={page}
+								basePath={`/tags/${canonicalSlug}`}
+								baseParams={{
+									...paginationBaseParams,
+									content: "top-traders",
+									...buildLeaderboardSearchParams({
+										timeframe: traderTimeframe,
+										sort: traderSort,
+										direction: traderDirection,
+									}),
+								}}
+								toolbarLeft={viewTabs}
 							/>
 						</Suspense>
 					)}

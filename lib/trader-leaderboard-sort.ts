@@ -1,3 +1,5 @@
+import { DEFAULT_TRADER_TIMEFRAME } from "@/lib/trader-timeframes";
+
 export const TRADER_LEADERBOARD_SORT_KEYS = [
 	"total_pnl_usd",
 	"realized_pnl_usd",
@@ -45,6 +47,19 @@ export type TraderLeaderboardSortDirection = (typeof TRADER_LEADERBOARD_SORT_DIR
 
 export const DEFAULT_TRADER_LEADERBOARD_SORT: TraderLeaderboardSortKey = "total_pnl_usd";
 export const DEFAULT_TRADER_LEADERBOARD_SORT_DIRECTION: TraderLeaderboardSortDirection = "desc";
+
+export function buildLeaderboardSearchParams(options: {
+	timeframe?: string;
+	sort: TraderLeaderboardSortKey;
+	direction: TraderLeaderboardSortDirection;
+}): Record<string, string> {
+	const { timeframe, sort, direction } = options;
+	return {
+		...(timeframe && timeframe !== DEFAULT_TRADER_TIMEFRAME ? { timeframe } : {}),
+		...(sort !== DEFAULT_TRADER_LEADERBOARD_SORT ? { sort } : {}),
+		...(direction !== DEFAULT_TRADER_LEADERBOARD_SORT_DIRECTION ? { dir: direction } : {}),
+	};
+}
 
 export type LeaderboardScope = "global" | "category";
 
