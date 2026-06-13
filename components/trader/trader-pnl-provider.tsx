@@ -101,24 +101,29 @@ export function TraderPnlProvider({
 
 	const update = useCallback((patch: Partial<TraderPnlQuery>) => {
 		const nextQuery = { ...queryRef.current, ...patch };
-		queryRef.current = nextQuery;
 		const requestId = requestIdRef.current + 1;
 		requestIdRef.current = requestId;
 
 		startTransition(async () => {
-			const result = await getTraderPnlViewAction({ address, ...nextQuery });
-			if (requestIdRef.current !== requestId) return;
-			setState({
-				range: result.range,
-				fillGaps: result.fillGaps,
-				candles: result.candles,
-				annotations:
-					result.range.mode === "preset" && result.range.timeframe === "all"
-						? getPnlChartAnnotations(result.candles, periods)
-						: [],
-				exits: result.exits,
-				risk: result.risk,
-			});
+			try {
+				const result = await getTraderPnlViewAction({ address, ...nextQuery });
+				if (requestIdRef.current !== requestId) return;
+				queryRef.current = nextQuery;
+				setState({
+					range: result.range,
+					fillGaps: result.fillGaps,
+					candles: result.candles,
+					annotations:
+						result.range.mode === "preset" && result.range.timeframe === "all"
+							? getPnlChartAnnotations(result.candles, periods)
+							: [],
+					exits: result.exits,
+					risk: result.risk,
+				});
+			} catch (error) {
+				if (requestIdRef.current !== requestId) return;
+				console.error("Failed to load trader PnL data", error);
+			}
 		});
 	}, [address, periods]);
 

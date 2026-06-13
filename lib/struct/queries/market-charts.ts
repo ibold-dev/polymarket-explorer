@@ -9,6 +9,12 @@ import type {
 import { getStructClient } from "@/lib/struct/client";
 import { logStructError, readStatus } from "@/lib/struct/http";
 
+export function toVolumePoints(points: PositionVolumeDataPoint[] | null) {
+	return (points ?? [])
+		.filter((point) => (point.bv ?? 0) + (point.sv ?? 0) > 0)
+		.map((point) => ({ t: point.t, buy: point.bv ?? 0, sell: point.sv ?? 0 }));
+}
+
 export async function getMarketChart(conditionId: string): Promise<PositionChartOutcome[] | null> {
 	const client = getStructClient();
 

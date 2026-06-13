@@ -1,7 +1,11 @@
 import { ChartCard } from "@/components/market/chart-card";
 import { MarketChartsClient } from "@/components/market/market-charts-client";
 import type { VolumeOutcome } from "@/components/market/market-volume-chart-client";
-import { getMarketChart, getPositionVolumeChart } from "@/lib/struct/market-queries";
+import {
+	getMarketChart,
+	getPositionVolumeChart,
+	toVolumePoints,
+} from "@/lib/struct/market-queries";
 
 export async function MarketCharts({ conditionId }: { conditionId: string }) {
 	const outcomes = await getMarketChart(conditionId);
@@ -20,9 +24,7 @@ export async function MarketCharts({ conditionId }: { conditionId: string }) {
 			initialVolume = {
 				name: firstOutcome.name,
 				outcomeIndex: firstOutcome.outcome_index,
-				data: (points ?? [])
-					.filter((point) => (point.bv ?? 0) + (point.sv ?? 0) > 0)
-					.map((point) => ({ t: point.t, buy: point.bv ?? 0, sell: point.sv ?? 0 })),
+				data: toVolumePoints(points),
 			};
 		} catch {
 			initialVolume = {

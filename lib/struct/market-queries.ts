@@ -28,6 +28,7 @@ export {
 	getMarketChart,
 	getMarketPriceJumps,
 	getPositionVolumeChart,
+	toVolumePoints,
 } from "@/lib/struct/queries/market-charts";
 
 export {

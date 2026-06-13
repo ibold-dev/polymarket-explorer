@@ -79,11 +79,18 @@ export function HomeActivityTabs({ initialData }: { initialData: HomeActivityDat
 	const requestIdRef = useRef(0);
 
 	const loadTab = useCallback(async (nextTab: HomeActivityTab) => {
+		const prevTab = tab;
 		const requestId = requestIdRef.current + 1;
 		requestIdRef.current = requestId;
-		const result = await getHomeActivityDataAction(nextTab);
-		if (requestIdRef.current === requestId) setData(result);
-	}, []);
+		try {
+			const result = await getHomeActivityDataAction(nextTab);
+			if (requestIdRef.current === requestId) setData(result);
+		} catch (error) {
+			if (requestIdRef.current !== requestId) return;
+			setTab(prevTab);
+			console.error("Failed to load home activity data", error);
+		}
+	}, [tab]);
 
 	const refresh = useCallback(() => loadTab(tab), [loadTab, tab]);
 

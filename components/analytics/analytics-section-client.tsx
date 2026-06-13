@@ -84,7 +84,6 @@ export function AnalyticsSectionClient({
 	const { data } = current;
 
 	const load = useCallback((href: Route, params: URLSearchParams) => {
-		replaceUrl(href);
 		const requestId = requestIdRef.current + 1;
 		requestIdRef.current = requestId;
 		const raw = Object.fromEntries(params.entries());
@@ -92,21 +91,27 @@ export function AnalyticsSectionClient({
 		const next = parseAnalyticsParams(raw, scope, defaultRange);
 
 		startTransition(async () => {
-			const result = await getAnalyticsSectionDataAction({
-				source,
-				range: next.range,
-				resolution: next.resolution,
-				view: next.view,
-				defaultRange,
-				showKpis,
-			});
-			if (requestIdRef.current !== requestId) return;
-			setState({
-				sourceData: initialData,
-				data: result,
-				cap: parseAnalyticsCap(raw.cap) ?? defaultCap,
-				refreshedAt: new Date().toISOString(),
-			});
+			try {
+				const result = await getAnalyticsSectionDataAction({
+					source,
+					range: next.range,
+					resolution: next.resolution,
+					view: next.view,
+					defaultRange,
+					showKpis,
+				});
+				if (requestIdRef.current !== requestId) return;
+				replaceUrl(href);
+				setState({
+					sourceData: initialData,
+					data: result,
+					cap: parseAnalyticsCap(raw.cap) ?? defaultCap,
+					refreshedAt: new Date().toISOString(),
+				});
+			} catch (error) {
+				if (requestIdRef.current !== requestId) return;
+				console.error("Failed to load analytics section data", error);
+			}
 		});
 	}, [defaultCap, defaultRange, initialData, showKpis, source]);
 

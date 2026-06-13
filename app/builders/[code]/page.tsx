@@ -212,7 +212,7 @@ async function BuilderPageContent({
 						pathname={`/builders/${encodeURIComponent(builderCode)}`}
 						allowedComponents={["buy", "sell"]}
 						showKpis={false}
-						source={{ kind: "builder", code }}
+						source={{ kind: "builder", code: builderCode }}
 						appendMetrics={BUILDER_ANALYTICS_APPEND_METRICS}
 						metricPlacements={BUILDER_ANALYTICS_METRIC_PLACEMENTS}
 					/>

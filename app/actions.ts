@@ -26,6 +26,7 @@ import {
 	getMarketsByTag,
 	getTopMarkets,
 	getMarketTradesPage,
+	toVolumePoints,
 } from "@/lib/struct/market-queries";
 import { getEventsByTag } from "@/lib/struct/queries/events";
 import { eventResponseToRow } from "@/lib/event-table-map";
@@ -761,9 +762,7 @@ export async function getMarketPositionVolumeAction({
 	await assertHumanRequest();
 	if (!positionId) return null;
 	const points = await getPositionVolumeChart(positionId);
-	const data = (points ?? [])
-		.filter((point) => (point.bv ?? 0) + (point.sv ?? 0) > 0)
-		.map((point) => ({ t: point.t, buy: point.bv ?? 0, sell: point.sv ?? 0 }));
+	const data = toVolumePoints(points);
 
 	return data.length > 0 ? { name, outcomeIndex, data } : null;
 }
