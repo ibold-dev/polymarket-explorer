@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 import { useLocalStorage } from "@/lib/hooks/use-local-storage";
 import { resolveBrowserTimezone } from "@/lib/pnl-timezones";
@@ -42,6 +42,10 @@ export function useTimezone() {
 		resolveBrowserTimezone,
 		{ deserialize },
 	);
+
+	useEffect(() => {
+		if (isValidTimezone(timezone)) writeCookie(timezone);
+	}, [timezone]);
 
 	const setTimezone = useCallback(
 		(next: string) => {

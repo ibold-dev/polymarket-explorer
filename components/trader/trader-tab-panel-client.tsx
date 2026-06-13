@@ -134,7 +134,8 @@ export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 	}, [currentData.address, currentTab, props])
 
 	useEffect(() => {
-		bridge?.registerHandler("trader-positions", handleTabChange as (tab: string) => void)
+		if (!bridge) return
+		return bridge.registerHandler("trader-positions", handleTabChange as (tab: string) => void)
 	}, [bridge, handleTabChange])
 
 	useEffect(() => {

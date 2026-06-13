@@ -43,7 +43,7 @@ const traderSearchParamParsers = {
 	pnlAnchor: parseAsStringLiteral(pnlAnchorValues),
 	pnlFrom: parseAsUnixSeconds,
 	pnlTo: parseAsUnixSeconds,
-	pnlFillGaps: parseAsBoolean.withDefault(true),
+	pnlFillGaps: parseAsBoolean.withDefault(false),
 };
 
 export const loadTraderSearchParams = createLoader(traderSearchParamParsers);

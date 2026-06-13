@@ -28,6 +28,7 @@ export function Header() {
 									href={item.href}
 									prefetch={false}
 									target={item.external ? "_blank" : undefined}
+									rel={item.external ? "noopener noreferrer" : undefined}
 									className={
 										item.primary
 											? cn(buttonVariants({ variant: "default", size: "sm" }))

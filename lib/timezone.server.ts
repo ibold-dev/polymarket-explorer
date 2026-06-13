@@ -19,6 +19,10 @@ export async function getServerTimezone(): Promise<string> {
 	const store = await cookies();
 	const raw = store.get(TIMEZONE_COOKIE_NAME)?.value;
 	if (!raw) return "UTC";
-	const decoded = decodeURIComponent(raw);
-	return isValidTimezone(decoded) ? decoded : "UTC";
+	try {
+		const decoded = decodeURIComponent(raw);
+		return isValidTimezone(decoded) ? decoded : "UTC";
+	} catch {
+		return "UTC";
+	}
 }

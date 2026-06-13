@@ -72,24 +72,31 @@ export function TraderHighlightsClient({
 
 			const requestId = requestIdRef.current + 1
 			requestIdRef.current = requestId
+			const previousMode = mode
 			void setSearchParams({ highlights: nextMode })
 
 			startTransition(async () => {
-				const result = await getTraderRankedPositionsPageAction({
-					address,
-					mode: nextMode,
-					pageNumber: 1,
-				})
-
-				if (requestIdRef.current === requestId) {
-					setState({
-						sourceMode: initialMode,
-						sourcePage: initialPage,
-						sourcePageNumber: initialPageNumber,
+				try {
+					const result = await getTraderRankedPositionsPageAction({
+						address,
 						mode: nextMode,
-						page: result.page,
-						pageNumber: result.pageNumber,
+						pageNumber: 1,
 					})
+
+					if (requestIdRef.current === requestId) {
+						setState({
+							sourceMode: initialMode,
+							sourcePage: initialPage,
+							sourcePageNumber: initialPageNumber,
+							mode: nextMode,
+							page: result.page,
+							pageNumber: result.pageNumber,
+						})
+					}
+				} catch {
+					if (requestIdRef.current === requestId) {
+						void setSearchParams({ highlights: previousMode })
+					}
 				}
 			})
 		},

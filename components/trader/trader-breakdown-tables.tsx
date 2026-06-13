@@ -86,6 +86,8 @@ function buildHref(basePath: string, baseParams: Record<string, string>, pageKey
 	const params = new URLSearchParams(baseParams);
 	if (pageNumber != null && pageNumber > 1) {
 		params.set(pageKey, String(pageNumber));
+	} else {
+		params.delete(pageKey);
 	}
 	const qs = params.toString();
 	return (qs ? `${basePath}?${qs}` : basePath) as Route;

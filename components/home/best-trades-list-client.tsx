@@ -81,10 +81,12 @@ export function BestTradesListClient({
 	const handleTimeframeChange = useCallback(
 		(next: BestTradesTimeframe) => {
 			if (next === timeframe) return;
-			setTimeframe(next);
 			startTransition(async () => {
-				const result = await getBestTradesAction({ timeframe: next, limit });
-				setRows(result.rows);
+				try {
+					const result = await getBestTradesAction({ timeframe: next, limit });
+					setRows(result.rows);
+					setTimeframe(next);
+				} catch {}
 			});
 		},
 		[timeframe, limit],

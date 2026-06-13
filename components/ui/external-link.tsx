@@ -27,6 +27,7 @@ type ExternalLinkProps = React.ComponentPropsWithoutRef<"a"> & {
 export function ExternalLink({ href, linkType, onClick, children, ...props }: ExternalLinkProps) {
 	return (
 		<a
+			{...props}
 			href={href}
 			target="_blank"
 			rel="noreferrer"
@@ -34,7 +35,6 @@ export function ExternalLink({ href, linkType, onClick, children, ...props }: Ex
 				captureOutbound(href, linkType ? { link_type: linkType } : undefined);
 				onClick?.(event);
 			}}
-			{...props}
 		>
 			{children}
 		</a>

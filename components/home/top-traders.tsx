@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getGlobalLeaderboard } from "@/lib/struct/market-queries";
-import { formatNumber, readTotalPnlUsd } from "@/lib/format";
+import { formatNumber, pnlColorClass, readTotalPnlUsd } from "@/lib/format";
 import { getTraderDisplayName, normalizeWalletAddress } from "@/lib/utils";
 import type { Route } from "next";
 import Link from "next/link";
@@ -27,7 +27,7 @@ export async function TopTraders() {
 							</Avatar>
 						)}
 						<span className="max-w-44 truncate sm:max-w-[16rem]">{getTraderDisplayName(trader)}</span>
-						<span className="text-emerald-500">+{formatNumber(trader.pnl, { compact: true, currency: true })}</span>
+						<span className={pnlColorClass(trader.pnl)}>{trader.pnl > 0 ? "+" : ""}{formatNumber(trader.pnl, { compact: true, currency: true })}</span>
 					</Link>
 				))}
 			</div>

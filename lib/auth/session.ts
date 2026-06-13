@@ -35,6 +35,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
 		const response = await fetch(`${getAuthBaseUrl()}/api/auth/get-session?disableCookieCache=true`, {
 			headers: { cookie: cookieHeader },
 			cache: "no-store",
+			signal: AbortSignal.timeout(5_000),
 		});
 
 		if (!response.ok) return null;

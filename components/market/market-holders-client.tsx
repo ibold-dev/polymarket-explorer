@@ -81,9 +81,10 @@ const columns: ColumnDef<HolderRow, unknown>[] = [
 		header: "Avg Entry",
 		size: 110,
 		cell: ({ row }) => {
-			const buyVolume = row.original.pnl?.buy_volume_usd;
-			const sharesBought = row.original.pnl?.total_shares_bought;
-			const avgEntry = buyVolume != null && sharesBought ? buyVolume / sharesBought : null;
+			const buyVolume = toNumber(row.original.pnl?.buy_volume_usd);
+			const sharesBought = toNumber(row.original.pnl?.total_shares_bought);
+			const avgEntry =
+				buyVolume != null && sharesBought != null && sharesBought > 0 ? buyVolume / sharesBought : null;
 			return (
 				<span className="tabular-nums text-foreground/80">
 					{formatPriceCents(avgEntry)}
@@ -96,8 +97,7 @@ const columns: ColumnDef<HolderRow, unknown>[] = [
 		header: "Realized PnL",
 		size: 140,
 		cell: ({ row }) => {
-			const raw = row.original.pnl?.realized_pnl_usd;
-			const pnl = raw == null ? null : Number(raw);
+			const pnl = toNumber(row.original.pnl?.realized_pnl_usd);
 			if (pnl == null) return <span className="text-muted-foreground">—</span>;
 			return (
 				<span

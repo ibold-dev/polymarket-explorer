@@ -138,7 +138,8 @@ export function MarketTabPanelClient({
 	}, [currentData.conditionId, currentData.slug, currentTab, initialData]);
 
 	useEffect(() => {
-		bridge?.registerHandler("market-activity", handleTabChange as (tab: string) => void);
+		if (!bridge) return;
+		return bridge.registerHandler("market-activity", handleTabChange as (tab: string) => void);
 	}, [bridge, handleTabChange]);
 
 	useEffect(() => {

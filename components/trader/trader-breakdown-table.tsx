@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { type ReactNode, useCallback, useState, useTransition } from "react";
+import { type ReactNode, useCallback, useRef, useState, useTransition } from "react";
 import { useQueryStates } from "nuqs";
 
 import { SortableHeader } from "@/components/ui/sortable-header";
@@ -74,6 +74,7 @@ export function useTraderBreakdownTable<S extends string, R>({
 	fetchPage,
 }: UseTraderBreakdownTableArgs<S, R>) {
 	const [isPending, startTransition] = useTransition();
+	const latestRequestId = useRef(0);
 	const [tableState, setTableState] = useState(() => ({
 		sourcePage: page,
 		sourcePageNumber: pageNumber,
@@ -104,29 +105,34 @@ export function useTraderBreakdownTable<S extends string, R>({
 	const loadPage = useCallback(
 		(nextPageNumber: number, nextSortBy: S, nextSortDirection: TraderSortDirection) => {
 			startTransition(async () => {
+				const requestId = ++latestRequestId.current;
 				void setSearchParams({
 					[paramKeys.page]: nextPageNumber,
 					[paramKeys.sortBy]: nextSortBy,
 					[paramKeys.sortDirection]: nextSortDirection,
 				} as Partial<TraderSearchParams>);
 
-				const result = await fetchPage({
-					address,
-					pageNumber: nextPageNumber,
-					sortBy: nextSortBy,
-					sortDirection: nextSortDirection,
-				});
+				try {
+					const result = await fetchPage({
+						address,
+						pageNumber: nextPageNumber,
+						sortBy: nextSortBy,
+						sortDirection: nextSortDirection,
+					});
 
-				setTableState({
-					sourcePage: page,
-					sourcePageNumber: pageNumber,
-					sourceSortBy: sortBy,
-					sourceSortDirection: sortDirection,
-					page: result.page,
-					pageNumber: result.pageNumber,
-					sortBy: nextSortBy,
-					sortDirection: nextSortDirection,
-				});
+					if (requestId !== latestRequestId.current) return;
+
+					setTableState({
+						sourcePage: page,
+						sourcePageNumber: pageNumber,
+						sourceSortBy: sortBy,
+						sourceSortDirection: sortDirection,
+						page: result.page,
+						pageNumber: result.pageNumber,
+						sortBy: nextSortBy,
+						sortDirection: nextSortDirection,
+					});
+				} catch {}
 			});
 		},
 		[address, fetchPage, page, pageNumber, paramKeys, setSearchParams, sortBy, sortDirection],

@@ -61,7 +61,9 @@ const getTraderPnlCandlesCached = cache(
 		address: string,
 		timeframe: StructPnlCandleTimeframe = defaultPnlTimeframe,
 		resolution: StructPnlCandleResolution = defaultPnlResolution,
-		options: TraderPnlCandlesOptions = {},
+		fillGaps?: boolean,
+		from?: number,
+		to?: number,
 	): Promise<PnlDataPoint[]> => {
 		const client = getStructClient();
 
@@ -74,9 +76,9 @@ const getTraderPnlCandlesCached = cache(
 				address,
 				timeframe,
 				resolution,
-				...(options.fillGaps === undefined ? {} : { fill_gaps: options.fillGaps }),
-				...(options.from === undefined ? {} : { from: options.from }),
-				...(options.to === undefined ? {} : { to: options.to }),
+				...(fillGaps === undefined ? {} : { fill_gaps: fillGaps }),
+				...(from === undefined ? {} : { from }),
+				...(to === undefined ? {} : { to }),
 			});
 
 			return response.data
@@ -127,7 +129,7 @@ const getTraderPnlCandlesCached = cache(
 				return [];
 			}
 
-			const rangeKey = `${options.from ?? ""}:${options.to ?? ""}`;
+			const rangeKey = `${from ?? ""}:${to ?? ""}`;
 			logStructError(`getTraderPnlCandles:${address}:${timeframe}:${resolution}:${rangeKey}`, error);
 			return [];
 		}
@@ -144,7 +146,7 @@ export async function getTraderPnlCandles(
 
 	if (!normalizedAddress) return [];
 
-	return getTraderPnlCandlesCached(normalizedAddress, timeframe, resolution, options);
+	return getTraderPnlCandlesCached(normalizedAddress, timeframe, resolution, options.fillGaps, options.from, options.to);
 }
 
 export async function getTraderCumulativePnlUsd(address: string): Promise<number> {
@@ -325,7 +327,7 @@ export async function getTraderChartExits(
 }
 
 const getTraderDailyPnlCached = cache(async (address: string): Promise<DailyPnlEntry[]> => {
-	const data = await getTraderPnlCandlesCached(address, "lifetime", "1d", { fillGaps: false });
+	const data = await getTraderPnlCandlesCached(address, "lifetime", "1d", false);
 	return toDailyPnl(data);
 });
 

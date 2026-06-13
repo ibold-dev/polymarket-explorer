@@ -256,16 +256,21 @@ export default function TraderActivity({ address, page, pageNumber, tabs, onRefr
 		const Icon = meta.Icon;
 		const usdAmount = trade.usd_amount ?? null;
 		const amountText = formatNumber(usdAmount, { currency: true });
-		const middleSpan = Math.max(columnCount - 2, 1);
+		const visibleIds = row.getVisibleCells().map((cell) => cell.column.id);
+		const showAge = visibleIds.includes("age");
+		const showLink = visibleIds.includes("link");
+		const middleSpan = Math.max(columnCount - Number(showAge) - Number(showLink), 1);
 		return (
 			<TableRow className="bg-card text-foreground/90 hover:bg-card">
-				<TableCell>
-					{trade.confirmed_at != null ? (
-						<TimeAgo timestamp={trade.confirmed_at} className="text-sm text-muted-foreground" />
-					) : (
-						<p className="text-sm text-muted-foreground">—</p>
-					)}
-				</TableCell>
+				{showAge ? (
+					<TableCell>
+						{trade.confirmed_at != null ? (
+							<TimeAgo timestamp={trade.confirmed_at} className="text-sm text-muted-foreground" />
+						) : (
+							<p className="text-sm text-muted-foreground">—</p>
+						)}
+					</TableCell>
+				) : null}
 				<TableCell colSpan={middleSpan}>
 					<div className="flex items-center gap-3">
 						<div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
@@ -278,17 +283,19 @@ export default function TraderActivity({ address, page, pageNumber, tabs, onRefr
 						</p>
 					</div>
 				</TableCell>
-				<TableCell>
-					<div className="flex justify-end">
-						<TooltipWrapper content="View on Polygonscan">
-							<ExternalLink href={`https://polygonscan.com/tx/${trade.hash}`} linkType="polygonscan">
-								<Button variant="ghost" size="icon" aria-label="View on Polygonscan">
-									<HashIcon className="size-4" />
-								</Button>
-							</ExternalLink>
-						</TooltipWrapper>
-					</div>
-				</TableCell>
+				{showLink ? (
+					<TableCell>
+						<div className="flex justify-end">
+							<TooltipWrapper content="View on Polygonscan">
+								<ExternalLink href={`https://polygonscan.com/tx/${trade.hash}`} linkType="polygonscan">
+									<Button variant="ghost" size="icon" aria-label="View on Polygonscan">
+										<HashIcon className="size-4" />
+									</Button>
+								</ExternalLink>
+							</TooltipWrapper>
+						</div>
+					</TableCell>
+				) : null}
 			</TableRow>
 		);
 	};
@@ -307,8 +314,10 @@ export default function TraderActivity({ address, page, pageNumber, tabs, onRefr
 						size="sm"
 						onClick={() => {
 							if (!onRefresh) return;
-							startTransition(async () => {
-								await onRefresh();
+							startTransition(() => {
+								void onRefresh().catch((error) => {
+									console.error("Failed to refresh trader activity", error);
+								});
 							});
 						}}
 						disabled={isPending || !onRefresh}

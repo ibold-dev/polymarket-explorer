@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { MarketEntry, PositionEntry, TraderInfo } from "@structbuild/sdk";
 import Link from "next/link";
 import type { Route } from "next";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useRef, useState, useTransition } from "react";
 
 import { getMarketPositionTopTradersAction } from "@/app/actions";
 import { TraderAvatar } from "@/components/trader/trader-avatar";
@@ -384,6 +384,7 @@ export function MarketTopTradersClient({
 	const [activeValue, setActiveValue] = useState<string>(ALL_VALUE);
 	const [rawRows, setRawRows] = useState<RawRow[]>(initialTraders as unknown as RawRow[]);
 	const [isPending, startTransition] = useTransition();
+	const latestRequestIdRef = useRef(0);
 
 	const handleChange = useCallback(
 		(next: string) => {
@@ -391,12 +392,15 @@ export function MarketTopTradersClient({
 			setActiveValue(next);
 
 			if (next === ALL_VALUE) {
+				latestRequestIdRef.current += 1;
 				setRawRows(initialTraders as unknown as RawRow[]);
 				return;
 			}
 
 			startTransition(async () => {
+				const requestId = ++latestRequestIdRef.current;
 				const result = await getMarketPositionTopTradersAction({ positionId: next });
+				if (requestId !== latestRequestIdRef.current) return;
 				setRawRows(result.traders as unknown as RawRow[]);
 			});
 		},

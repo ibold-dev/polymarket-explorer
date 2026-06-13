@@ -8,6 +8,7 @@ export function useScrollSpy(ids: string[], offset = 130) {
 
 	useEffect(() => {
 		if (ids.length === 0) {
+			setActiveId(null);
 			return;
 		}
 

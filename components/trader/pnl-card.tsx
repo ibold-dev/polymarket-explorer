@@ -55,12 +55,20 @@ export function PnlCard({ data, displayName, address, profileImage, annotations 
 		startTransition: startFillGapsTransition,
 	})
 	const [storedFillGaps, setStoredFillGaps] = useLocalStorage<boolean>(FILL_GAPS_STORAGE_KEY, false)
+	const hasInitializedFillGapsSync = useRef(false)
 
 	useEffect(() => {
+		if (!hasInitializedFillGapsSync.current) {
+			hasInitializedFillGapsSync.current = true
+			if (storedFillGaps !== pnlFillGaps) {
+				setStoredFillGaps(pnlFillGaps)
+			}
+			return
+		}
 		if (storedFillGaps !== pnlFillGaps) {
 			setFillGaps(storedFillGaps ? true : null)
 		}
-	}, [storedFillGaps, pnlFillGaps, setFillGaps])
+	}, [storedFillGaps, pnlFillGaps, setFillGaps, setStoredFillGaps])
 
 	const windowAnnotations = useMemo(
 		() => annotations.filter((annotation) => annotation.window === periodWindow),

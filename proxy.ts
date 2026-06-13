@@ -21,8 +21,10 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
 
 		if (!response.ok) return false;
 
-		const session = (await response.json()) as { session: unknown; user: unknown } | null;
-		return session !== null && session.user !== null;
+		const payload: unknown = await response.json();
+		if (!payload || typeof payload !== "object") return false;
+		const { session, user } = payload as { session?: unknown; user?: unknown };
+		return session != null && user != null;
 	} catch {
 		return false;
 	}

@@ -25,9 +25,12 @@ export function UserMenu() {
 	async function handleSignOut() {
 		posthog.capture("auth_signed_out", {});
 		setSigningOut(true);
-		await authClient.signOut();
-		setSigningOut(false);
-		router.refresh();
+		try {
+			await authClient.signOut();
+			router.refresh();
+		} finally {
+			setSigningOut(false);
+		}
 	}
 
 	if (isPending) {

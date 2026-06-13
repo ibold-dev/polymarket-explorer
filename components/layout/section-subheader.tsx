@@ -21,7 +21,7 @@ export function SectionSubheader({
 				floating
 					? cn(
 							"fixed inset-x-0 top-14 transition-opacity duration-200 sm:top-16",
-							visible ? "opacity-100" : "pointer-events-none opacity-0",
+							visible ? "opacity-100" : "pointer-events-none invisible opacity-0",
 						)
 					: "sticky top-14 sm:top-16",
 			)}

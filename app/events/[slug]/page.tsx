@@ -118,7 +118,6 @@ async function EventPageContent({ params }: { params: Props["params"] }) {
 			? [{ id: "event-probability", label: "Probability" }]
 			: []),
 		{ id: "event-markets", label: "Markets" },
-		...(event.event_slug ? [{ id: "event-top-traders", label: "Top traders" }] : []),
 		...(childMarkets.length > 0 ? [{ id: "event-trades", label: "Recent trades" }] : []),
 	];
 

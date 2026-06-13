@@ -55,19 +55,23 @@ export function SignInForm({ onSuccess, callbackURL }: { onSuccess?: () => void;
 	}
 
 	async function verifyOtp(code: string) {
+		if (loading) return;
 		posthog.capture("auth_otp_submitted", {});
 		setLoading(true);
 		setError(null);
 
-		const { data, error } = await authClient.signIn.emailOtp({ email, otp: code });
+		try {
+			const { data, error } = await authClient.signIn.emailOtp({ email, otp: code });
 
-		if (error || !data) {
+			if (error || !data) {
+				setError(error?.message ?? "Invalid code. Please try again.");
+				return;
+			}
+
+			onSuccess?.();
+		} finally {
 			setLoading(false);
-			setError(error?.message ?? "Invalid code. Please try again.");
-			return;
 		}
-
-		onSuccess?.();
 	}
 
 	if (step === "otp") {
@@ -75,7 +79,7 @@ export function SignInForm({ onSuccess, callbackURL }: { onSuccess?: () => void;
 			<form
 				onSubmit={(event) => {
 					event.preventDefault();
-					verifyOtp(otp);
+					void verifyOtp(otp);
 				}}
 				className="space-y-4"
 			>
@@ -93,7 +97,7 @@ export function SignInForm({ onSuccess, callbackURL }: { onSuccess?: () => void;
 						onChange={(event) => {
 							const next = event.target.value.replace(/\D/g, "").slice(0, 6);
 							setOtp(next);
-							if (next.length === 6) verifyOtp(next);
+							if (next.length === 6 && !loading) void verifyOtp(next);
 						}}
 						className="h-11 text-center text-lg tracking-[0.4em]"
 					/>

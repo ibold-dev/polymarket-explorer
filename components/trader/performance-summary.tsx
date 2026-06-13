@@ -341,7 +341,14 @@ export function PerformanceSummary({ pnlSummary, pnlRisk, pnlChanges, streaks, p
 			</div>
 			<TradingStatsGrid pnlSummary={pnlSummary} />
 			<PnlStatsGrid pnlSummary={pnlSummary} />
-			<InfoRow label="Avg. Hold Time" value={formatDuration(pnlSummary?.avg_hold_time_seconds ?? 0)} />
+			<InfoRow
+				label="Avg. Hold Time"
+				value={
+					pnlSummary?.avg_hold_time_seconds != null && pnlSummary.avg_hold_time_seconds > 0
+						? formatDuration(pnlSummary.avg_hold_time_seconds)
+						: "—"
+				}
+			/>
 			<TradeHighlightRow
 				label="Best Win"
 				pnl={pnlSummary?.best_trade_pnl_usd}

@@ -118,6 +118,7 @@ const MAX_PNL_UNIX_SECONDS = 4102444800;
 
 export const unixSecondsParserDef = {
 	parse(value: string) {
+		if (!/^\d+$/.test(value)) return null;
 		const parsed = Number.parseInt(value, 10);
 		if (!Number.isSafeInteger(parsed)) return null;
 		if (parsed < MIN_PNL_UNIX_SECONDS || parsed > MAX_PNL_UNIX_SECONDS) return null;

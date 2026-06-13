@@ -11,5 +11,5 @@ export const viewLabels: Record<TagView, string> = {
 export function parseTagView(value: string | string[] | undefined, allowedViews?: readonly TagView[]): TagView {
 	const raw = Array.isArray(value) ? value[0] : value;
 	const allowed = allowedViews ?? tagViewValues;
-	return allowed.includes(raw as TagView) ? (raw as TagView) : DEFAULT_TAG_VIEW;
+	return allowed.includes(raw as TagView) ? (raw as TagView) : (allowed[0] ?? DEFAULT_TAG_VIEW);
 }

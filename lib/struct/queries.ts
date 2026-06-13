@@ -388,7 +388,8 @@ function emptyCursorPage<T>(): CursorPage<T> {
 function readCursorPage<T>(response: { data?: T[] | null; pagination?: { has_more: boolean; pagination_key: string | number | null } | undefined }): CursorPage<T> {
 	const key = response.pagination?.pagination_key;
 	const hasMore = response.pagination?.has_more ?? false;
-	const nextCursor = hasMore && key !== null && key !== undefined ? String(key) : null;
+	const cursor = key !== null && key !== undefined ? String(key).trim() : "";
+	const nextCursor = hasMore && cursor !== "" ? cursor : null;
 	return {
 		data: response.data ?? [],
 		nextCursor,

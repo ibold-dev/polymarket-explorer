@@ -21,6 +21,6 @@ export function computeProbabilityYDomain(
 	const rawHigh = max + pad;
 	const step = range >= 40 ? 10 : range >= 20 ? 5 : range >= 10 ? 2 : 1;
 	const low = Math.max(0, Math.floor(rawLow / step) * step);
-	const high = Math.min(100, Math.ceil(rawHigh / step) * step);
+	const high = Math.max(low, Math.min(100, Math.ceil(rawHigh / step) * step));
 	return [low, high === low ? Math.min(100, low + step) : high];
 }
