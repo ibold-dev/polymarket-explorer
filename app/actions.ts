@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { BuilderSortBy, BuilderTimeframe, MarketEntry, PnlTimeframe, PolymarketCategory } from "@structbuild/sdk";
+import { checkBotId } from "botid/server";
 
 import {
 	defaultTraderTablePageSize,
@@ -21,9 +22,11 @@ import {
 	getMarketHolders,
 	getMarketHoldersHistory,
 	getMarketPriceJumps,
+	getPositionVolumeChart,
 	getMarketsByTag,
 	getTopMarkets,
 	getMarketTradesPage,
+	toVolumePoints,
 } from "@/lib/struct/market-queries";
 import { getEventsByTag } from "@/lib/struct/queries/events";
 import { eventResponseToRow } from "@/lib/event-table-map";
@@ -36,6 +39,28 @@ import {
 import { getBuildersStackedData } from "@/lib/struct/builders-stacked";
 import { maxBuilderTradesPageNumber } from "@/lib/builder-search-params-shared";
 import type { AnalyticsResolution } from "@/lib/struct/analytics-shared";
+import {
+	parseAnalyticsParams,
+	type AnalyticsQuerySource,
+	type AnalyticsRange,
+	type AnalyticsView,
+} from "@/lib/struct/analytics-shared";
+import { loadAnalyticsSectionData } from "@/lib/struct/analytics-section-data";
+import { HOME_ACTIVITY_TABS, type HomeActivityTab } from "@/lib/home-activity";
+import { loadHomeActivityData } from "@/lib/struct/home-activity.server";
+import {
+	getTraderChartExits,
+	getTraderPnlCandles,
+	getTraderPnlRisk,
+} from "@/lib/struct/pnl";
+import { resolvePnlRange } from "@/lib/struct/pnl-range";
+import {
+	PNL_RISK_TIMEFRAMES,
+	pnlAnchorValues,
+	pnlTimeframeValues,
+	type PnlAnchor,
+	type PnlTimeframe as TraderPnlTimeframe,
+} from "@/lib/struct/pnl-timeframes";
 import {
 	DEFAULT_BUILDERS_STACKED_TOP_N,
 	parseBuildersStackedMetric,
@@ -68,6 +93,7 @@ import {
 } from "@/lib/market-search-params-shared";
 import { marketResponseToRow } from "@/lib/market-table-map";
 import { parsePolymarketCategory } from "@/lib/tag-category";
+import { normalizeWalletAddress } from "@/lib/utils";
 import {
 	maxTraderPageNumber,
 	defaultTraderPositionSortBy,
@@ -124,6 +150,13 @@ export type SearchResultEvent = {
 	volume_24hr_usd: number | null;
 	end_time: number | null;
 };
+
+async function assertHumanRequest() {
+	const verification = await checkBotId();
+	if (verification.isBot) {
+		throw new Error("Access denied");
+	}
+}
 
 export type SearchResult = {
 	traders: SearchResultTrader[];
@@ -225,6 +258,7 @@ export async function getMarketsStatusPageAction({
 	sortDirection: MarketSortDirection;
 	timeframe: MarketTimeframe;
 }) {
+	await assertHumanRequest();
 	const safeTab = parseMarketStatus(tab);
 	const safeSortBy = parseMarketSortBy(sortBy);
 	const safeSortDirection = parseMarketSortDirection(sortDirection);
@@ -249,6 +283,7 @@ export async function getTagMarketsStatusPageAction({
 	tagLabel: string;
 	tab: MarketStatusTab;
 }) {
+	await assertHumanRequest();
 	const safeTab = parseMarketStatus(tab);
 	const result = await getMarketsByTag(tagLabel, 24, undefined, "volume", "desc", safeTab);
 
@@ -267,6 +302,7 @@ export async function getTagEventsStatusPageAction({
 	tagSlug: string;
 	tab: EventStatusTab;
 }) {
+	await assertHumanRequest();
 	const safeTab = parseEventStatusTab(tab);
 	const result = await getEventsByTag(tagSlug, 24, safeTab, undefined, "volume", "desc", "24h");
 
@@ -293,6 +329,7 @@ export async function getTraderPositionsPageAction({
 	sortDirection: TraderSortDirection;
 	category?: PolymarketCategory | null;
 }) {
+	await assertHumanRequest();
 	const safePageNumber = clampPageNumber(pageNumber, maxTraderPageNumber);
 	const page = await getTraderPositionsPage(address, status, {
 		limit: defaultTraderTablePageSize,
@@ -314,6 +351,7 @@ export async function getTraderTabPageAction({
 	tab: TraderTab;
 	search: string;
 }) {
+	await assertHumanRequest();
 	const params = new URLSearchParams(search);
 	const safeTab = parseTraderTab(tab);
 
@@ -410,6 +448,7 @@ export async function getTraderActivityPageAction({
 	address: string;
 	pageNumber: number;
 }) {
+	await assertHumanRequest();
 	const safePageNumber = clampPageNumber(pageNumber, maxTraderPageNumber);
 	const page = await getTraderTradesPage(address, {
 		limit: defaultTraderTablePageSize,
@@ -431,6 +470,7 @@ export async function getTraderCategoriesPageAction({
 	sortBy: TraderCategorySortBy;
 	sortDirection: TraderSortDirection;
 }) {
+	await assertHumanRequest();
 	const safePageNumber = clampPageNumber(pageNumber, maxTraderPageNumber);
 	const page = await getTraderCategoriesPage(address, {
 		limit: defaultTraderTablePageSize,
@@ -453,6 +493,7 @@ export async function getTraderMarketsPageAction({
 	sortBy: TraderMarketSortBy;
 	sortDirection: TraderSortDirection;
 }) {
+	await assertHumanRequest();
 	const safePageNumber = clampPageNumber(pageNumber, maxTraderPageNumber);
 	const page = await getTraderMarketsPage(address, {
 		limit: defaultTraderTablePageSize,
@@ -473,6 +514,7 @@ export async function getTraderRankedPositionsPageAction({
 	mode: TraderExitMode;
 	pageNumber: number;
 }) {
+	await assertHumanRequest();
 	const safePageNumber = clampPageNumber(pageNumber, maxTraderPageNumber);
 	const page = await getTraderPositionsPage(address, "closed", {
 		limit: defaultTraderTablePageSize,
@@ -491,6 +533,7 @@ export async function getMarketTradesPageAction({
 	conditionId: string;
 	pageNumber: number;
 }) {
+	await assertHumanRequest();
 	const safePageNumber = clampPageNumber(pageNumber, maxMarketTradesPageNumber);
 	const page = await getMarketTradesPage(conditionId, {
 		limit: defaultMarketTradesPageSize,
@@ -507,6 +550,7 @@ export async function getBuilderTradesPageAction({
 	builderCode: string;
 	pageNumber: number;
 }) {
+	await assertHumanRequest();
 	const safePageNumber = clampPageNumber(pageNumber, maxBuilderTradesPageNumber);
 	const page = await getBuilderTradesPage(builderCode, {
 		limit: defaultBuilderTradesPageSize,
@@ -527,6 +571,7 @@ export async function getMarketTabPageAction({
 	tab: MarketDetailTab;
 	search: string;
 }) {
+	await assertHumanRequest();
 	const params = new URLSearchParams(search);
 	const safeTab = parseMarketDetailTab(tab);
 
@@ -601,6 +646,7 @@ export async function getMarketPositionTopTradersAction({
 }: {
 	positionId: string;
 }) {
+	await assertHumanRequest();
 	if (!positionId) {
 		return { positionId, traders: [] };
 	}
@@ -618,6 +664,7 @@ export async function getBestTradesAction({
 	timeframe: PnlTimeframe;
 	limit: number;
 }): Promise<{ timeframe: PnlTimeframe; rows: MarketEntry[] }> {
+	await assertHumanRequest();
 	const safeTimeframe = BEST_TRADES_TIMEFRAME_SET.has(timeframe) ? timeframe : "1d";
 	const { data } = await getTopTradesMarkets({
 		timeframe: safeTimeframe,
@@ -633,6 +680,7 @@ export async function getBuilderGlobalTagsAction({
 	sort: BuilderSortBy;
 	timeframe: BuilderTimeframe;
 }) {
+	await assertHumanRequest();
 	const safeTimeframe = parseBuilderTimeframe(timeframe);
 	const safeSort = getBuilderSortOptionsForTimeframe(safeTimeframe).includes(sort)
 		? sort
@@ -655,6 +703,7 @@ export async function getBuildersStackedDataAction({
 	timeframe: BuilderTimeframe;
 	resolution: AnalyticsResolution;
 }) {
+	await assertHumanRequest();
 	const safeTimeframe = parseBuilderTimeframe(timeframe);
 	const safeMetric = parseBuildersStackedMetric(metric, safeTimeframe);
 	const safeResolution = parseBuildersStackedResolution(safeTimeframe, resolution);
@@ -667,7 +716,113 @@ export async function getBuildersStackedDataAction({
 	});
 }
 
+export async function getAnalyticsSectionDataAction({
+	source,
+	range,
+	resolution,
+	view,
+	defaultRange,
+	showKpis,
+}: {
+	source: AnalyticsQuerySource;
+	range: AnalyticsRange;
+	resolution: AnalyticsResolution;
+	view: AnalyticsView;
+	defaultRange: AnalyticsRange;
+	showKpis: boolean;
+}) {
+	await assertHumanRequest();
+	const scope = source.kind === "global" || source.kind === "builderGlobal" ? "global" : "scoped";
+	const safe = parseAnalyticsParams({ range, resolution, view }, scope, defaultRange);
+
+	return loadAnalyticsSectionData({
+		source,
+		range: safe.range,
+		resolution: safe.resolution,
+		view: safe.view,
+		showKpis,
+	});
+}
+
+export async function getHomeActivityDataAction(tab: HomeActivityTab) {
+	await assertHumanRequest();
+	const safeTab = HOME_ACTIVITY_TABS.includes(tab) ? tab : "trades";
+	return loadHomeActivityData(safeTab);
+}
+
+export async function getMarketPositionVolumeAction({
+	positionId,
+	name,
+	outcomeIndex,
+}: {
+	positionId: string;
+	name: string;
+	outcomeIndex: number;
+}) {
+	await assertHumanRequest();
+	if (!positionId) return null;
+	const points = await getPositionVolumeChart(positionId);
+	const data = toVolumePoints(points);
+
+	return data.length > 0 ? { name, outcomeIndex, data } : null;
+}
+
+export async function getTraderPnlViewAction({
+	address,
+	timeframe,
+	anchor,
+	from,
+	to,
+	fillGaps,
+	timezone,
+}: {
+	address: string;
+	timeframe: TraderPnlTimeframe;
+	anchor: PnlAnchor | null;
+	from: number | null;
+	to: number | null;
+	fillGaps: boolean;
+	timezone: string;
+}) {
+	await assertHumanRequest();
+	const normalizedAddress = normalizeWalletAddress(address);
+	if (!normalizedAddress) throw new Error("Invalid trader address");
+
+	const safeTimeframe = pnlTimeframeValues.includes(timeframe) ? timeframe : "all";
+	const safeAnchor = anchor && pnlAnchorValues.includes(anchor) ? anchor : null;
+	const safeFrom = typeof from === "number" && Number.isFinite(from) ? Math.trunc(from) : null;
+	const safeTo = typeof to === "number" && Number.isFinite(to) ? Math.trunc(to) : null;
+	const safeFillGaps = fillGaps === true;
+	let safeTimezone = "UTC";
+	try {
+		new Intl.DateTimeFormat("en-US", { timeZone: timezone }).format();
+		safeTimezone = timezone;
+	} catch {
+		// Keep UTC for invalid client input.
+	}
+
+	const range = resolvePnlRange({
+		timeframe: safeTimeframe,
+		anchor: safeAnchor,
+		from: safeFrom,
+		to: safeTo,
+		tz: safeTimezone,
+	});
+	const [candles, exits, risk] = await Promise.all([
+		getTraderPnlCandles(normalizedAddress, range.apiTimeframe, range.resolution, {
+			from: range.from,
+			to: range.to,
+			fillGaps: safeFillGaps,
+		}),
+		getTraderChartExits(normalizedAddress, { from: range.from, to: range.to }),
+		getTraderPnlRisk(normalizedAddress, PNL_RISK_TIMEFRAMES[range.timeframe]),
+	]);
+
+	return { range, fillGaps: safeFillGaps, candles, exits, risk };
+}
+
 export async function searchTradersAction(query: string) {
+	await assertHumanRequest();
 	const results = await searchTraders(query);
 	return results.map((t) => ({
 		address: t.address,
@@ -678,6 +833,7 @@ export async function searchTradersAction(query: string) {
 }
 
 export async function searchAction(query: string): Promise<SearchResult> {
+	await assertHumanRequest();
 	const { traders, markets, events, builders } = await searchAll(query);
 
 	const marketResults: SearchResultMarket[] = [];
@@ -731,6 +887,7 @@ export async function searchAction(query: string): Promise<SearchResult> {
 }
 
 export async function refreshTraderTabAction(pathname: string) {
+	await assertHumanRequest();
 	if (!pathname.startsWith("/traders/")) {
 		throw new Error("Invalid trader pathname");
 	}
@@ -739,5 +896,6 @@ export async function refreshTraderTabAction(pathname: string) {
 }
 
 export async function refreshRewardsPageAction() {
+	await assertHumanRequest();
 	revalidatePath("/rewards");
 }

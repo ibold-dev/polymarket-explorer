@@ -14,7 +14,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { getSiteUrl } from "@/lib/env";
 import { formatCapitalizeWords, formatNumber, slugify } from "@/lib/format";
 import { buildEntityPageTitle, buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
-import { getEventBySlug, getEventMetrics } from "@/lib/struct/queries/events";
+import { getEventBySlug } from "@/lib/struct/queries/events";
 
 type Props = {
 	params: Promise<{ slug: string }>;
@@ -78,10 +78,7 @@ async function EventPageContent({ params }: { params: Props["params"] }) {
 	await connection();
 
 	const { slug } = await params;
-	const [event, metrics] = await Promise.all([
-		getEventBySlug(slug),
-		getEventMetrics(slug, "lifetime"),
-	]);
+	const event = await getEventBySlug(slug);
 
 	if (!event) {
 		notFound();
@@ -143,7 +140,7 @@ async function EventPageContent({ params }: { params: Props["params"] }) {
 					<JsonLd data={jsonLd} />
 
 					<SectionAnchor id="event-overview">
-						<EventHeader event={event} slug={slug} metrics={metrics} />
+						<EventHeader event={event} slug={slug} />
 					</SectionAnchor>
 
 					{event.event_slug && childMarkets.length > 0 && (

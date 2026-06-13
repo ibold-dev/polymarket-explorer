@@ -9,6 +9,16 @@ import posthog from "posthog-js";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { TooltipWrapper } from "@/components/ui/tooltip";
 
+export type AnalyticsNavigateHandler<T extends string> = ({
+	href,
+	next,
+	params,
+}: {
+	href: Route;
+	next: T;
+	params: URLSearchParams;
+}) => void;
+
 type Props<T extends string> = {
 	paramKey: string;
 	value: T;
@@ -19,15 +29,7 @@ type Props<T extends string> = {
 	descriptions?: Partial<Record<T, string>>;
 	transformParams?: (params: URLSearchParams, next: T) => void;
 	pending?: boolean;
-	onNavigate?: ({
-		href,
-		next,
-		params,
-	}: {
-		href: Route;
-		next: T;
-		params: URLSearchParams;
-	}) => void;
+	onNavigate?: AnalyticsNavigateHandler<T>;
 };
 
 export function AnalyticsUrlToggle<T extends string>({
@@ -95,6 +97,7 @@ export function AnalyticsUrlToggle<T extends string>({
 						key={opt}
 						value={opt}
 						aria-label={`${ariaLabelPrefix} ${labels[opt]}`}
+						disabled={isPending || pending}
 					>
 						{labels[opt]}
 					</ToggleGroupItem>

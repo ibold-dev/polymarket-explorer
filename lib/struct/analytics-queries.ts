@@ -19,7 +19,6 @@ import {
 	type AnalyticsPoint,
 	type AnalyticsRange,
 	type AnalyticsResolution,
-	type AnalyticsSummary,
 } from "@/lib/struct/analytics-shared";
 
 type RangeConfig = {
@@ -304,7 +303,9 @@ function handleDeltasError(label: string, error: unknown): AnalyticsPoint[] {
 	}
 	const status = error instanceof HttpError ? error.status : "unknown";
 	console.error(
-		`${label} failed (status=${status})`,
+		"%s failed (status=%s)",
+		label,
+		status,
 		error instanceof Error ? error.message : error,
 	);
 	return [];
@@ -316,7 +317,9 @@ function handleChangesError(label: string, error: unknown): AnalyticsMetricPctCh
 	}
 	const status = error instanceof HttpError ? error.status : "unknown";
 	console.error(
-		`${label} failed (status=${status})`,
+		"%s failed (status=%s)",
+		label,
+		status,
 		error instanceof Error ? error.message : error,
 	);
 	return null;
@@ -716,45 +719,4 @@ export async function getBuilderGlobalAnalyticsChanges(
 	} catch (error) {
 		return handleChangesError(`getBuilderGlobalAnalyticsChanges:${range}`, error);
 	}
-}
-
-export function summarizeAnalytics(points: AnalyticsPoint[]): AnalyticsSummary {
-	if (points.length === 0) {
-		return {
-			totalVolumeUsd: 0,
-			totalSharesVolume: 0,
-			totalFeesUsd: 0,
-			totalTxnCount: 0,
-			uniqueTradersTotal: 0,
-			avgTradeSizeUsd: 0,
-			avgTradeSizeShares: 0,
-		};
-	}
-
-	let totalVolumeUsd = 0;
-	let totalSharesVolume = 0;
-	let totalFeesUsd = 0;
-	let totalTxnCount = 0;
-	let uniqueTradersTotal = 0;
-
-	for (const p of points) {
-		totalVolumeUsd += p.volumeUsd;
-		totalSharesVolume += p.sharesVolume;
-		totalFeesUsd += p.feesUsd;
-		totalTxnCount += p.txnCount;
-		uniqueTradersTotal += p.uniqueTraders;
-	}
-
-	const avgTradeSizeUsd = totalTxnCount > 0 ? totalVolumeUsd / totalTxnCount : 0;
-	const avgTradeSizeShares = totalTxnCount > 0 ? totalSharesVolume / totalTxnCount : 0;
-
-	return {
-		totalVolumeUsd,
-		totalSharesVolume,
-		totalFeesUsd,
-		totalTxnCount,
-		uniqueTradersTotal,
-		avgTradeSizeUsd,
-		avgTradeSizeShares,
-	};
 }

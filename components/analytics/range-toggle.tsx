@@ -1,6 +1,6 @@
 "use client";
 
-import { AnalyticsUrlToggle } from "@/components/analytics/url-toggle";
+import { AnalyticsUrlToggle, type AnalyticsNavigateHandler } from "@/components/analytics/url-toggle";
 import {
 	ANALYTICS_RANGES,
 	ANALYTICS_RANGE_DESCRIPTIONS,
@@ -12,9 +12,13 @@ import {
 export function AnalyticsRangeToggle({
 	range,
 	defaultRange = DEFAULT_ANALYTICS_RANGE,
+	pending,
+	onNavigate,
 }: {
 	range: AnalyticsRange;
 	defaultRange?: AnalyticsRange;
+	pending?: boolean;
+	onNavigate?: AnalyticsNavigateHandler<AnalyticsRange>;
 }) {
 	return (
 		<AnalyticsUrlToggle
@@ -24,6 +28,8 @@ export function AnalyticsRangeToggle({
 			labels={ANALYTICS_RANGE_LABELS}
 			descriptions={ANALYTICS_RANGE_DESCRIPTIONS}
 			defaultValue={defaultRange}
+			pending={pending}
+			onNavigate={onNavigate}
 			transformParams={(params) => {
 				params.delete("resolution");
 			}}

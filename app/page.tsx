@@ -1,13 +1,12 @@
-import { BestTradesList, BestTradesListFallback } from "@/components/home/best-trades-list";
 import { HomeActivityTabs } from "@/components/home/home-activity-tabs";
 import { HomeExploreGrid } from "@/components/home/home-explore-grid";
 import { HomeSearchTrigger } from "@/components/home/home-search-trigger";
-import { NewMarketsList, NewMarketsListFallback } from "@/components/home/new-markets-list";
 import { PlatformStats, PlatformStatsFallback } from "@/components/home/platform-stats";
-import { RecentTradesList, RecentTradesListFallback } from "@/components/home/recent-trades-list";
-import { TrendingMarketsList, TrendingMarketsListFallback } from "@/components/home/trending-markets-list";
+import { RecentTradesListFallback } from "@/components/home/recent-trades-list";
+import { loadHomeActivityData } from "@/lib/struct/home-activity.server";
 import { SITE_NAME } from "@/lib/site-metadata";
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
@@ -37,31 +36,18 @@ export default function HomePage() {
 					<PlatformStats />
 				</Suspense>
 
-				<HomeActivityTabs
-					trades={
-						<Suspense fallback={<RecentTradesListFallback />}>
-							<RecentTradesList />
-						</Suspense>
-					}
-					trending={
-						<Suspense fallback={<TrendingMarketsListFallback />}>
-							<TrendingMarketsList />
-						</Suspense>
-					}
-					bestTrades={
-						<Suspense fallback={<BestTradesListFallback />}>
-							<BestTradesList />
-						</Suspense>
-					}
-					markets={
-						<Suspense fallback={<NewMarketsListFallback />}>
-							<NewMarketsList />
-						</Suspense>
-					}
-				/>
+				<Suspense fallback={<RecentTradesListFallback />}>
+					<HomeActivitySection />
+				</Suspense>
 
 				<HomeExploreGrid />
 			</div>
 		</div>
 	);
+}
+
+async function HomeActivitySection() {
+	await connection();
+	const initialData = await loadHomeActivityData("trades");
+	return <HomeActivityTabs initialData={initialData} />;
 }

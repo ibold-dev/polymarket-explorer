@@ -1,6 +1,6 @@
 "use client";
 
-import { AnalyticsUrlToggle } from "@/components/analytics/url-toggle";
+import { AnalyticsUrlToggle, type AnalyticsNavigateHandler } from "@/components/analytics/url-toggle";
 import {
 	ANALYTICS_VIEWS,
 	ANALYTICS_VIEW_DESCRIPTIONS,
@@ -9,7 +9,15 @@ import {
 	type AnalyticsView,
 } from "@/lib/struct/analytics-shared";
 
-export function AnalyticsViewToggle({ view }: { view: AnalyticsView }) {
+export function AnalyticsViewToggle({
+	view,
+	pending,
+	onNavigate,
+}: {
+	view: AnalyticsView;
+	pending?: boolean;
+	onNavigate?: AnalyticsNavigateHandler<AnalyticsView>;
+}) {
 	return (
 		<AnalyticsUrlToggle
 			paramKey="view"
@@ -18,6 +26,8 @@ export function AnalyticsViewToggle({ view }: { view: AnalyticsView }) {
 			labels={ANALYTICS_VIEW_LABELS}
 			descriptions={ANALYTICS_VIEW_DESCRIPTIONS}
 			defaultValue={DEFAULT_ANALYTICS_VIEW}
+			pending={pending}
+			onNavigate={onNavigate}
 			transformParams={(params, next) => {
 				if (next === "cumulative") params.delete("range");
 			}}

@@ -74,6 +74,14 @@ export const RESOLUTION_OPTIONS_BY_RANGE: Record<AnalyticsRange, readonly Analyt
 
 export type AnalyticsScope = "global" | "scoped";
 
+export type AnalyticsQuerySource =
+	| { kind: "global" }
+	| { kind: "builderGlobal" }
+	| { kind: "market"; conditionId: string }
+	| { kind: "tag"; tag: string }
+	| { kind: "trader"; address: string }
+	| { kind: "builder"; code: string };
+
 export function getDefaultResolution(
 	range: AnalyticsRange,
 	scope: AnalyticsScope = "scoped",
@@ -288,6 +296,32 @@ export type AnalyticsSummary = {
 	avgTradeSizeUsd: number;
 	avgTradeSizeShares: number;
 };
+
+export function summarizeAnalytics(points: AnalyticsPoint[]): AnalyticsSummary {
+	let totalVolumeUsd = 0;
+	let totalSharesVolume = 0;
+	let totalFeesUsd = 0;
+	let totalTxnCount = 0;
+	let uniqueTradersTotal = 0;
+
+	for (const point of points) {
+		totalVolumeUsd += point.volumeUsd;
+		totalSharesVolume += point.sharesVolume;
+		totalFeesUsd += point.feesUsd;
+		totalTxnCount += point.txnCount;
+		uniqueTradersTotal += point.uniqueTraders;
+	}
+
+	return {
+		totalVolumeUsd,
+		totalSharesVolume,
+		totalFeesUsd,
+		totalTxnCount,
+		uniqueTradersTotal,
+		avgTradeSizeUsd: totalTxnCount > 0 ? totalVolumeUsd / totalTxnCount : 0,
+		avgTradeSizeShares: totalTxnCount > 0 ? totalSharesVolume / totalTxnCount : 0,
+	};
+}
 
 export type VolumeComponentId = "buy" | "sell" | "redeem" | "merge" | "split" | "convert";
 

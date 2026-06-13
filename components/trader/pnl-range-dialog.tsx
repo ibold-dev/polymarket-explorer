@@ -1,7 +1,6 @@
 "use client"
 
 import { useMemo, useState, useTransition, type ReactNode } from "react"
-import { useRouter } from "next/navigation"
 import { useQueryStates } from "nuqs"
 import posthog from "posthog-js"
 import { CalendarIcon, ChevronDownIcon } from "lucide-react"
@@ -49,6 +48,13 @@ type PnlRangeDialogProps = {
 	to: number | undefined
 	timezone: string
 	firstTradeAt?: number
+	pending?: boolean
+	onRangeChange?: (range: {
+		anchor: PnlAnchor | null
+		from: number | null
+		to: number | null
+	}) => void
+	onTimezoneChange?: (timezone: string) => void
 }
 
 function startOfDayUtcSeconds(date: Date): number {
@@ -73,13 +79,23 @@ function formatDraftDate(date: Date): string {
 	return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
 }
 
-export function PnlRangeDialog({ mode, timeframe, anchor, from, to, timezone: serverTimezone, firstTradeAt }: PnlRangeDialogProps) {
+export function PnlRangeDialog({
+	mode,
+	timeframe,
+	anchor,
+	from,
+	to,
+	timezone: serverTimezone,
+	firstTradeAt,
+	pending = false,
+	onRangeChange,
+	onTimezoneChange,
+}: PnlRangeDialogProps) {
 	const [open, setOpen] = useState(false)
-	const [isPending, startTransition] = useTransition()
-	const router = useRouter()
+	const [isUrlPending, startTransition] = useTransition()
 	const [, setParams] = useQueryStates(RANGE_PARAMS, {
 		history: "push",
-		shallow: false,
+		shallow: true,
 		scroll: false,
 		startTransition,
 	})
@@ -116,6 +132,7 @@ export function PnlRangeDialog({ mode, timeframe, anchor, from, to, timezone: se
 			pnlFrom: null,
 			pnlTo: null,
 		})
+		onRangeChange?.({ anchor: nextAnchor, from: null, to: null })
 		setOpen(false)
 	}
 
@@ -126,7 +143,7 @@ export function PnlRangeDialog({ mode, timeframe, anchor, from, to, timezone: se
 			previous_timezone: timezone,
 		})
 		setTimezone(nextTimezone)
-		startTransition(() => router.refresh())
+		onTimezoneChange?.(nextTimezone)
 	}
 
 	function applyCustom() {
@@ -143,6 +160,7 @@ export function PnlRangeDialog({ mode, timeframe, anchor, from, to, timezone: se
 			pnlFrom: nextFrom,
 			pnlTo: nextTo,
 		})
+		onRangeChange?.({ anchor: null, from: nextFrom, to: nextTo })
 		setOpen(false)
 	}
 
@@ -168,8 +186,12 @@ export function PnlRangeDialog({ mode, timeframe, anchor, from, to, timezone: se
 					<Button
 						variant="outline"
 						size="sm"
-						className={cn("h-7 gap-1.5 rounded-md px-2 font-medium tabular-nums", isPending && "opacity-70")}
+						className={cn(
+							"h-7 gap-1.5 rounded-md px-2 font-medium tabular-nums",
+							(isUrlPending || pending) && "opacity-70",
+						)}
 						aria-label="Change time range"
+						disabled={isUrlPending || pending}
 					>
 						<CalendarIcon aria-hidden="true" className="size-3.5 text-muted-foreground" />
 						<span className="max-w-[18ch] truncate text-xs">{label}</span>

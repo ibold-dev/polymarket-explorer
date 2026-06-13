@@ -1,44 +1,49 @@
 import { ChartCard } from "@/components/market/chart-card";
 import { MarketChartsClient } from "@/components/market/market-charts-client";
-import { getMarketChart, getPositionVolumeChart } from "@/lib/struct/market-queries";
+import type { VolumeOutcome } from "@/components/market/market-volume-chart-client";
+import {
+	getMarketChart,
+	getPositionVolumeChart,
+	toVolumePoints,
+} from "@/lib/struct/market-queries";
 
 export async function MarketCharts({ conditionId }: { conditionId: string }) {
 	const outcomes = await getMarketChart(conditionId);
 
 	const hasPrice = !!outcomes?.length && outcomes.some((o) => o.data.length > 1);
 
-	const volumeOutcomes = outcomes?.length
-		? (
-					await Promise.all(
-						outcomes.map(async (o) => {
-							try {
-								const points = await getPositionVolumeChart(o.position_id);
-								const data = (points ?? [])
-									.filter((p) => (p.bv ?? 0) + (p.sv ?? 0) > 0)
-									.map((p) => ({ t: p.t, buy: p.bv ?? 0, sell: p.sv ?? 0 }));
-								return {
-									name: o.name,
-									outcomeIndex: o.outcome_index,
-									data,
-								};
-							} catch {
-								return null;
-							}
-						}),
-					)
-				).filter((o): o is NonNullable<typeof o> => o !== null && o.data.length > 0)
-			: [];
-
-	const hasVolume = volumeOutcomes.length > 0;
-
-	if (!hasPrice && !hasVolume) {
+	if (!outcomes?.length) {
 		return null;
+	}
+
+	const firstOutcome = outcomes[0];
+	let initialVolume: VolumeOutcome | null = null;
+	if (!hasPrice && firstOutcome) {
+		try {
+			const points = await getPositionVolumeChart(firstOutcome.position_id);
+			initialVolume = {
+				name: firstOutcome.name,
+				outcomeIndex: firstOutcome.outcome_index,
+				data: toVolumePoints(points),
+			};
+		} catch {
+			initialVolume = {
+				name: firstOutcome.name,
+				outcomeIndex: firstOutcome.outcome_index,
+				data: [],
+			};
+		}
 	}
 
 	return (
 		<MarketChartsClient
-			outcomes={hasPrice ? outcomes! : null}
-			volume={hasVolume ? volumeOutcomes : null}
+			outcomes={hasPrice ? outcomes : null}
+			initialVolume={initialVolume}
+			volumeOptions={outcomes.map((outcome) => ({
+				name: outcome.name,
+				outcomeIndex: outcome.outcome_index,
+				positionId: outcome.position_id,
+			}))}
 		/>
 	);
 }

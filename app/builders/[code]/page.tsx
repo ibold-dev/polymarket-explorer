@@ -5,9 +5,6 @@ import { Suspense } from "react";
 import type { BuilderTimeframe } from "@structbuild/sdk";
 
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
-import { AnalyticsRangeToggle } from "@/components/analytics/range-toggle";
-import { AnalyticsResolutionToggle } from "@/components/analytics/resolution-toggle";
-import { AnalyticsViewToggle } from "@/components/analytics/view-toggle";
 import { BuilderConcentrationCard } from "@/components/builders/builder-concentration-card";
 import { BuilderFeeHistory } from "@/components/builders/builder-fee-history";
 import {
@@ -30,24 +27,18 @@ import {
 	getBuilderPageDescription,
 	getBuilderPageTitle,
 	getBuilderSocialTitle,
-	loadBuilderOpenGraphIdentity,
 } from "@/lib/builder-open-graph";
+import { getBuilderDisplayName } from "@/lib/builder-display-name";
 import { loadBuilderSearchParams } from "@/lib/builder-search-params.server";
 import { getSiteUrl } from "@/lib/env";
 import { buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
 import { formatBuilderCodeDisplay } from "@/lib/utils";
-import {
-	getBuilderAnalyticsChanges,
-	getBuilderAnalyticsDeltas,
-	getBuilderAnalyticsTimeseries,
-} from "@/lib/struct/analytics-queries";
 import {
 	type AnalyticsRange,
 	parseAnalyticsParams,
 } from "@/lib/struct/analytics-shared";
 import {
 	getBuilderByCode,
-	getBuilderMetadata,
 	getBuilderConcentration,
 	getBuilderFees,
 	getBuilderFeesHistory,
@@ -91,17 +82,16 @@ function rangeToBuilderTimeframe(range: AnalyticsRange): BuilderTimeframe {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const { code } = await params;
-	const [builder, identity] = await Promise.all([
-		getBuilderByCode(code),
-		loadBuilderOpenGraphIdentity(code),
-	]);
+	const builder = await getBuilderByCode(code);
 
 	if (!builder) {
 		return {};
 	}
 
 	const isEmpty = builder.volume_usd === 0 && builder.txn_count === 0;
-	const { displayName, codeLabel } = identity;
+	const builderCode = builder.builder_code?.trim() || code;
+	const codeLabel = formatBuilderCodeDisplay(builderCode);
+	const displayName = getBuilderDisplayName(builderCode, builder.metadata);
 	const title = getBuilderPageTitle(displayName, builder);
 	const socialTitle = getBuilderSocialTitle(displayName, builder);
 	const description = getBuilderPageDescription(displayName, codeLabel, builder);
@@ -168,7 +158,7 @@ async function BuilderPageContent({
 		notFound();
 	}
 
-	const [fees, concentration, retention, topTraders, tagBreakdown, feeHistory, metadata] =
+	const [fees, concentration, retention, topTraders, tagBreakdown, feeHistory] =
 		await Promise.all([
 			getBuilderFees(code),
 			getBuilderConcentration(code, builderTimeframe),
@@ -176,14 +166,14 @@ async function BuilderPageContent({
 			getBuilderTopTraders(code, "volume", builderTimeframe, 25),
 			getBuilderTags(code, "volume", builderTimeframe, 12),
 			getBuilderFeesHistory(code, 25),
-			getBuilderMetadata(code),
 		]);
 
 	const siteUrl = getSiteUrl();
 	const builderCode = builder.builder_code?.trim() || code;
 	const codeLabel = formatBuilderCodeDisplay(builderCode);
-	const pageHeaderMetadata =
-		metadata ?? (builder.metadata ? { builder_code: builderCode, ...builder.metadata } : null);
+	const pageHeaderMetadata = builder.metadata
+		? { builder_code: builderCode, ...builder.metadata }
+		: null;
 	const jsonLd: Record<string, unknown> = {
 		"@context": "https://schema.org",
 		"@type": "Thing",
@@ -210,41 +200,23 @@ async function BuilderPageContent({
 					</div>
 				</SectionAnchor>
 
-				<SectionAnchor id="builder-analytics">
-					<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-						<h2 className="text-lg font-medium text-foreground/90">Analytics</h2>
-						<div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-							{view === "deltas" ? (
-								<AnalyticsRangeToggle range={range} defaultRange={defaultRange} />
-							) : null}
-							<AnalyticsResolutionToggle
-								range={range}
-								resolution={resolution}
-								defaultResolution={defaultResolution}
-							/>
-							<AnalyticsViewToggle view={view} />
-						</div>
-					</div>
-				</SectionAnchor>
 				<BuilderStatsRow row={builder} fees={fees} />
-				<AnalyticsSection
-					range={range}
-					view={view}
-					resolution={resolution}
-					defaultResolution={defaultResolution}
-					defaultRange={defaultRange}
-					pathname={`/builders/${encodeURIComponent(builderCode)}`}
-					allowedComponents={["buy", "sell"]}
-					showControls={false}
-					showKpis={false}
-					fetchers={{
-						deltas: () => getBuilderAnalyticsDeltas(code, range, resolution),
-						timeseries: () => getBuilderAnalyticsTimeseries(code, range, resolution),
-						changes: () => getBuilderAnalyticsChanges(code, range),
-					}}
-					appendMetrics={BUILDER_ANALYTICS_APPEND_METRICS}
-					metricPlacements={BUILDER_ANALYTICS_METRIC_PLACEMENTS}
-				/>
+				<SectionAnchor id="builder-analytics">
+					<AnalyticsSection
+						title="Analytics"
+						range={range}
+						view={view}
+						resolution={resolution}
+						defaultResolution={defaultResolution}
+						defaultRange={defaultRange}
+						pathname={`/builders/${encodeURIComponent(builderCode)}`}
+						allowedComponents={["buy", "sell"]}
+						showKpis={false}
+						source={{ kind: "builder", code: builderCode }}
+						appendMetrics={BUILDER_ANALYTICS_APPEND_METRICS}
+						metricPlacements={BUILDER_ANALYTICS_METRIC_PLACEMENTS}
+					/>
+				</SectionAnchor>
 
 				<SectionAnchor id="builder-breakdown">
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

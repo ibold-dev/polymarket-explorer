@@ -1,7 +1,10 @@
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
-import { PerformanceSummary } from "@/components/trader/performance-summary";
 import { PnlCalendar } from "@/components/trader/pnl-calendar";
 import { PnlCard } from "@/components/trader/pnl-card";
+import {
+	TraderPerformanceSummaryLive,
+	TraderPnlProvider,
+} from "@/components/trader/trader-pnl-provider";
 import { TraderDnaCard } from "@/components/trader/trader-dna-card";
 import { TraderTabPanel, TraderTabPanelFallback, loadTraderTabPanelData } from "@/components/trader/trader-tab-panel";
 import { TraderHighlightsFallback, TraderHighlightsSection, loadTraderHighlightsData } from "@/components/trader/trader-highlights";
@@ -10,7 +13,6 @@ import {
 	computeStreaks,
 	getPnlChartAnnotations,
 	getTraderChartExits,
-	getTraderCumulativePnlUsd,
 	getTraderDailyPnl,
 	getTraderPnlCandles,
 	getTraderPnlPeriods,
@@ -30,12 +32,10 @@ import {
 	getTraderPageDescription,
 	getTraderPageTitle,
 	getTraderSocialTitle,
-	loadTraderOpenGraphIdentity,
 	traderOgImageSize,
 } from "@/lib/trader-open-graph";
 import { loadTraderSearchParams } from "@/lib/trader-search-params.server";
 import { getServerTimezone } from "@/lib/timezone.server";
-import { getTraderAnalyticsChanges, getTraderAnalyticsDeltas, getTraderAnalyticsTimeseries } from "@/lib/struct/analytics-queries";
 import { parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/struct/analytics-shared";
 import { getTraderCategoryPnl, getTraderPnlSummary, getTraderPnlChanges, getTraderProfile } from "@/lib/struct/queries";
 import { SectionAnchor } from "@/components/layout/section-anchor";
@@ -43,9 +43,10 @@ import type { SubheaderSlot } from "@/components/layout/section-subheader-bar";
 import { BridgeSectionSubheader, TabBridgeProvider } from "@/components/layout/tab-bridge";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
+import { readTotalPnlUsd } from "@/lib/format";
 import { buildPageMetadata } from "@/lib/site-metadata";
 import { getTraderDisplayName, normalizeWalletAddress } from "@/lib/utils";
-import type { PnlChangesResponse, PnlRiskResponse, GlobalEntry, UserProfile } from "@structbuild/sdk";
+import type { GlobalEntry } from "@structbuild/sdk";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -73,6 +74,13 @@ type TraderInsightsData = {
 	chartExits: PnlChartExit[];
 };
 
+type TraderProfileIdentity = {
+	name?: string | null;
+	pseudonym?: string | null;
+	profile_image?: string | null;
+	bio?: string | null;
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const { address: rawAddress } = await params;
 	const address = normalizeWalletAddress(rawAddress);
@@ -81,11 +89,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 		notFound();
 	}
 
-	const [{ displayName }, pnlSummary, cumulativePnlUsd] = await Promise.all([
-		loadTraderOpenGraphIdentity(address),
-		getTraderPnlSummary(address),
-		getTraderCumulativePnlUsd(address),
-	]);
+	const pnlSummary = await getTraderPnlSummary(address);
+	const profile = pnlSummary?.trader ?? (await getTraderProfile(address));
+	const displayName = getTraderDisplayName({
+		address,
+		name: profile?.name,
+		pseudonym: profile?.pseudonym,
+	});
+	const cumulativePnlUsd = readTotalPnlUsd(pnlSummary);
 	const description = getTraderPageDescription(displayName, address, cumulativePnlUsd, pnlSummary);
 	const socialTitle = getTraderSocialTitle(displayName, cumulativePnlUsd);
 	const ogImage = getTraderOgImageUrl(address);
@@ -142,45 +153,6 @@ function loadTraderInsights(address: string, range: ResolvedPnlRange, fillGaps: 
 	);
 }
 
-async function TraderInsightsSection({
-	address,
-	displayName,
-	profileImage,
-	pnlRange,
-	pnlFillGaps,
-	firstTradeAt,
-	insightsPromise,
-}: {
-	address: string;
-	displayName: string;
-	profileImage?: string | null;
-	pnlRange: ResolvedPnlRange;
-	pnlFillGaps: boolean;
-	firstTradeAt?: number;
-	insightsPromise: Promise<TraderInsightsData>;
-}) {
-	const { pnlCandles, dailyPnl, periods, chartAnnotations, chartExits } = await insightsPromise;
-
-	return (
-		<>
-			<PnlCard
-				address={address}
-				data={pnlCandles}
-				displayName={displayName}
-				profileImage={profileImage}
-				annotations={chartAnnotations}
-				exits={chartExits}
-				pnlRange={pnlRange}
-				pnlFillGaps={pnlFillGaps}
-				firstTradeAt={firstTradeAt}
-			/>
-			<div className="rounded-lg bg-card p-4 sm:p-6">
-				<PnlCalendar data={dailyPnl} periods={periods} />
-			</div>
-		</>
-	);
-}
-
 function TraderInsightsFallback() {
 	return (
 		<>
@@ -233,34 +205,6 @@ function TraderHeaderFallback() {
 	);
 }
 
-async function TraderPerformanceSummarySection({
-	pnlSummary,
-	insightsPromise,
-	pnlRiskPromise,
-	pnlChangesPromise,
-}: {
-	pnlSummary: GlobalEntry | null;
-	insightsPromise: Promise<TraderInsightsData>;
-	pnlRiskPromise: Promise<PnlRiskResponse | null>;
-	pnlChangesPromise: Promise<PnlChangesResponse | null>;
-}) {
-	const [{ streaks, periods }, pnlRisk, pnlChanges] = await Promise.all([
-		insightsPromise,
-		pnlRiskPromise,
-		pnlChangesPromise,
-	]);
-
-	return (
-		<PerformanceSummary
-			pnlSummary={pnlSummary}
-			pnlRisk={pnlRisk}
-			pnlChanges={pnlChanges}
-			streaks={streaks}
-			periods={periods}
-		/>
-	);
-}
-
 function TraderPerformanceSummaryFallback() {
 	return (
 		<div className="rounded-lg bg-card p-4 sm:p-6">
@@ -289,7 +233,7 @@ async function TraderOverviewSection({
 	address: string;
 	pnlRange: ResolvedPnlRange;
 	pnlFillGaps: boolean;
-	profilePromise: Promise<UserProfile | null>;
+	profilePromise: Promise<TraderProfileIdentity | null>;
 	pnlSummaryPromise: Promise<GlobalEntry | null>;
 	insightsPromise: Promise<TraderInsightsData>;
 	cumulativePnlUsdPromise: Promise<number>;
@@ -297,6 +241,11 @@ async function TraderOverviewSection({
 	const [profile, pnlSummary] = await Promise.all([profilePromise, pnlSummaryPromise]);
 	const pnlRiskPromise = getTraderPnlRisk(address, PNL_RISK_TIMEFRAMES[pnlRange.timeframe]);
 	const pnlChangesPromise = getTraderPnlChanges(address);
+	const [insights, pnlRisk, pnlChanges] = await Promise.all([
+		insightsPromise,
+		pnlRiskPromise,
+		pnlChangesPromise,
+	]);
 
 	const displayName = getTraderDisplayName({
 		address,
@@ -336,42 +285,49 @@ async function TraderOverviewSection({
 				profileImage={profile?.profile_image}
 				pnlSummary={pnlSummary}
 			/>
-			<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
-				<div className="min-w-0 space-y-6 lg:w-2/3">
-					<Suspense fallback={<TraderInsightsFallback />}>
-						<TraderInsightsSection
+			<TraderPnlProvider
+				address={address}
+				initialRange={pnlRange}
+				initialFillGaps={pnlFillGaps}
+				initialCandles={insights.pnlCandles}
+				initialAnnotations={insights.chartAnnotations}
+				initialExits={insights.chartExits}
+				initialRisk={pnlRisk}
+				periods={insights.periods}
+			>
+				<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
+					<div className="min-w-0 space-y-6 lg:w-2/3">
+						<PnlCard
 							address={address}
 							displayName={displayName}
 							profileImage={profile?.profile_image}
-							pnlRange={pnlRange}
-							pnlFillGaps={pnlFillGaps}
 							firstTradeAt={pnlSummary?.first_trade_at ?? undefined}
-							insightsPromise={insightsPromise}
 						/>
-					</Suspense>
-					{/* <TraderInfo address={address} profile={profile} /> */}
-				</div>
+						<div className="rounded-lg bg-card p-4 sm:p-6">
+							<PnlCalendar data={insights.dailyPnl} periods={insights.periods} />
+						</div>
+						{/* <TraderInfo address={address} profile={profile} /> */}
+					</div>
 
-				<div className="min-w-0 space-y-6 lg:w-1/3">
-					<Suspense fallback={<TraderPerformanceSummaryFallback />}>
-						<TraderPerformanceSummarySection
+					<div className="min-w-0 space-y-6 lg:w-1/3">
+						<TraderPerformanceSummaryLive
 							pnlSummary={pnlSummary}
-							insightsPromise={insightsPromise}
-							pnlRiskPromise={pnlRiskPromise}
-							pnlChangesPromise={pnlChangesPromise}
+							pnlChanges={pnlChanges}
+							streaks={insights.streaks}
+							periods={insights.periods}
 						/>
-					</Suspense>
-					<Suspense fallback={<TraderDnaFallback />}>
-						<TraderDnaSection
-							pnlSummaryPromise={pnlSummaryPromise}
-							cumulativePnlUsdPromise={cumulativePnlUsdPromise}
-							address={address}
-							displayName={displayName}
-							profileImage={profile?.profile_image}
-						/>
-					</Suspense>
+						<Suspense fallback={<TraderDnaFallback />}>
+							<TraderDnaSection
+								pnlSummaryPromise={pnlSummaryPromise}
+								cumulativePnlUsdPromise={cumulativePnlUsdPromise}
+								address={address}
+								displayName={displayName}
+								profileImage={profile?.profile_image}
+							/>
+						</Suspense>
+					</div>
 				</div>
-			</div>
+			</TraderPnlProvider>
 		</div>
 	);
 }
@@ -460,10 +416,8 @@ async function TraderPageContent({
 		notFound();
 	}
 
-	const [profile, pnlSummary] = await Promise.all([
-		getTraderProfile(address),
-		getTraderPnlSummary(address),
-	]);
+	const pnlSummary = await getTraderPnlSummary(address);
+	const profile = pnlSummary?.trader ?? (await getTraderProfile(address));
 
 	if (!profile && !pnlSummary) {
 		notFound();
@@ -511,7 +465,7 @@ async function TraderPageContent({
 	const profilePromise = Promise.resolve(profile);
 	const pnlSummaryPromise = Promise.resolve(pnlSummary);
 	const insightsPromise = loadTraderInsights(address, pnlRange, pnlFillGaps);
-	const cumulativePnlUsdPromise = getTraderCumulativePnlUsd(address);
+	const cumulativePnlUsdPromise = Promise.resolve(readTotalPnlUsd(pnlSummary));
 	const tabDataPromise = loadTraderTabPanelData({
 		address,
 		currentTab: tab,
@@ -611,14 +565,10 @@ async function TraderPageContent({
 							defaultRange={defaultRange}
 							excludeMetrics={["uniqueTraders", "makersTakers"]}
 							appendMetrics={["fees", "tradeTypes"]}
-							allowedComponents={SCOPED_VOLUME_COMPONENTS}
-							pathname={`/traders/${address}`}
-							fetchers={{
-								deltas: () => getTraderAnalyticsDeltas(address, range, resolution),
-								timeseries: () => getTraderAnalyticsTimeseries(address, range, resolution),
-								changes: () => getTraderAnalyticsChanges(address, range),
-							}}
-						/>
+								allowedComponents={SCOPED_VOLUME_COMPONENTS}
+								pathname={`/traders/${address}`}
+								source={{ kind: "trader", address }}
+							/>
 					</SectionAnchor>
 				</div>
 			</div>

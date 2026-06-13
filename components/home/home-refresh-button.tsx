@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 
-export function HomeRefreshButton() {
+export function HomeRefreshButton({ onRefresh }: { onRefresh?: () => Promise<void> | void }) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 
@@ -16,7 +16,11 @@ export function HomeRefreshButton() {
 			size="sm"
 			className="shrink-0"
 			onClick={() => {
-				startTransition(() => {
+				startTransition(async () => {
+					if (onRefresh) {
+						await onRefresh();
+						return;
+					}
 					router.refresh();
 				});
 			}}
