@@ -2,62 +2,78 @@
 /* eslint-disable @next/next/no-img-element */
 
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table"
-import type { components } from "@structbuild/sdk"
+import type { PolymarketCategory, PositionEntry } from "@structbuild/sdk"
 import type { Route } from "next"
 import Link from "next/link"
-import { ExternalLinkIcon, InfoIcon, RefreshCwIcon } from "lucide-react"
+import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon, RefreshCwIcon } from "lucide-react"
 import { type ReactNode, useCallback, useMemo, useState, useTransition } from "react"
-import { usePathname, useRouter } from "next/navigation"
 import { useQueryStates } from "nuqs"
+import posthog from "posthog-js"
 
-import { getTraderPositionsPageAction, refreshTraderTabAction } from "@/app/actions"
+import { getTraderPositionsPageAction, getTraderRankedPositionsPageAction } from "@/app/actions"
 import type {
+	TraderExitMode,
 	TraderPositionSortBy,
 	TraderSortDirection,
 } from "@/lib/trader-search-params-shared"
 import type { PaginatedResource } from "@/lib/struct/types"
 import { traderSearchParamParsers } from "@/lib/trader-search-params"
 import { maxTraderPageNumber } from "@/lib/trader-search-params-shared"
-import { getTraderPositionPnlDisplay } from "@/lib/trader-position-pnl"
+import { POLYMARKET_CATEGORIES } from "@/lib/tag-category"
 
 import { Badge } from "../ui/badge"
 import { DataTable } from "../ui/data-table"
 import { SortableHeader } from "../ui/sortable-header"
 import { TooltipWrapper } from "../ui/tooltip"
 import { Button } from "../ui/button"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../ui/select"
 import { ShowUnknownMarketsToggle } from "../ui/show-unknown-markets-toggle"
+import { ExternalLink } from "../ui/external-link"
 import { TraderTabs } from "./trader-tabs"
-import { formatNumber, formatPriceCents, formatDateShort, formatTime, pnlColorClass } from "@/lib/format"
+import { formatNumber, formatPriceCents, formatDateShort, formatTime, pnlColorClass, readTotalPnlUsd, readTotalPnlPct } from "@/lib/format"
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url"
 import { cn } from "@/lib/utils"
 
-type TraderOutcomePnlEntry = components["schemas"]["TraderOutcomePnlEntry"]
-
-function formatSharesLine(row: TraderOutcomePnlEntry) {
-	const bought = row.total_shares_bought ?? 0
-	const sold = row.total_shares_sold ?? 0
-	const net = bought - sold
-
-	if (bought === 0 && sold === 0) {
-		return null
-	}
-
-	if (Math.abs(net) < 1e-9) {
-		return `${formatNumber(sold, { decimals: 2 })} shares traded`
-	}
-
-	return `${formatNumber(net, { decimals: 2 })} net shares`
-}
-
 const defaultColumnVisibility: VisibilityState = {
-	realized_pnl: false,
 	current_value: false,
-	total_shares_bought: false,
-	total_shares_sold: false,
-	total_buy_usd: false,
-	total_sell_usd: false,
 	total_fees: false,
 	redemption_usd: false,
+	convert: false,
+}
+
+const baseSortOptions: { value: TraderPositionSortBy; label: string }[] = [
+	{ value: "realized_pnl_usd", label: "PnL ($)" },
+	{ value: "realized_pnl_pct", label: "PnL (%)" },
+	{ value: "current_value", label: "Current Value" },
+	{ value: "current_price", label: "Current Price" },
+	{ value: "current_shares_balance", label: "Shares Held" },
+	{ value: "end_date", label: "Market End Date" },
+	{ value: "redeemable", label: "Redeemable" },
+	{ value: "mergeable", label: "Mergeable" },
+	{ value: "merge_count", label: "Merges" },
+	{ value: "split_count", label: "Splits" },
+	{ value: "last_trade_at", label: "Last Active" },
+	{ value: "first_trade_at", label: "First Trade" },
+]
+
+const openOnlySortKeys: ReadonlySet<TraderPositionSortBy> = new Set([
+	"current_price",
+	"mergeable",
+])
+
+const closedOnlySortKeys: ReadonlySet<TraderPositionSortBy> = new Set([
+	"redeemable",
+])
+
+function getSortOptions(status: "open" | "closed") {
+	const excluded = status === "open" ? closedOnlySortKeys : openOnlySortKeys
+	return baseSortOptions.filter((option) => !excluded.has(option.value))
 }
 
 function buildColumns(
@@ -65,38 +81,42 @@ function buildColumns(
 	currentSortBy: TraderPositionSortBy,
 	currentSortDirection: TraderSortDirection,
 	onSortChange: (sortBy: TraderPositionSortBy) => void,
-): ColumnDef<TraderOutcomePnlEntry, unknown>[] {
-	// The backend has no current_price sort key, so this composite column uses the closest
-	// server-supported price field for each tab.
+	sortable: boolean,
+): ColumnDef<PositionEntry, unknown>[] {
 	const entryCurrentSortBy = status === "closed" ? "avg_exit_price" : "avg_entry_price"
+
+	const columnHeader = (sortBy: TraderPositionSortBy, label: string) =>
+		sortable
+			? () => (
+					<SortableHeader
+						table="trader_positions"
+						sortBy={sortBy}
+						currentSortBy={currentSortBy}
+						currentSortDirection={currentSortDirection}
+						onSortChange={onSortChange}
+					>
+						{label}
+					</SortableHeader>
+				)
+			: () => <span>{label}</span>
 
 	return [
 		{
 			id: "market",
 			meta: { title: "Market" },
-			header: () => (
-				<SortableHeader
-					sortBy="title"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Market
-				</SortableHeader>
-			),
+			header: columnHeader("title", "Market"),
 			size: 520,
 			cell: ({ row }) => {
 				const entry = row.original
-				const isUnknownMarket = !entry.title
-				const title = entry.title || "Unknown Market"
-				const sharesLine = formatSharesLine(entry)
+				const isUnknownMarket = !entry.question
+				const question = entry.question || "Unknown Market"
 				const href = entry.market_slug ? (`/markets/${entry.market_slug}` as Route) : null
 				return (
 					<div className="flex items-center gap-3">
 						{entry.image_url ? (
 							<img
 								className="size-10 rounded-md object-cover"
-								alt={title}
+								alt={question}
 								src={normalizePolymarketS3ImageUrl(entry.image_url) ?? ""}
 							/>
 						) : (
@@ -104,10 +124,10 @@ function buildColumns(
 						)}
 						<div className="min-w-0 flex-1 space-y-0.5">
 							{isUnknownMarket ? (
-								<p className="truncate text-base font-medium" title={title}>
+								<p className="truncate text-base font-medium" title={question}>
 									<TooltipWrapper content="Polymarket Gamma has no data on this market/position">
 										<span className="cursor-help border-b border-dotted border-muted-foreground/50">
-											{title}
+											{question}
 										</span>
 									</TooltipWrapper>
 								</p>
@@ -116,16 +136,21 @@ function buildColumns(
 									href={href}
 									prefetch={false}
 									className="block truncate text-base font-medium text-foreground underline-offset-4 hover:underline"
-									title={title}
+									title={question}
 								>
-									{title}
+									{question}
 								</Link>
 							) : (
-								<p className="truncate text-base font-medium" title={title}>
-									{title}
+								<p className="truncate text-base font-medium" title={question}>
+									{question}
 								</p>
 							)}
 							<div className="flex flex-wrap items-center gap-1.5">
+								{status === "closed" && entry.won != null ? (
+									<Badge variant={entry.won ? "positive" : "negative"}>
+										{entry.won ? "Won" : "Lost"}
+									</Badge>
+								) : null}
 								{entry.outcome ? (
 									<Badge
 										variant={
@@ -139,10 +164,14 @@ function buildColumns(
 										{entry.outcome}
 									</Badge>
 								) : null}
-								{sharesLine ? (
-									<p className="truncate text-sm text-muted-foreground" title={sharesLine}>
-										{sharesLine}
-									</p>
+								{entry.category ? (
+									<Badge variant="secondary">{entry.category}</Badge>
+								) : null}
+								{entry.redeemable ? (
+									<Badge variant="redeemable">Redeemable</Badge>
+								) : null}
+								{status === "open" && entry.current_shares_balance ? (
+									<p className="text-muted-foreground">{formatNumber(entry.current_shares_balance, { decimals: 2 })} shares</p>
 								) : null}
 							</div>
 						</div>
@@ -153,20 +182,11 @@ function buildColumns(
 		{
 			id: "entry_current",
 			meta: { title: "Entry / Current" },
-			header: () => (
-				<SortableHeader
-					sortBy={entryCurrentSortBy}
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Entry / Current
-				</SortableHeader>
-			),
+			header: columnHeader(entryCurrentSortBy, "Entry / Current"),
 			size: 140,
 			cell: ({ row }) => {
 				const entry = row.original
-				const isEntryUnknown = entry.avg_entry_price === 0 || entry.avg_entry_price == null
+				const isEntryUnknown = entry.avg_entry_price == null
 
 				return (
 					<p>
@@ -178,69 +198,27 @@ function buildColumns(
 							formatPriceCents(entry.avg_entry_price)
 						)}{" "}
 						<span className="text-muted-foreground">/</span>{" "}
-						{formatPriceCents(entry.current_price ?? entry.avg_exit_price)}
-					</p>
-				)
-			},
-		},
-		{
-			id: "pnl",
-			meta: { title: "PnL" },
-			header: () => (
-				<span className="flex items-center gap-1.5">
-					PnL
-					<TooltipWrapper content="Unrealized PnL on currently-held shares: shares × (current price − entry price). Closed positions show realized PnL.">
-						<InfoIcon className="size-4 text-muted-foreground" />
-					</TooltipWrapper>
-				</span>
-			),
-			size: 150,
-			cell: ({ row }) => {
-				const entry = row.original
-				const pnl = getTraderPositionPnlDisplay(entry)
-
-				return (
-					<p className={cn(pnlColorClass(pnl.colorValue))}>
-						{formatNumber(pnl.value, { currency: true, compact: true })}
-						{pnl.percent != null ? (
-							<span className="text-muted-foreground">
-								{" "}
-								({formatNumber(pnl.percent, { percent: true })})
-							</span>
-						) : null}
+						{formatPriceCents(entry.current_price ?? entry.avg_exit_price ?? 0)}
 					</p>
 				)
 			},
 		},
 		{
 			id: "realized_pnl",
-			meta: { title: "Realized PnL" },
-			header: () => (
-				<SortableHeader
-					sortBy="realized_pnl_usd"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					<span className="flex items-center gap-1.5">
-						Realized PnL
-						<TooltipWrapper content="Realized PnL is calculated based on shares bought, sold, and redeemed. If you haven't sold or redeemed any shares, your realized PnL will be negative.">
-							<InfoIcon className="size-4 text-muted-foreground" />
-						</TooltipWrapper>
-					</span>
-				</SortableHeader>
-			),
-			size: 180,
+			meta: { title: "PnL" },
+			header: columnHeader("realized_pnl_usd", "PnL"),
+			size: 150,
 			cell: ({ row }) => {
 				const entry = row.original
-				const pnl = entry.realized_pnl_usd ?? 0
+				const pnl = readTotalPnlUsd(entry)
+				const pnlPct = readTotalPnlPct(entry)
 				return (
 					<p className={cn(pnlColorClass(pnl))}>
 						{formatNumber(pnl, { currency: true, compact: true })}
-						{entry.realized_pnl_pct != null ? (
+						{pnlPct != null ? (
 							<span className="text-muted-foreground">
 								{" "}
-								({formatNumber(entry.realized_pnl_pct, { percent: true })})
+								({formatNumber(pnlPct, { percent: true })})
 							</span>
 						) : null}
 					</p>
@@ -252,175 +230,117 @@ function buildColumns(
 					{
 						id: "current_value",
 						meta: { title: "Current Value" },
-						header: () => (
-							<SortableHeader
-								sortBy="current_value"
-								currentSortBy={currentSortBy}
-								currentSortDirection={currentSortDirection}
-								onSortChange={onSortChange}
-							>
-								Current Value
-							</SortableHeader>
-						),
+						header: columnHeader("current_value", "Current Value"),
 						size: 160,
 						cell: ({ row }) => {
 							const entry = row.original
-							const currentVal = entry.current_value
-							const shares = entry.current_shares_balance
-
-							if (currentVal === 0) {
-								return (
-									<div>
-										<p>{formatNumber(0, { currency: true })}</p>
-										<p className="text-sm text-muted-foreground">
-											{formatNumber(shares ?? 0, { decimals: 2 })} shares
-										</p>
-									</div>
-								)
-							}
-
-							const showSharesLine = shares != null && shares > 0
-
 							return (
 								<div>
-									<p>
-										{currentVal != null && currentVal > 0
-											? formatNumber(currentVal, { currency: true, compact: true })
-											: "—"}
+									<p>{formatNumber(entry.current_value ?? 0, { currency: true, compact: true })}</p>
+									<p className="text-sm text-muted-foreground">
+										{formatNumber(entry.current_shares_balance ?? 0, { decimals: 2 })} shares
 									</p>
-									{showSharesLine ? (
-										<p className="text-sm text-muted-foreground">
-											{formatNumber(shares, { decimals: 2 })} shares
-										</p>
-									) : null}
 								</div>
 							)
 						},
-					} satisfies ColumnDef<TraderOutcomePnlEntry, unknown>,
+					} satisfies ColumnDef<PositionEntry, unknown>,
 				]
 			: []),
 		{
-			id: "total_shares_bought",
-			meta: { title: "Bought" },
-			header: () => (
-				<SortableHeader
-					sortBy="total_shares_bought"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Bought
-				</SortableHeader>
-			),
-			size: 120,
-			cell: ({ row }) => (
-				<p>{formatNumber(row.original.total_shares_bought ?? 0, { decimals: 2 })}</p>
-			),
+			id: "buys",
+			meta: { title: "Buys" },
+			header: columnHeader("total_buy_usd", "Buys"),
+			size: 160,
+			cell: ({ row }) => {
+				const usd = row.original.total_buy_usd ?? 0
+				const count = row.original.total_buys ?? 0
+				return (
+					<p className="tabular-nums">
+						<span>{formatNumber(usd, { currency: true, compact: true })}</span>
+						{count > 0 ? (
+							<span className="text-muted-foreground"> · {formatNumber(count, { decimals: 0 })}</span>
+						) : null}
+					</p>
+				)
+			},
 		},
 		{
-			id: "total_shares_sold",
-			meta: { title: "Sold" },
-			header: () => (
-				<SortableHeader
-					sortBy="total_shares_sold"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Sold
-				</SortableHeader>
-			),
-			size: 120,
-			cell: ({ row }) => (
-				<p>{formatNumber(row.original.total_shares_sold ?? 0, { decimals: 2 })}</p>
-			),
+			id: "sells",
+			meta: { title: "Sells" },
+			header: columnHeader("total_sell_usd", "Sells"),
+			size: 160,
+			cell: ({ row }) => {
+				const usd = row.original.total_sell_usd ?? 0
+				const count = row.original.total_sells ?? 0
+				return (
+					<p className="tabular-nums">
+						<span>{formatNumber(usd, { currency: true, compact: true })}</span>
+						{count > 0 ? (
+							<span className="text-muted-foreground"> · {formatNumber(count, { decimals: 0 })}</span>
+						) : null}
+					</p>
+				)
+			},
 		},
 		{
-			id: "total_buy_usd",
-			meta: { title: "Buy Vol" },
-			header: () => (
-				<SortableHeader
-					sortBy="total_buy_usd"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Buy Vol
-				</SortableHeader>
-			),
+			id: "merge_usd",
+			meta: { title: "Merge" },
+			header: () => <span>Merge</span>,
 			size: 130,
-			cell: ({ row }) => (
-				<p>{formatNumber(row.original.total_buy_usd ?? 0, { currency: true, compact: true })}</p>
-			),
+			cell: ({ row }) => {
+				const val = row.original.merge_usd ?? 0
+				return <p>{formatNumber(val, { currency: true, compact: true })}</p>
+			},
 		},
 		{
-			id: "total_sell_usd",
-			meta: { title: "Sell Vol" },
-			header: () => (
-				<SortableHeader
-					sortBy="total_sell_usd"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Sell Vol
-				</SortableHeader>
-			),
-			size: 130,
-			cell: ({ row }) => (
-				<p>{formatNumber(row.original.total_sell_usd ?? 0, { currency: true, compact: true })}</p>
-			),
+			id: "convert",
+			meta: { title: "Convert" },
+			header: () => <span>Convert</span>,
+			size: 140,
+			cell: ({ row }) => {
+				const count = row.original.converted_count ?? 0
+				const gained = row.original.converted_shares_gained ?? 0
+				const lost = row.original.converted_shares_lost ?? 0
+				const net = gained - lost
+				return (
+					<p className="tabular-nums">
+						<span>{formatNumber(count, { decimals: 0 })}</span>
+						{count > 0 ? (
+							<span className="text-muted-foreground">
+								{" "}· {net >= 0 ? "+" : ""}{formatNumber(net, { decimals: 2 })} sh
+							</span>
+						) : null}
+					</p>
+				)
+			},
 		},
 		{
 			id: "total_fees",
 			meta: { title: "Fees" },
-			header: () => (
-				<SortableHeader
-					sortBy="total_fees"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Fees
-				</SortableHeader>
-			),
+			header: columnHeader("total_fees", "Fees"),
 			size: 110,
 			cell: ({ row }) => (
 				<p>{formatNumber(row.original.total_fees ?? 0, { currency: true })}</p>
 			),
 		},
-		{
-			id: "redemption_usd",
-			meta: { title: "Redemption" },
-			header: () => (
-				<SortableHeader
-					sortBy="redemption_usd"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Redemption
-				</SortableHeader>
-			),
-			size: 130,
-			cell: ({ row }) => {
-				const val = row.original.redemption_usd
-				return <p>{val != null && val > 0 ? formatNumber(val, { currency: true, compact: true }) : "—"}</p>
-			},
-		},
+		...(status === "closed"
+			? [
+					{
+						id: "redemption_usd",
+						meta: { title: "Redemption" },
+						header: columnHeader("redemption_usd", "Redemption"),
+						size: 130,
+						cell: ({ row }) => {
+							const val = row.original.redemption_usd ?? 0
+							return <p>{formatNumber(val, { currency: true, compact: true })}</p>
+						},
+					} satisfies ColumnDef<PositionEntry, unknown>,
+				]
+			: []),
 		{
 			id: "last_trade_at",
 			meta: { title: "Last Active" },
-			header: () => (
-				<SortableHeader
-					sortBy="last_trade_at"
-					currentSortBy={currentSortBy}
-					currentSortDirection={currentSortDirection}
-					onSortChange={onSortChange}
-				>
-					Last Active
-				</SortableHeader>
-			),
+			header: columnHeader("last_trade_at", "Last Active"),
 			size: 150,
 			cell: ({ row }) => {
 				const lastTradeAtMs = row.original.last_trade_at
@@ -446,15 +366,14 @@ function buildColumns(
 				return (
 					<div className="flex justify-end">
 						<TooltipWrapper content="View on Polymarket">
-							<a
+							<ExternalLink
 								href={`https://polymarket.com/market/${slug}`}
-								target="_blank"
-								rel="noopener noreferrer"
+								linkType="polymarket_market"
 							>
 								<Button variant="ghost" size="icon" aria-label="View on Polymarket">
 									<ExternalLinkIcon className="size-4" />
 								</Button>
-							</a>
+							</ExternalLink>
 						</TooltipWrapper>
 					</div>
 				)
@@ -465,13 +384,18 @@ function buildColumns(
 
 type Props = {
 	address: string
-	page: PaginatedResource<TraderOutcomePnlEntry, number>
+	page: PaginatedResource<PositionEntry, number>
 	pageNumber: number
 	status: "open" | "closed"
 	sortBy: TraderPositionSortBy
 	sortDirection: TraderSortDirection
+	category?: PolymarketCategory
+	ranked?: TraderExitMode
 	tabs?: ReactNode
+	onRefresh?: () => Promise<void>
 }
+
+const ALL_CATEGORIES_VALUE = "__all__"
 
 export default function TraderPositions({
 	address,
@@ -480,20 +404,23 @@ export default function TraderPositions({
 	status,
 	sortBy,
 	sortDirection,
+	category,
+	ranked,
 	tabs,
+	onRefresh,
 }: Props) {
-	const pathname = usePathname()
-	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
 	const [tableState, setTableState] = useState(() => ({
 		sourcePage: page,
 		sourcePageNumber: pageNumber,
 		sourceSortBy: sortBy,
 		sourceSortDirection: sortDirection,
+		sourceCategory: category,
 		page,
 		pageNumber,
 		sortBy,
 		sortDirection,
+		category,
 	}))
 	const [, setSearchParams] = useQueryStates(traderSearchParamParsers, {
 		history: "push",
@@ -508,27 +435,57 @@ export default function TraderPositions({
 		tableState.sourcePage === page &&
 		tableState.sourcePageNumber === pageNumber &&
 		tableState.sourceSortBy === sortBy &&
-		tableState.sourceSortDirection === sortDirection
+		tableState.sourceSortDirection === sortDirection &&
+		tableState.sourceCategory === category
 	const currentPage = hasLocalTableState ? tableState.page : page
 	const currentPageNumber = hasLocalTableState ? tableState.pageNumber : pageNumber
 	const currentSortBy = hasLocalTableState ? tableState.sortBy : sortBy
 	const currentSortDirection = hasLocalTableState ? tableState.sortDirection : sortDirection
+	const currentCategory = hasLocalTableState ? tableState.category : category
 
-	const hasUnknownMarkets = currentPage.data.some((entry) => !entry.title)
+	const hasUnknownMarkets = currentPage.data.some((entry) => !entry.question)
 
-	const loadPage = useCallback((nextPageNumber: number, nextSortBy: TraderPositionSortBy, nextSortDirection: TraderSortDirection) => {
+	const loadPage = useCallback((nextPageNumber: number, nextSortBy: TraderPositionSortBy, nextSortDirection: TraderSortDirection, nextCategory: PolymarketCategory | undefined) => {
 		startTransition(async () => {
+			if (ranked) {
+				void setSearchParams(
+					ranked === "wins" ? { winsPage: nextPageNumber } : { lossesPage: nextPageNumber },
+				)
+
+				const result = await getTraderRankedPositionsPageAction({
+					address,
+					mode: ranked,
+					pageNumber: nextPageNumber,
+				})
+
+				setTableState({
+					sourcePage: page,
+					sourcePageNumber: pageNumber,
+					sourceSortBy: sortBy,
+					sourceSortDirection: sortDirection,
+					sourceCategory: category,
+					page: result.page,
+					pageNumber: result.pageNumber,
+					sortBy,
+					sortDirection,
+					category,
+				})
+				return
+			}
+
 			if (status === "open") {
 				void setSearchParams({
 					openSortBy: nextSortBy,
 					openSortDirection: nextSortDirection,
 					openPage: nextPageNumber,
+					positionsCategory: nextCategory ?? null,
 				})
 			} else {
 				void setSearchParams({
 					closedSortBy: nextSortBy,
 					closedSortDirection: nextSortDirection,
 					closedPage: nextPageNumber,
+					positionsCategory: nextCategory ?? null,
 				})
 			}
 
@@ -538,6 +495,7 @@ export default function TraderPositions({
 				pageNumber: nextPageNumber,
 				sortBy: nextSortBy,
 				sortDirection: nextSortDirection,
+				category: nextCategory,
 			})
 
 			setTableState({
@@ -545,31 +503,75 @@ export default function TraderPositions({
 				sourcePageNumber: pageNumber,
 				sourceSortBy: sortBy,
 				sourceSortDirection: sortDirection,
+				sourceCategory: category,
 				page: result.page,
 				pageNumber: result.pageNumber,
 				sortBy: nextSortBy,
 				sortDirection: nextSortDirection,
+				category: nextCategory,
 			})
 		})
-	}, [address, page, pageNumber, setSearchParams, sortBy, sortDirection, startTransition, status])
+	}, [address, category, page, pageNumber, ranked, setSearchParams, sortBy, sortDirection, startTransition, status])
 
 	const handleSortChange = useCallback((nextSortBy: TraderPositionSortBy) => {
 		const nextSortDirection: TraderSortDirection =
 			nextSortBy === currentSortBy && currentSortDirection === "desc" ? "asc" : "desc"
 
-		loadPage(1, nextSortBy, nextSortDirection)
-	}, [currentSortBy, currentSortDirection, loadPage])
+		loadPage(1, nextSortBy, nextSortDirection, currentCategory)
+	}, [currentCategory, currentSortBy, currentSortDirection, loadPage])
+
+	const handleSelectSortChange = useCallback((nextSortBy: TraderPositionSortBy) => {
+		if (nextSortBy === currentSortBy) return
+		posthog.capture("trader_positions_sorted", {
+			sort_by: nextSortBy,
+			sort_direction: "desc",
+			status,
+		})
+		loadPage(1, nextSortBy, "desc", currentCategory)
+	}, [currentCategory, currentSortBy, loadPage, status])
+
+	const handleDirectionToggle = useCallback(() => {
+		const nextDirection: TraderSortDirection = currentSortDirection === "desc" ? "asc" : "desc"
+		posthog.capture("trader_positions_sorted", {
+			sort_by: currentSortBy,
+			sort_direction: nextDirection,
+			status,
+		})
+		loadPage(1, currentSortBy, nextDirection, currentCategory)
+	}, [currentCategory, currentSortBy, currentSortDirection, loadPage, status])
+
+	const handleCategoryChange = useCallback((value: string | null) => {
+		const nextCategory = !value || value === ALL_CATEGORIES_VALUE
+			? undefined
+			: (POLYMARKET_CATEGORIES.find((option) => option === value) ?? undefined)
+		if (nextCategory === currentCategory) return
+		posthog.capture("trader_positions_category_filtered", {
+			category: nextCategory ?? "all",
+			status,
+		})
+		loadPage(1, currentSortBy, currentSortDirection, nextCategory)
+	}, [currentCategory, currentSortBy, currentSortDirection, loadPage, status])
+
+	const sortOptions = useMemo(() => getSortOptions(status), [status])
+	const sortOptionValues = useMemo(
+		() => new Set<TraderPositionSortBy>(sortOptions.map((o) => o.value)),
+		[sortOptions],
+	)
+
+	const selectSortValue: TraderPositionSortBy | null = sortOptionValues.has(currentSortBy)
+		? currentSortBy
+		: null
 
 	const columns = useMemo(
-		() => buildColumns(status, currentSortBy, currentSortDirection, handleSortChange),
-		[handleSortChange, currentSortBy, currentSortDirection, status],
+		() => buildColumns(status, currentSortBy, currentSortDirection, handleSortChange, !ranked),
+		[handleSortChange, currentSortBy, currentSortDirection, status, ranked],
 	)
 
 	const data = useMemo(() => {
 		if (showUnknown) {
 			return currentPage.data
 		}
-		return currentPage.data.filter((entry) => entry.title)
+		return currentPage.data.filter((entry) => entry.question)
 	}, [currentPage.data, showUnknown])
 
 	const toolbarRight = (
@@ -577,32 +579,100 @@ export default function TraderPositions({
 			{hasUnknownMarkets ? (
 				<ShowUnknownMarketsToggle show={showUnknown} onToggle={setShowUnknown} />
 			) : null}
-			<Button
-				variant="outline"
-				size="sm"
-				onClick={() => {
-					startTransition(async () => {
-						await refreshTraderTabAction(pathname)
-						router.refresh()
-					})
-				}}
-				disabled={isPending}
-			>
-				<RefreshCwIcon data-icon="inline-start" />
-				Refresh
-			</Button>
+			{!ranked ? (
+				<Select
+					value={currentCategory ?? ALL_CATEGORIES_VALUE}
+					onValueChange={handleCategoryChange}
+				>
+					<SelectTrigger size="sm" aria-label="Filter by category">
+						<span className="text-muted-foreground">Category:</span>
+						<SelectValue placeholder="All">
+							{(value) => (value && value !== ALL_CATEGORIES_VALUE ? value : "All")}
+						</SelectValue>
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value={ALL_CATEGORIES_VALUE}>All</SelectItem>
+						{POLYMARKET_CATEGORIES.map((option) => (
+							<SelectItem key={option} value={option}>
+								{option}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			) : null}
+			{!ranked ? (
+				<div className="flex items-center gap-1">
+					<Select
+						value={selectSortValue}
+						onValueChange={(value) => {
+							if (value) handleSelectSortChange(value as TraderPositionSortBy)
+						}}
+					>
+						<SelectTrigger size="sm" aria-label="Sort by">
+							<span className="text-muted-foreground">Sort:</span>
+							<SelectValue placeholder="Custom">
+								{(value) => sortOptions.find((option) => option.value === value)?.label ?? "Custom"}
+							</SelectValue>
+						</SelectTrigger>
+						<SelectContent>
+							{sortOptions.map((option) => (
+								<SelectItem key={option.value} value={option.value}>
+									{option.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<TooltipWrapper content={currentSortDirection === "desc" ? "Sorted descending" : "Sorted ascending"}>
+						<Button
+							variant="outline"
+							size="icon"
+							className="size-7"
+							onClick={handleDirectionToggle}
+							aria-label={`Toggle sort direction (currently ${currentSortDirection})`}
+						>
+							{currentSortDirection === "desc" ? (
+								<ArrowDownIcon className="size-4" />
+							) : (
+								<ArrowUpIcon className="size-4" />
+							)}
+						</Button>
+					</TooltipWrapper>
+				</div>
+			) : null}
+			{onRefresh ? (
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => {
+						startTransition(async () => {
+							await onRefresh()
+						})
+					}}
+					disabled={isPending}
+				>
+					<RefreshCwIcon data-icon="inline-start" />
+					Refresh
+				</Button>
+			) : null}
 		</div>
 	)
 
 	return (
 		<DataTable
+			tableName="trader_positions"
 			toolbarLeft={tabs ?? <TraderTabs />}
 			toolbarRight={toolbarRight}
 			columns={columns}
 			data={data}
 			storageKey="positions-table"
 			defaultColumnVisibility={defaultColumnVisibility}
-			emptyMessage="No positions to show."
+			emptyMessage={
+				ranked === "wins"
+					? "No winning positions to show."
+					: ranked === "losses"
+						? "No losing positions to show."
+						: "No positions to show."
+			}
 			emptyClassName="py-24"
 			columnLayout="fixed"
 			paginationMode="server"
@@ -617,7 +687,7 @@ export default function TraderPositions({
 					return
 				}
 
-				loadPage(nextPageNumber, currentSortBy, currentSortDirection)
+				loadPage(nextPageNumber, currentSortBy, currentSortDirection, currentCategory)
 			}}
 		/>
 	)

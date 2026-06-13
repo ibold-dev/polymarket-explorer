@@ -1,19 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import posthog from "posthog-js";
 import Link from "next/link";
 import type { Route } from "next";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Holder, OutcomeHolders } from "@structbuild/sdk";
+import type { MarketHolder, OutcomeHolders } from "@structbuild/sdk";
 
 import { DataTable } from "@/components/ui/data-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TraderAvatar } from "@/components/trader/trader-avatar";
-import { formatNumber, formatPriceCents } from "@/lib/format";
+import { formatNumber, formatPriceCents, toSeconds } from "@/lib/format";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { cn, getTraderDisplayName } from "@/lib/utils";
 
-type HolderRow = Holder & { rank: number };
+type HolderRow = MarketHolder & { rank: number };
 
 function toNumber(value: string | number | null | undefined): number | null {
 	if (value == null) return null;
@@ -79,18 +80,24 @@ const columns: ColumnDef<HolderRow, unknown>[] = [
 		id: "avg_entry",
 		header: "Avg Entry",
 		size: 110,
-		cell: ({ row }) => (
-			<span className="tabular-nums text-foreground/80">
-				{formatPriceCents(row.original.pnl?.avg_entry_price ?? null)}
-			</span>
-		),
+		cell: ({ row }) => {
+			const buyVolume = toNumber(row.original.pnl?.buy_volume_usd);
+			const sharesBought = toNumber(row.original.pnl?.total_shares_bought);
+			const avgEntry =
+				buyVolume != null && sharesBought != null && sharesBought > 0 ? buyVolume / sharesBought : null;
+			return (
+				<span className="tabular-nums text-foreground/80">
+					{formatPriceCents(avgEntry)}
+				</span>
+			);
+		},
 	},
 	{
 		id: "realized_pnl",
 		header: "Realized PnL",
 		size: 140,
 		cell: ({ row }) => {
-			const pnl = toNumber(row.original.pnl?.realized_sell_pnl_usd);
+			const pnl = toNumber(row.original.pnl?.realized_pnl_usd);
 			if (pnl == null) return <span className="text-muted-foreground">—</span>;
 			return (
 				<span
@@ -131,7 +138,7 @@ const columns: ColumnDef<HolderRow, unknown>[] = [
 		header: "First Bought",
 		size: 110,
 		cell: ({ row }) => {
-			const t = row.original.pnl?.first_trade_at;
+			const t = toSeconds(row.original.pnl?.first_trade_at);
 			return t != null ? (
 				<TimeAgo timestamp={t} className="tabular-nums text-foreground/80" />
 			) : (
@@ -144,7 +151,7 @@ const columns: ColumnDef<HolderRow, unknown>[] = [
 		header: "Last Trade",
 		size: 110,
 		cell: ({ row }) => {
-			const t = row.original.pnl?.last_trade_at;
+			const t = toSeconds(row.original.pnl?.last_trade_at);
 			return t != null ? (
 				<TimeAgo timestamp={t} className="tabular-nums text-foreground/80" />
 			) : (
@@ -174,7 +181,19 @@ export function MarketHoldersClient({ outcomes }: { outcomes: OutcomeHolders[] }
 	);
 
 	const outcomePicker = (
-		<Tabs value={activeOutcomeId} onValueChange={(value) => setActiveOutcomeId(String(value))}>
+		<Tabs
+			value={activeOutcomeId}
+			onValueChange={(value) => {
+				const next = String(value);
+				if (next !== activeOutcomeId) {
+					const picked = outcomes.find((o) => o.position_id === next);
+					posthog.capture("market_holders_outcome_changed", {
+						outcome_name: picked?.outcome_name,
+					});
+				}
+				setActiveOutcomeId(next);
+			}}
+		>
 			<TabsList>
 				{outcomes.map((outcome) => (
 					<TabsTrigger key={outcome.position_id} value={outcome.position_id}>
@@ -194,11 +213,13 @@ export function MarketHoldersClient({ outcomes }: { outcomes: OutcomeHolders[] }
 		<DataTable
 			columns={columns}
 			data={rows}
+			getRowHref={(row) => `/traders/${row.trader.address}`}
 			storageKey="market-holders-table"
 			defaultColumnVisibility={defaultColumnVisibility}
 			emptyMessage="No holders for this outcome."
 			columnLayout="fixed"
 			paginationMode="none"
+			tableName="market_holders"
 			toolbarLeft={outcomePicker}
 		/>
 	);

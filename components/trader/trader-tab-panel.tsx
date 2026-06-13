@@ -1,10 +1,16 @@
+import type { PolymarketCategory } from "@structbuild/sdk"
+
 import type {
+	TraderCategorySortBy,
+	TraderMarketSortBy,
 	TraderPositionSortBy,
 	TraderSortDirection,
 	TraderTab,
 } from "@/lib/trader-search-params-shared"
 import {
 	defaultTraderTablePageSize,
+	getTraderCategoriesPage,
+	getTraderMarketsPage,
 	getTraderPositionsPage,
 	getTraderTradesPage,
 } from "@/lib/struct/queries"
@@ -20,6 +26,7 @@ type TraderTabPanelData =
 			pageNumber: number
 			sortBy: TraderPositionSortBy
 			sortDirection: TraderSortDirection
+			category?: PolymarketCategory
 			page: Awaited<ReturnType<typeof getTraderPositionsPage>>
 	  }
 	| {
@@ -28,6 +35,22 @@ type TraderTabPanelData =
 			pageNumber: number
 			page: Awaited<ReturnType<typeof getTraderTradesPage>>
 	  }
+	| {
+			kind: "categories"
+			address: string
+			pageNumber: number
+			sortBy: TraderCategorySortBy
+			sortDirection: TraderSortDirection
+			page: Awaited<ReturnType<typeof getTraderCategoriesPage>>
+	  }
+	| {
+			kind: "markets"
+			address: string
+			pageNumber: number
+			sortBy: TraderMarketSortBy
+			sortDirection: TraderSortDirection
+			page: Awaited<ReturnType<typeof getTraderMarketsPage>>
+	  }
 
 type LoadTraderTabPanelDataProps = {
 	address: string
@@ -35,10 +58,17 @@ type LoadTraderTabPanelDataProps = {
 	openPage: number
 	closedPage: number
 	activityPage: number
+	categoriesPage: number
+	marketsPage: number
 	openSortBy: TraderPositionSortBy
 	openSortDirection: TraderSortDirection
 	closedSortBy: TraderPositionSortBy
 	closedSortDirection: TraderSortDirection
+	categoriesSortBy: TraderCategorySortBy
+	categoriesSortDirection: TraderSortDirection
+	marketsSortBy: TraderMarketSortBy
+	marketsSortDirection: TraderSortDirection
+	category?: PolymarketCategory
 }
 
 export function loadTraderTabPanelData({
@@ -47,12 +77,20 @@ export function loadTraderTabPanelData({
 	openPage,
 	closedPage,
 	activityPage,
+	categoriesPage,
+	marketsPage,
 	openSortBy,
 	openSortDirection,
 	closedSortBy,
 	closedSortDirection,
+	categoriesSortBy,
+	categoriesSortDirection,
+	marketsSortBy,
+	marketsSortDirection,
+	category,
 }: LoadTraderTabPanelDataProps): Promise<TraderTabPanelData> {
 	const pageSize = defaultTraderTablePageSize
+	const categoryOption = category ? { category } : {}
 
 	switch (currentTab) {
 		case "closed":
@@ -61,6 +99,7 @@ export function loadTraderTabPanelData({
 				offset: (closedPage - 1) * pageSize,
 				sort_by: closedSortBy,
 				sort_direction: closedSortDirection,
+				...categoryOption,
 			}).then((page) => ({
 				kind: "positions" as const,
 				address,
@@ -68,6 +107,7 @@ export function loadTraderTabPanelData({
 				pageNumber: closedPage,
 				sortBy: closedSortBy,
 				sortDirection: closedSortDirection,
+				category,
 				page,
 			}))
 		case "activity":
@@ -81,6 +121,34 @@ export function loadTraderTabPanelData({
 				pageNumber: activityPage,
 				page,
 			}))
+		case "categories":
+			return getTraderCategoriesPage(address, {
+				limit: pageSize,
+				offset: (categoriesPage - 1) * pageSize,
+				sort_by: categoriesSortBy,
+				sort_direction: categoriesSortDirection,
+			}).then((page) => ({
+				kind: "categories" as const,
+				address,
+				pageNumber: categoriesPage,
+				sortBy: categoriesSortBy,
+				sortDirection: categoriesSortDirection,
+				page,
+			}))
+		case "markets":
+			return getTraderMarketsPage(address, {
+				limit: pageSize,
+				offset: (marketsPage - 1) * pageSize,
+				sort_by: marketsSortBy,
+				sort_direction: marketsSortDirection,
+			}).then((page) => ({
+				kind: "markets" as const,
+				address,
+				pageNumber: marketsPage,
+				sortBy: marketsSortBy,
+				sortDirection: marketsSortDirection,
+				page,
+			}))
 		case "active":
 		default:
 			return getTraderPositionsPage(address, "open", {
@@ -88,6 +156,7 @@ export function loadTraderTabPanelData({
 				offset: (openPage - 1) * pageSize,
 				sort_by: openSortBy,
 				sort_direction: openSortDirection,
+				...categoryOption,
 			}).then((page) => ({
 				kind: "positions" as const,
 				address,
@@ -95,6 +164,7 @@ export function loadTraderTabPanelData({
 				pageNumber: openPage,
 				sortBy: openSortBy,
 				sortDirection: openSortDirection,
+				category,
 				page,
 			}))
 	}
@@ -117,9 +187,13 @@ export function TraderTabPanelFallback({
 	const label =
 		currentTab === "activity"
 			? "Loading activity"
-			: currentTab === "closed"
-				? "Loading closed positions"
-				: "Loading open positions"
+			: currentTab === "categories"
+				? "Loading categories"
+				: currentTab === "markets"
+					? "Loading markets"
+					: currentTab === "closed"
+						? "Loading closed positions"
+						: "Loading open positions"
 
 	return (
 		<div className="space-y-3">

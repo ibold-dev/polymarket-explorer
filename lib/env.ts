@@ -43,3 +43,25 @@ export function getSiteUrl() {
     return new URL(defaultSiteUrl);
   }
 }
+
+const defaultAuthBaseUrl = "https://struct.to";
+
+function isAllowedAuthUrl(url: URL): boolean {
+  const isLocal = url.hostname === "localhost" || url.hostname.endsWith(".localhost");
+  const isStruct = url.hostname === "struct.to" || url.hostname.endsWith(".struct.to");
+  if (isLocal) return url.protocol === "http:" || url.protocol === "https:";
+  if (isStruct) return url.protocol === "https:";
+  return false;
+}
+
+export function getAuthBaseUrl() {
+  const configured = readString(process.env.NEXT_PUBLIC_AUTH_URL);
+  if (configured) {
+    try {
+      if (isAllowedAuthUrl(new URL(configured))) return configured;
+    } catch {
+      return defaultAuthBaseUrl;
+    }
+  }
+  return defaultAuthBaseUrl;
+}

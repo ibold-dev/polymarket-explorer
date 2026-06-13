@@ -1,10 +1,14 @@
 "use client"
 
-import type { TraderOutcomePnlEntry } from "@structbuild/sdk"
-import { useCallback, useRef, useState, useTransition } from "react"
+import type { CategoryEntry, MarketEntry, PolymarketCategory, PositionEntry } from "@structbuild/sdk"
+import type { ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 
 import { getTraderTabPageAction } from "@/app/actions"
+import { useTabBridge } from "@/components/layout/tab-bridge"
 import type {
+	TraderCategorySortBy,
+	TraderMarketSortBy,
 	TraderPositionSortBy,
 	TraderSortDirection,
 	TraderTab,
@@ -12,6 +16,8 @@ import type {
 import type { PaginatedResource } from "@/lib/struct/types"
 import type { TradeRow } from "./types"
 import TraderActivity from "./activity"
+import TraderCategories from "./categories"
+import TraderMarkets from "./markets"
 import TraderPositions from "./positions"
 import { TraderTabs } from "./trader-tabs"
 
@@ -23,7 +29,8 @@ type TraderTabPanelClientProps =
 			pageNumber: number
 			sortBy: TraderPositionSortBy
 			sortDirection: TraderSortDirection
-			page: PaginatedResource<TraderOutcomePnlEntry, number>
+			category?: PolymarketCategory
+			page: PaginatedResource<PositionEntry, number>
 	  }
 	| {
 			kind: "activity"
@@ -31,11 +38,27 @@ type TraderTabPanelClientProps =
 			pageNumber: number
 			page: PaginatedResource<TradeRow, number>
 	  }
+	| {
+			kind: "categories"
+			address: string
+			pageNumber: number
+			sortBy: TraderCategorySortBy
+			sortDirection: TraderSortDirection
+			page: PaginatedResource<CategoryEntry, number>
+	  }
+	| {
+			kind: "markets"
+			address: string
+			pageNumber: number
+			sortBy: TraderMarketSortBy
+			sortDirection: TraderSortDirection
+			page: PaginatedResource<MarketEntry, number>
+	  }
 
 function tabForPanelData(props: TraderTabPanelClientProps): TraderTab {
-	if (props.kind === "activity") {
-		return "activity"
-	}
+	if (props.kind === "activity") return "activity"
+	if (props.kind === "categories") return "categories"
+	if (props.kind === "markets") return "markets"
 
 	return props.status === "closed" ? "closed" : "active"
 }
@@ -59,6 +82,7 @@ function replaceTraderTabUrl(tab: TraderTab) {
 export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 	const [isPending, startTransition] = useTransition()
 	const requestIdRef = useRef(0)
+	const bridge = useTabBridge()
 	const [panelState, setPanelState] = useState(() => ({
 		sourceProps: props,
 		data: props,
@@ -91,6 +115,33 @@ export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 		})
 	}, [currentData.address, currentTab, props])
 
+	const handleRefresh = useCallback(async () => {
+		const requestId = requestIdRef.current + 1
+		requestIdRef.current = requestId
+
+		const data = await getTraderTabPageAction({
+			address: currentData.address,
+			tab: currentTab,
+			search: window.location.search,
+		})
+
+		if (requestIdRef.current === requestId) {
+			setPanelState({
+				sourceProps: props,
+				data,
+			})
+		}
+	}, [currentData.address, currentTab, props])
+
+	useEffect(() => {
+		if (!bridge) return
+		return bridge.registerHandler("trader-positions", handleTabChange as (tab: string) => void)
+	}, [bridge, handleTabChange])
+
+	useEffect(() => {
+		bridge?.reportActive("trader-positions", currentTab)
+	}, [bridge, currentTab])
+
 	const tabs = (
 		<TraderTabs
 			value={currentTab}
@@ -99,26 +150,57 @@ export function TraderTabPanelClient(props: TraderTabPanelClientProps) {
 		/>
 	)
 
+	let content: ReactNode
+
 	if (currentData.kind === "activity") {
-		return (
+		content = (
 			<TraderActivity
 				address={currentData.address}
 				page={currentData.page}
 				pageNumber={currentData.pageNumber}
 				tabs={tabs}
+				onRefresh={handleRefresh}
+			/>
+		)
+	} else if (currentData.kind === "categories") {
+		content = (
+			<TraderCategories
+				address={currentData.address}
+				page={currentData.page}
+				pageNumber={currentData.pageNumber}
+				sortBy={currentData.sortBy}
+				sortDirection={currentData.sortDirection}
+				tabs={tabs}
+				onRefresh={handleRefresh}
+			/>
+		)
+	} else if (currentData.kind === "markets") {
+		content = (
+			<TraderMarkets
+				address={currentData.address}
+				page={currentData.page}
+				pageNumber={currentData.pageNumber}
+				sortBy={currentData.sortBy}
+				sortDirection={currentData.sortDirection}
+				tabs={tabs}
+				onRefresh={handleRefresh}
+			/>
+		)
+	} else {
+		content = (
+			<TraderPositions
+				address={currentData.address}
+				page={currentData.page}
+				pageNumber={currentData.pageNumber}
+				status={currentData.status}
+				sortBy={currentData.sortBy}
+				sortDirection={currentData.sortDirection}
+				category={currentData.category}
+				tabs={tabs}
+				onRefresh={handleRefresh}
 			/>
 		)
 	}
 
-	return (
-		<TraderPositions
-			address={currentData.address}
-			page={currentData.page}
-			pageNumber={currentData.pageNumber}
-			status={currentData.status}
-			sortBy={currentData.sortBy}
-			sortDirection={currentData.sortDirection}
-			tabs={tabs}
-		/>
-	)
+	return content
 }

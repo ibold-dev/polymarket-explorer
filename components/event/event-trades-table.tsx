@@ -11,6 +11,7 @@ import { HashIcon } from "lucide-react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { captureOutbound } from "@/components/ui/external-link";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { TooltipWrapper } from "@/components/ui/tooltip";
@@ -194,7 +195,7 @@ const columns: ColumnDef<TradeRow, unknown>[] = [
 			const isPositive = usdAmount != null && usdAmount > 0;
 			const isNegative = usdAmount != null && usdAmount < 0;
 			return (
-				<p className={cn("text-sm tabular-nums", isPositive ? "text-emerald-500" : isNegative ? "text-red-500" : "")}>
+				<p className={cn("text-sm tabular-nums", isPositive ? "text-emerald-500" : isNegative ? "text-red-500" : "text-muted-foreground")}>
 					{isPositive ? "+" : ""}
 					{formatNumber(usdAmount, { currency: true, compact: true })}
 				</p>
@@ -216,6 +217,11 @@ const columns: ColumnDef<TradeRow, unknown>[] = [
 							size="icon"
 							aria-label="View on Polygonscan"
 							nativeButton={false}
+							onClick={() =>
+								captureOutbound(`https://polygonscan.com/tx/${trade.hash}`, {
+									link_type: "polygonscan",
+								})
+							}
 							render={
 								<a
 									href={`https://polygonscan.com/tx/${trade.hash}`}
@@ -238,6 +244,7 @@ export function EventTradesTable({ trades }: { trades: TradeRow[] }) {
 		<DataTable
 			columns={columns}
 			data={trades}
+			tableName="event_trades"
 			storageKey="event-trades-table"
 			emptyMessage="No trades to show."
 			columnLayout="fixed"

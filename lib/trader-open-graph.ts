@@ -1,15 +1,17 @@
 import "server-only";
 
-import type { TraderPnlSummary, UserProfile } from "@structbuild/sdk";
+import type { GlobalEntry, UserProfile } from "@structbuild/sdk";
 import { cache } from "react";
 
 import {
 	computeStreaks,
 	getTraderDailyPnl,
 	getTraderPnlCandles,
+	getTraderPnlPeriods,
 	type PnlDataPoint,
+	type PnlPeriods,
 	type PnlStreaks,
-} from "@/lib/polymarket/pnl";
+} from "@/lib/struct/pnl";
 import { getSiteUrl } from "@/lib/env";
 import { formatNumber } from "@/lib/format";
 import { buildEntityPageTitle } from "@/lib/site-metadata";
@@ -25,9 +27,10 @@ export type TraderOpenGraphData = {
 	address: string;
 	displayName: string;
 	profile: UserProfile | null;
-	pnlSummary: TraderPnlSummary | null;
+	pnlSummary: GlobalEntry | null;
 	pnlCandles: PnlDataPoint[];
 	streaks: PnlStreaks;
+	periods: PnlPeriods;
 };
 
 export type TraderOpenGraphIdentity = {
@@ -53,7 +56,7 @@ export function getTraderPageDescription(
 	displayName: string,
 	address: string,
 	cumulativePnlUsd: number,
-	pnlSummary?: TraderPnlSummary | null,
+	pnlSummary?: GlobalEntry | null,
 ) {
 	const volume = pnlSummary?.total_volume_usd;
 	const winRate = pnlSummary?.market_win_rate_pct;
@@ -123,11 +126,12 @@ export async function loadTraderOpenGraphIdentity(address: string): Promise<Trad
 }
 
 const loadTraderOpenGraphDataCached = cache(async (address: string): Promise<TraderOpenGraphData> => {
-	const [identity, pnlSummary, pnlCandles, dailyPnl] = await Promise.all([
+	const [identity, pnlSummary, pnlCandles, dailyPnl, periods] = await Promise.all([
 		loadTraderOpenGraphIdentityCached(address),
 		getTraderPnlSummary(address),
-		getTraderPnlCandles(address, "all", "1h"),
+		getTraderPnlCandles(address, "lifetime", "1h"),
 		getTraderDailyPnl(address),
+		getTraderPnlPeriods(address),
 	]);
 
 	return {
@@ -137,6 +141,7 @@ const loadTraderOpenGraphDataCached = cache(async (address: string): Promise<Tra
 		pnlSummary,
 		pnlCandles,
 		streaks: computeStreaks(dailyPnl),
+		periods,
 	};
 });
 
@@ -152,6 +157,18 @@ export async function loadTraderOpenGraphData(address: string): Promise<TraderOp
 			pnlSummary: null,
 			pnlCandles: [],
 			streaks: computeStreaks([]),
+			periods: {
+				totalPnl: {
+					day: { best: null, worst: null },
+					week: { best: null, worst: null },
+					month: { best: null, worst: null },
+				},
+				portfolio: {
+					day: { best: null, worst: null },
+					week: { best: null, worst: null },
+					month: { best: null, worst: null },
+				},
+			},
 		};
 	}
 

@@ -1,13 +1,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getLeaderboard } from "@/lib/polymarket/leaderboard";
-import { formatNumber } from "@/lib/format";
+import { getGlobalLeaderboard } from "@/lib/struct/market-queries";
+import { formatNumber, pnlColorClass, readTotalPnlUsd } from "@/lib/format";
 import { getTraderDisplayName, normalizeWalletAddress } from "@/lib/utils";
 import type { Route } from "next";
 import Link from "next/link";
 
 export async function TopTraders() {
-	const leaderboard = await getLeaderboard();
-	const traders = leaderboard.slice(0, 10).map((entry) => ({ ...entry.trader, pnl: entry.pnl }));
+	const { data: entries } = await getGlobalLeaderboard("7d", 10);
+	const traders = entries.map((entry) => ({ ...entry.trader, pnl: readTotalPnlUsd(entry) }));
 
 	return (
 		<>
@@ -27,7 +27,7 @@ export async function TopTraders() {
 							</Avatar>
 						)}
 						<span className="max-w-44 truncate sm:max-w-[16rem]">{getTraderDisplayName(trader)}</span>
-						<span className="text-emerald-500">+{formatNumber(trader.pnl, { compact: true, currency: true })}</span>
+						<span className={pnlColorClass(trader.pnl)}>{trader.pnl > 0 ? "+" : ""}{formatNumber(trader.pnl, { compact: true, currency: true })}</span>
 					</Link>
 				))}
 			</div>

@@ -7,6 +7,8 @@ import { EventHeader, EventHeaderFallback } from "@/components/event/event-heade
 import { EventMarketsTable } from "@/components/event/event-markets-table";
 import { EventOverviewChart, EventOverviewChartFallback } from "@/components/event/event-overview-chart";
 import { EventTrades, EventTradesFallback } from "@/components/event/event-trades";
+import { AnchorSectionNav } from "@/components/layout/anchor-section-nav";
+import { SectionAnchor } from "@/components/layout/section-anchor";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getSiteUrl } from "@/lib/env";
@@ -66,13 +68,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default function EventPage({ params }: Props) {
 	return (
-		<div className="flex w-full justify-center">
-			<div className="flex w-full max-w-7xl flex-col gap-4 px-4 pt-6 pb-10 sm:gap-6 sm:px-6 sm:pt-8 sm:pb-12">
-				<Suspense fallback={<EventPageFallback />}>
-					<EventPageContent params={params} />
-				</Suspense>
-			</div>
-		</div>
+		<Suspense fallback={<EventPageFallback />}>
+			<EventPageContent params={params} />
+		</Suspense>
 	);
 }
 
@@ -114,50 +112,76 @@ async function EventPageContent({ params }: { params: Props["params"] }) {
 		},
 	};
 
+	const sectionNavItems = [
+		{ id: "event-overview", label: "Overview" },
+		...(event.event_slug && childMarkets.length > 0
+			? [{ id: "event-probability", label: "Probability" }]
+			: []),
+		{ id: "event-markets", label: "Markets" },
+		...(childMarkets.length > 0 ? [{ id: "event-trades", label: "Recent trades" }] : []),
+	];
+
 	return (
 		<>
-			<Breadcrumbs
-				items={[
-					{ label: "Home", href: "/" },
-					{ label: "Events", href: "/events" },
-					...(breadcrumbTag
-						? [{ label: formatCapitalizeWords(breadcrumbTag), href: `/tags/${slugify(breadcrumbTag)}` as string }]
-						: []),
-					{
-						label: truncateTitle(event.title ?? slug),
-						href: `/events/${slug}`,
-					},
-				]}
-			/>
+			<AnchorSectionNav items={sectionNavItems} />
+			<div className="flex w-full justify-center">
+				<div className="flex w-full max-w-7xl flex-col gap-4 px-4 pt-4 pb-10 sm:gap-6 sm:px-6 sm:pt-6 sm:pb-12">
+					<Breadcrumbs
+						items={[
+							{ label: "Home", href: "/" },
+							{ label: "Events", href: "/events" },
+							...(breadcrumbTag
+								? [{ label: formatCapitalizeWords(breadcrumbTag), href: `/tags/${slugify(breadcrumbTag)}` as string }]
+								: []),
+							{
+								label: truncateTitle(event.title ?? slug),
+								href: `/events/${slug}`,
+							},
+						]}
+					/>
 
-			<JsonLd data={jsonLd} />
+					<JsonLd data={jsonLd} />
 
-			<EventHeader event={event} slug={slug} metrics={metrics} />
+					<SectionAnchor id="event-overview">
+						<EventHeader event={event} slug={slug} metrics={metrics} />
+					</SectionAnchor>
 
-			{event.event_slug && childMarkets.length > 0 && (
-				<Suspense fallback={<EventOverviewChartFallback />}>
-					<EventOverviewChart event={event} />
-				</Suspense>
-			)}
+					{event.event_slug && childMarkets.length > 0 && (
+						<SectionAnchor id="event-probability">
+							<Suspense fallback={<EventOverviewChartFallback />}>
+								<EventOverviewChart event={event} />
+							</Suspense>
+						</SectionAnchor>
+					)}
 
-			<EventMarketsTable markets={childMarkets} />
+					<SectionAnchor id="event-markets">
+						<EventMarketsTable markets={childMarkets} />
+					</SectionAnchor>
 
-			{childMarkets.length > 0 && (
-				<Suspense fallback={<EventTradesFallback />}>
-					<EventTrades markets={childMarkets} />
-				</Suspense>
-			)}
+					{childMarkets.length > 0 && (
+						<SectionAnchor id="event-trades">
+							<Suspense fallback={<EventTradesFallback />}>
+								<EventTrades markets={childMarkets} />
+							</Suspense>
+						</SectionAnchor>
+					)}
 
-			<p className="sr-only">{`${SITE_NAME} event detail page for ${event.title ?? slug}`}</p>
+					<p className="sr-only">{`${SITE_NAME} event detail page for ${event.title ?? slug}`}</p>
+				</div>
+			</div>
 		</>
 	);
 }
 
 function EventPageFallback() {
 	return (
-		<div className="space-y-4">
-			<EventHeaderFallback />
-			<div className="h-64 rounded-lg bg-card" />
+		<div className="flex w-full justify-center">
+			<div className="flex w-full max-w-7xl flex-col gap-4 px-4 pt-4 pb-10 sm:gap-6 sm:px-6 sm:pt-6 sm:pb-12">
+				<div className="space-y-4">
+					<EventHeaderFallback />
+					<div className="h-64 rounded-lg bg-card" />
+				</div>
+			</div>
 		</div>
 	);
 }

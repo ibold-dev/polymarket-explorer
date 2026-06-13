@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
+import posthog from "posthog-js";
 import type { EventMarket, EventMarketOutcome } from "@structbuild/sdk";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Volume } from "@/components/ui/volume";
 import { formatDateShort, formatNumber } from "@/lib/format";
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
+import { cn } from "@/lib/utils";
 
 const SHOW_LESS_THRESHOLD = 12;
 
@@ -117,7 +119,7 @@ function MarketCell({ market }: { market: EventMarket }) {
 			) : (
 				<div className="size-10 shrink-0 rounded-md bg-muted" />
 			)}
-			<span className="line-clamp-2 min-w-0 text-sm font-medium leading-snug">
+			<span className="line-clamp-2 min-w-0 text-sm font-medium leading-snug underline-offset-4 group-hover:underline">
 				{title}
 			</span>
 		</div>
@@ -126,27 +128,8 @@ function MarketCell({ market }: { market: EventMarket }) {
 	if (!href) return inner;
 
 	return (
-		<Link
-			href={href}
-			prefetch={false}
-			className="-mx-2 flex min-w-0 items-center rounded px-2 py-1 transition-colors hover:bg-accent/40"
-		>
-			<div className="flex min-w-0 flex-1 items-center gap-3">
-				{imageUrl ? (
-					<Image
-						src={imageUrl}
-						alt={title}
-						width={40}
-						height={40}
-						className="size-10 shrink-0 rounded-md object-cover"
-					/>
-				) : (
-					<div className="size-10 shrink-0 rounded-md bg-muted" />
-				)}
-				<span className="line-clamp-2 min-w-0 text-sm font-medium leading-snug underline-offset-4 group-hover:underline">
-					{title}
-				</span>
-			</div>
+		<Link href={href} prefetch={false} className="group flex min-w-0 items-center">
+			{inner}
 		</Link>
 	);
 }
@@ -213,6 +196,7 @@ export function EventMarketsTable({ markets }: { markets: EventMarket[] }) {
 							<TableHead className="w-auto">Market</TableHead>
 							<TableHead className="w-[140px]">
 								<SortableHeader
+									table="event_markets"
 									sortBy="probability"
 									currentSortBy={sortKey}
 									currentSortDirection={sortDirection}
@@ -223,6 +207,7 @@ export function EventMarketsTable({ markets }: { markets: EventMarket[] }) {
 							</TableHead>
 							<TableHead className="w-[140px]">
 								<SortableHeader
+									table="event_markets"
 									sortBy="volume"
 									currentSortBy={sortKey}
 									currentSortDirection={sortDirection}
@@ -234,6 +219,7 @@ export function EventMarketsTable({ markets }: { markets: EventMarket[] }) {
 							{anyLiquidity && (
 								<TableHead className="w-[140px]">
 									<SortableHeader
+										table="event_markets"
 										sortBy="liquidity"
 										currentSortBy={sortKey}
 										currentSortDirection={sortDirection}
@@ -247,9 +233,27 @@ export function EventMarketsTable({ markets }: { markets: EventMarket[] }) {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{visible.map((market) => (
-							<TableRow key={market.condition_id || market.market_slug || market.id || ""}>
+						{visible.map((market) => {
+							const rowHref = market.market_slug ? (`/markets/${market.market_slug}` as Route) : null;
+							return (
+							<TableRow
+								key={market.condition_id || market.market_slug || market.id || ""}
+								className={cn(
+									rowHref &&
+										"relative cursor-pointer [&_a:not([data-row-link])]:relative [&_a:not([data-row-link])]:z-10",
+								)}
+							>
 								<TableCell className="align-middle">
+									{rowHref ? (
+										<Link
+											href={rowHref}
+											prefetch={false}
+											tabIndex={-1}
+											aria-hidden="true"
+											data-row-link=""
+											className="absolute inset-0 z-0"
+										/>
+									) : null}
 									<MarketCell market={market} />
 								</TableCell>
 								<TableCell className="align-middle">
@@ -269,14 +273,21 @@ export function EventMarketsTable({ markets }: { markets: EventMarket[] }) {
 									</TableCell>
 								)}
 							</TableRow>
-						))}
+							);
+						})}
 					</TableBody>
 				</Table>
 			</div>
 
 			{hiddenCount > 0 && (
 				<div className="flex justify-center">
-					<Button variant="ghost" onClick={() => setShowAll(true)}>
+					<Button
+						variant="ghost"
+						onClick={() => {
+							posthog.capture("event_markets_show_more_clicked", { hidden_count: hiddenCount });
+							setShowAll(true);
+						}}
+					>
 						Show {hiddenCount} more <ChevronDownIcon className="size-4" />
 					</Button>
 				</div>

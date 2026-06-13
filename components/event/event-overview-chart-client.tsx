@@ -3,6 +3,7 @@
 import { useMemo, type ReactNode } from "react";
 import type { Route } from "next";
 import Link from "next/link";
+import posthog from "posthog-js";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import type { EventMarketChartOutcome } from "@structbuild/sdk";
 
@@ -12,6 +13,7 @@ import {
 	ChartTooltipContent,
 	type ChartConfig,
 } from "@/components/ui/chart";
+import { computeProbabilityYDomain } from "@/lib/chart-domain";
 import { formatDateCompact, formatDateFull, formatTime } from "@/lib/format";
 
 const SERIES_COLORS = [
@@ -80,6 +82,11 @@ export function EventOverviewChartClient({ outcomes }: { outcomes: EventMarketCh
 		};
 	}, [filtered]);
 
+	const yDomain = useMemo<[number, number]>(
+		() => computeProbabilityYDomain(data, keys.map((k) => k.key)),
+		[data, keys],
+	);
+
 	if (keys.length === 0) {
 		return (
 			<div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground sm:h-[320px]">
@@ -110,7 +117,7 @@ export function EventOverviewChartClient({ outcomes }: { outcomes: EventMarketCh
 						tickFormatter={(v: string | number) => `${v}%`}
 						tick={{ fontSize: 12 }}
 						width={44}
-						domain={[0, 100]}
+						domain={yDomain}
 					/>
 					<ChartTooltip
 						content={
@@ -157,6 +164,7 @@ export function EventOverviewChartClient({ outcomes }: { outcomes: EventMarketCh
 							<Link
 								href={`/markets/${k.slug}` as Route}
 								prefetch={false}
+								onClick={() => posthog.capture("event_chart_market_clicked", { market_slug: k.slug })}
 								className="inline-flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-xs transition-colors hover:bg-accent"
 								title={k.name}
 							>

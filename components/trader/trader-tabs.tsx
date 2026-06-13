@@ -2,6 +2,7 @@
 
 import { useCallback, useTransition } from "react"
 import { useQueryStates } from "nuqs"
+import posthog from "posthog-js"
 
 import { traderSearchParamParsers } from "@/lib/trader-search-params"
 import {
@@ -36,6 +37,8 @@ export function TraderTabs({
 		if (nextTab === currentTab) {
 			return
 		}
+
+		posthog.capture("trader_tab_changed", { tab: nextTab, previous_tab: currentTab })
 
 		if (onValueChange) {
 			onValueChange(nextTab)
@@ -73,6 +76,18 @@ export function TraderTabs({
 						value="activity"
 					>
 						Activity
+					</TabsTrigger>
+					<TabsTrigger
+						className="text-base! sm:text-xl!"
+						value="categories"
+					>
+						Categories
+					</TabsTrigger>
+					<TabsTrigger
+						className="text-base! sm:text-xl!"
+						value="markets"
+					>
+						Markets
 					</TabsTrigger>
 				</TabsList>
 			</div>

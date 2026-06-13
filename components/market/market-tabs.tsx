@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useTransition } from "react";
+import { useCallback, useTransition, type ReactNode } from "react";
 import { useQueryStates } from "nuqs";
 import posthog from "posthog-js";
 
@@ -18,6 +18,7 @@ const tabLabels: Record<MarketDetailTab, string> = {
 	holders: "Holders",
 	spikes: "Price Spikes",
 	"holders-history": "Holders History",
+	"top-traders": "Top Traders",
 };
 
 export function MarketTabs({
@@ -25,11 +26,13 @@ export function MarketTabs({
 	onValueChange,
 	pending = false,
 	omitTopSpacing = false,
+	teasers,
 }: {
 	value?: MarketDetailTab;
 	onValueChange?: (value: MarketDetailTab) => void;
 	pending?: boolean;
 	omitTopSpacing?: boolean;
+	teasers?: Partial<Record<MarketDetailTab, ReactNode>>;
 }) {
 	const [isPending, startTransition] = useTransition();
 	const [{ tab: uncontrolledTab }, setSearchParams] = useQueryStates(
@@ -75,6 +78,7 @@ export function MarketTabs({
 						value={tab}
 					>
 						{tabLabels[tab]}
+						{teasers?.[tab]}
 					</TabsTrigger>
 				))}
 			</TabsList>

@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
+import { SectionAnchor } from "@/components/layout/section-anchor";
+import type { SubheaderSlot } from "@/components/layout/section-subheader-bar";
+import { BridgeSectionSubheader, TabBridgeProvider } from "@/components/layout/tab-bridge";
 import { MarketCharts, MarketChartsFallback } from "@/components/market/market-charts";
 import { MarketHeader } from "@/components/market/market-header";
 import { MarketTabPanel, MarketTabPanelFallback } from "@/components/market/market-tab-panel";
@@ -14,7 +17,7 @@ import { formatCapitalizeWords, formatNumber, slugify } from "@/lib/format";
 import { buildMarketJsonLd } from "@/lib/market-json-ld";
 import { loadMarketDetailSearchParams } from "@/lib/market-detail-search-params.server";
 import { getMarketAnalyticsChanges, getMarketAnalyticsDeltas, getMarketAnalyticsTimeseries } from "@/lib/struct/analytics-queries";
-import { parseAnalyticsCap, parseAnalyticsParams } from "@/lib/struct/analytics-shared";
+import { parseAnalyticsCap, parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/struct/analytics-shared";
 import { getMarketBySlug, getMarketsByTag } from "@/lib/struct/market-queries";
 import { buildEntityPageTitle, buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
 import type { MarketResponse } from "@structbuild/sdk";
@@ -23,6 +26,14 @@ type Props = {
 	params: Promise<{ slug: string }>;
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+const MARKET_SUBHEADER_ITEMS = [
+	{ value: "trades", label: "Trades" },
+	{ value: "holders", label: "Holders" },
+	{ value: "top-traders", label: "Top Traders" },
+	{ value: "spikes", label: "Price Spikes" },
+	{ value: "holders-history", label: "Holders History" },
+] as const;
 
 function getLeadingOutcome(market: MarketResponse) {
 	const outcomes = market.outcomes ?? [];
@@ -95,13 +106,9 @@ function truncateQuestion(question: string, maxLength: number = 60) {
 
 export default function MarketPage({ params, searchParams }: Props) {
 	return (
-		<div className="flex w-full justify-center">
-			<div className="flex w-full max-w-7xl flex-col gap-4 px-4 pt-6 pb-10 sm:gap-6 sm:px-6 sm:pt-8 sm:pb-12">
-				<Suspense fallback={<MarketPageFallback />}>
-					<MarketPageContent params={params} searchParams={searchParams} />
-				</Suspense>
-			</div>
-		</div>
+		<Suspense fallback={<MarketPageFallback />}>
+			<MarketPageContent params={params} searchParams={searchParams} />
+		</Suspense>
 	);
 }
 
@@ -142,71 +149,103 @@ async function MarketPageContent({
 		? getMarketsByTag(breadcrumbTag, 8, undefined, "volume", "desc", isResolved ? "all" : "open")
 		: null;
 
+	const subheaderSlots: SubheaderSlot[] = [
+		{ type: "anchor", id: "market-overview", label: "Overview" },
+		...(conditionId
+			? ([
+					{ type: "anchor", id: "market-chart", label: "Chart" },
+					{ type: "tabs", id: "market-activity", tabs: [...MARKET_SUBHEADER_ITEMS] },
+					{ type: "anchor", id: "market-analytics", label: "Analytics" },
+				] as SubheaderSlot[])
+			: []),
+		...(breadcrumbTag && relatedMarketsPromise
+			? ([{ type: "anchor", id: "market-related", label: "Related" }] as SubheaderSlot[])
+			: []),
+	];
+
 	return (
-		<>
-			<Breadcrumbs
-				items={[
-					{ label: "Home", href: "/" },
-					{ label: "Markets", href: "/markets" },
-					...(breadcrumbTag ? [{ label: formatCapitalizeWords(breadcrumbTag), href: `/tags/${slugify(breadcrumbTag)}` as string }] : []),
-					{
-						label: truncateQuestion(market.question ?? market.title ?? slug),
-						href: `/markets/${slug}`,
-					},
-				]}
-			/>
-
-			<JsonLd data={marketJsonLd} />
-
-			<MarketHeader market={market} slug={slug} />
-
-			{conditionId && (
-				<>
-					<Suspense fallback={<MarketChartsFallback />}>
-						<MarketCharts conditionId={conditionId} />
-					</Suspense>
-					<Suspense fallback={<MarketTabPanelFallback />}>
-						<MarketTabPanel currentTab={tab} slug={slug} conditionId={conditionId} tradesPage={tradesPage} />
-					</Suspense>
-					<div className="mt-8">
-						<AnalyticsSection
-							title="Analytics"
-							range={range}
-							view={view}
-							resolution={resolution}
-							defaultResolution={defaultResolution}
-							endTime={endTime}
-							cap={cap}
-							defaultCap={defaultCap}
-							pathname={`/markets/${slug}`}
-							fetchers={{
-								deltas: () => getMarketAnalyticsDeltas(conditionId, range, resolution),
-								timeseries: () => getMarketAnalyticsTimeseries(conditionId, range, resolution),
-								changes: () => getMarketAnalyticsChanges(conditionId, range),
-							}}
-						/>
-					</div>
-				</>
-			)}
-
-			{breadcrumbTag && relatedMarketsPromise && (
-				<Suspense>
-					<RelatedMarketsSection
-						relatedPromise={relatedMarketsPromise}
-						tag={breadcrumbTag}
-						currentSlug={slug}
+		<TabBridgeProvider initial={{ "market-activity": tab }}>
+			<BridgeSectionSubheader slots={subheaderSlots} />
+			<div className="flex w-full justify-center">
+				<div className="flex w-full max-w-7xl flex-col gap-4 px-4 pt-4 pb-10 sm:gap-6 sm:px-6 sm:pt-6 sm:pb-12">
+					<Breadcrumbs
+						items={[
+							{ label: "Home", href: "/" },
+							{ label: "Markets", href: "/markets" },
+							...(breadcrumbTag ? [{ label: formatCapitalizeWords(breadcrumbTag), href: `/tags/${slugify(breadcrumbTag)}` as string }] : []),
+							{
+								label: truncateQuestion(market.question ?? market.title ?? slug),
+								href: `/markets/${slug}`,
+							},
+						]}
 					/>
-				</Suspense>
-			)}
-		</>
+
+					<JsonLd data={marketJsonLd} />
+
+					<SectionAnchor id="market-overview">
+						<MarketHeader market={market} slug={slug} />
+					</SectionAnchor>
+
+					{conditionId && (
+						<>
+							<SectionAnchor id="market-chart">
+								<Suspense fallback={<MarketChartsFallback />}>
+									<MarketCharts conditionId={conditionId} />
+								</Suspense>
+							</SectionAnchor>
+							<SectionAnchor id="market-activity">
+								<Suspense fallback={<MarketTabPanelFallback />}>
+									<MarketTabPanel currentTab={tab} slug={slug} conditionId={conditionId} tradesPage={tradesPage} totalHolders={market.total_holders} />
+								</Suspense>
+							</SectionAnchor>
+							<SectionAnchor id="market-analytics" className="mt-8">
+								<AnalyticsSection
+									title="Analytics"
+									range={range}
+									view={view}
+									resolution={resolution}
+									defaultResolution={defaultResolution}
+									endTime={endTime}
+									cap={cap}
+									defaultCap={defaultCap}
+									allowedComponents={SCOPED_VOLUME_COMPONENTS}
+									pathname={`/markets/${slug}`}
+									fetchers={{
+										deltas: () => getMarketAnalyticsDeltas(conditionId, range, resolution),
+										timeseries: () => getMarketAnalyticsTimeseries(conditionId, range, resolution),
+										changes: () => getMarketAnalyticsChanges(conditionId, range),
+									}}
+								/>
+							</SectionAnchor>
+						</>
+					)}
+
+					{breadcrumbTag && relatedMarketsPromise && (
+						<SectionAnchor id="market-related">
+							<Suspense>
+								<RelatedMarketsSection
+									relatedPromise={relatedMarketsPromise}
+									tag={breadcrumbTag}
+									currentSlug={slug}
+								/>
+							</Suspense>
+						</SectionAnchor>
+					)}
+				</div>
+			</div>
+		</TabBridgeProvider>
 	);
 }
 
 function MarketPageFallback() {
 	return (
-		<div className="space-y-4">
-			<div className="h-32 rounded-lg bg-card" />
-			<div className="h-64 rounded-lg bg-card" />
+		<div className="flex w-full justify-center">
+			<div className="flex w-full max-w-7xl flex-col gap-4 px-4 pt-4 pb-10 sm:gap-6 sm:px-6 sm:pt-6 sm:pb-12">
+				<div className="space-y-4">
+					<div className="h-32 rounded-lg bg-card" />
+					<div className="h-64 rounded-lg bg-card" />
+				</div>
+			</div>
 		</div>
 	);
 }

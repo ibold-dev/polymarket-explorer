@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import type { TraderPnlSummary } from "@structbuild/sdk";
+import type { GlobalEntry } from "@structbuild/sdk";
 
 import { DnaShareDialog } from "@/components/trader/dna-share-dialog";
 import { ShareIdentityHeader } from "@/components/trader/share-identity-header";
@@ -15,8 +15,9 @@ import {
 } from "@/lib/polymarket/trader-archetype";
 
 type TraderDnaCardProps = {
-	pnlSummary: TraderPnlSummary | null;
+	pnlSummary: GlobalEntry | null;
 	cumulativePnlUsd: number;
+	categoryVolumes?: number[];
 	address: string;
 	displayName: string;
 	profileImage?: string | null;
@@ -34,11 +35,11 @@ const ARCHETYPE_CLASSES: Record<TraderArchetypeId, string> = {
 	trader: "bg-muted text-foreground",
 };
 
-export function TraderDnaCard({ pnlSummary, cumulativePnlUsd, address, displayName, profileImage }: TraderDnaCardProps) {
+export function TraderDnaCard({ pnlSummary, cumulativePnlUsd, categoryVolumes, address, displayName, profileImage }: TraderDnaCardProps) {
 	const cardRef = useRef<HTMLDivElement>(null);
 
 	if (!pnlSummary) return null;
-	const dna = computeTraderDna({ summary: pnlSummary, cumulativePnlUsd });
+	const dna = computeTraderDna({ summary: pnlSummary, cumulativePnlUsd, categoryVolumes });
 
 	return (
 		<div ref={cardRef} className="group/share-card rounded-lg bg-card p-4 sm:p-6">

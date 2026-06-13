@@ -1,6 +1,9 @@
-import type { TraderPnlSummary } from "@structbuild/sdk";
+import type { GlobalEntry } from "@structbuild/sdk";
 
 import { formatDuration, formatNumber } from "@/lib/format";
+import { POLYMARKET_CATEGORIES } from "@/lib/tag-category";
+
+const CATEGORY_UNIVERSE_SIZE = POLYMARKET_CATEGORIES.length;
 
 export type TraderAxisId =
 	| "profitability"
@@ -42,8 +45,9 @@ export type TraderDna = {
 };
 
 export type TraderDnaInputs = {
-	summary: TraderPnlSummary;
+	summary: GlobalEntry;
 	cumulativePnlUsd: number;
+	categoryVolumes?: number[];
 };
 
 const AXIS_ORDER: TraderAxisId[] = [
@@ -81,7 +85,7 @@ function pickNum(value: number | null | undefined): number {
 	return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
-function txnCount(summary: TraderPnlSummary): number {
+function txnCount(summary: GlobalEntry): number {
 	return (
 		pickNum(summary.total_buys) +
 		pickNum(summary.total_sells) +
@@ -90,10 +94,30 @@ function txnCount(summary: TraderPnlSummary): number {
 	);
 }
 
-function avgTradeSize(summary: TraderPnlSummary): number {
+function avgTradeSize(summary: GlobalEntry): number {
 	const count = txnCount(summary);
 	if (count <= 0) return 0;
 	return pickNum(summary.total_volume_usd) / count;
+}
+
+function categoryDiversity(volumes: number[]): { score: number; tradedCount: number } {
+	const positive = volumes.filter((value) => Number.isFinite(value) && value > 0);
+	const tradedCount = positive.length;
+	const total = positive.reduce((sum, value) => sum + value, 0);
+
+	if (total <= 0 || tradedCount <= 1) {
+		return { score: 0, tradedCount };
+	}
+
+	let entropy = 0;
+	for (const value of positive) {
+		const share = value / total;
+		entropy -= share * Math.log(share);
+	}
+
+	const maxEntropy = Math.log(Math.max(CATEGORY_UNIVERSE_SIZE, tradedCount));
+	const normalized = maxEntropy > 0 ? entropy / maxEntropy : 0;
+	return { score: clamp(normalized * 100), tradedCount };
 }
 
 function computeAxis(id: TraderAxisId, inputs: TraderDnaInputs): TraderAxis {
@@ -150,6 +174,17 @@ function computeAxis(id: TraderAxisId, inputs: TraderDnaInputs): TraderAxis {
 			};
 		}
 		case "diversity": {
+			const categoryVolumes = inputs.categoryVolumes;
+			if (categoryVolumes && categoryVolumes.some((value) => Number.isFinite(value) && value > 0)) {
+				const { score, tradedCount } = categoryDiversity(categoryVolumes);
+				return {
+					id,
+					label: "Diversity",
+					description: `How evenly trading volume is spread across Polymarket's ${CATEGORY_UNIVERSE_SIZE} categories (Shannon evenness). Concentrating in one category scores low; spreading volume widely scores high.`,
+					score,
+					rawLabel: `${formatNumber(tradedCount, { decimals: 0 })} of ${CATEGORY_UNIVERSE_SIZE} categories`,
+				};
+			}
 			const markets = pickNum(summary.markets_traded);
 			return {
 				id,
@@ -181,7 +216,7 @@ function toScores(axes: TraderAxis[]): Scores {
 	}, {} as Scores);
 }
 
-function classify(scores: Scores, summary: TraderPnlSummary): TraderArchetype {
+function classify(scores: Scores, summary: GlobalEntry): TraderArchetype {
 	const totalTrades = txnCount(summary);
 
 	if (totalTrades < 5) {

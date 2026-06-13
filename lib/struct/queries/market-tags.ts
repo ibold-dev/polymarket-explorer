@@ -17,7 +17,9 @@ import { logStructError, readStatus } from "@/lib/struct/http";
 import {
 	defaultPageSize,
 	logPaginationLimitReached,
+	maxOffset,
 	maxPaginationRequests,
+	maxReachablePage,
 	type PaginatedResult,
 } from "@/lib/struct/queries/_shared";
 
@@ -41,7 +43,6 @@ export async function getAllTags(
 	}
 
 	const results: Tag[] = [];
-	let offset = 0;
 	const batchSize = 250;
 	const sortParams = sort
 		? { sort, timeframe: timeframe ?? ("lifetime" as TagSortTimeframe) }
@@ -49,6 +50,8 @@ export async function getAllTags(
 
 	try {
 		let requestCount = 0;
+		let offset = 0;
+		let cursor: string | undefined;
 
 		do {
 			if (requestCount >= maxPaginationRequests) {
@@ -58,7 +61,7 @@ export async function getAllTags(
 
 			const response = await client.tags.getTags({
 				limit: batchSize,
-				offset,
+				...(cursor ? { pagination_key: cursor } : { offset }),
 				...sortParams,
 			});
 			results.push(...response.data);
@@ -70,7 +73,17 @@ export async function getAllTags(
 
 			if (response.data.length < batchSize) break;
 
-			offset += batchSize;
+			if (sortParams) {
+				offset += batchSize;
+				if (offset > maxOffset) {
+					logPaginationLimitReached("getAllTags");
+					break;
+				}
+			} else {
+				const nextKey = response.pagination?.pagination_key;
+				if (nextKey == null) break;
+				cursor = String(nextKey);
+			}
 		} while (true);
 
 		return results;
@@ -128,7 +141,10 @@ export async function getTagPageCount(
 	}
 
 	const totalTags = await getTagCount();
-	const upperPageCount = Math.max(1, Math.ceil(Math.max(0, totalTags) / pageSize));
+	const upperPageCount = Math.min(
+		maxReachablePage(pageSize),
+		Math.max(1, Math.ceil(Math.max(0, totalTags) / pageSize)),
+	);
 	const client = getStructClient();
 
 	if (!client || upperPageCount <= 1) {

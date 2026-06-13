@@ -57,7 +57,9 @@ export function Volume({ usd, shares, compact = true, decimals, className, fallb
 		</span>
 	);
 
-	if (noTooltip) {
+	const hasNotional = shares != null && !Number.isNaN(shares);
+
+	if (noTooltip || !hasNotional) {
 		return node;
 	}
 

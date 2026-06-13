@@ -1,21 +1,16 @@
 "use client";
 
 import type { Route } from "next";
-import { useCallback, useTransition } from "react";
+import { useCallback, useTransition, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 
-import { DEFAULT_TAG_VIEW, tagViewValues, type TagView } from "@/lib/tag-view-shared";
+import { DEFAULT_TAG_VIEW, tagViewValues, viewLabels, type TagView } from "@/lib/tag-view-shared";
 import { cn } from "@/lib/utils";
 
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 
-const viewLabels: Record<TagView, string> = {
-	events: "Events",
-	markets: "Markets",
-};
-
-function buildViewHref(pathname: string, search: string, view: TagView) {
+export function buildViewHref(pathname: string, search: string, view: TagView) {
 	const params = new URLSearchParams(search);
 
 	if (view === DEFAULT_TAG_VIEW) {
@@ -32,7 +27,16 @@ function buildViewHref(pathname: string, search: string, view: TagView) {
 	return (nextSearch ? `${pathname}?${nextSearch}` : pathname) as Route;
 }
 
-export function TagViewTabs({ value }: { value: TagView }) {
+export function TagViewTabs({
+	value,
+	availableViews,
+	teasers,
+}: {
+	value: TagView;
+	availableViews?: readonly TagView[];
+	teasers?: Partial<Record<TagView, ReactNode>>;
+}) {
+	const visibleViews = availableViews ?? tagViewValues;
 	const [isPending, startTransition] = useTransition();
 	const router = useRouter();
 	const pathname = usePathname();
@@ -61,13 +65,14 @@ export function TagViewTabs({ value }: { value: TagView }) {
 					isPending && "opacity-70",
 				)}
 			>
-				{tagViewValues.map((view) => (
+				{visibleViews.map((view) => (
 					<TabsTrigger
 						key={view}
 						className="text-base! sm:text-xl!"
 						value={view}
 					>
 						{viewLabels[view]}
+						{teasers?.[view]}
 					</TabsTrigger>
 				))}
 			</TabsList>

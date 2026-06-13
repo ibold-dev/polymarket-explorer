@@ -4,11 +4,13 @@ import type { Tag, TagSortBy, TagSortTimeframe } from "@structbuild/sdk";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Route } from "next";
 import Link from "next/link";
+import posthog from "posthog-js";
 import { useMemo } from "react";
 
 import { DataTable } from "@/components/ui/data-table";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Volume } from "@/components/ui/volume";
 import { formatCapitalizeWords, formatNumber } from "@/lib/format";
 import {
 	TAG_TIMEFRAME_LABELS,
@@ -19,20 +21,33 @@ import { TAGS_TABLE_COLUMN_SIZES } from "./tags-table-columns";
 
 type NumericField =
 	| "volume_usd"
+	| "builder_usd_volume"
 	| "unique_traders"
+	| "unique_builder_traders"
+	| "unique_makers"
+	| "unique_takers"
 	| "txn_count"
-	| "fees_usd";
+	| "builder_txn_count"
+	| "fees_usd"
+	| "builder_fees_usd";
 
 type ColumnSpec = {
 	id: string;
 	title: string;
 	field: NumericField;
-	sortKey: TagSortBy;
+	sortKey?: TagSortBy;
 	currency: boolean;
 };
 
 const NUMERIC_COLUMNS: readonly ColumnSpec[] = [
 	{ id: "volume", title: "Volume", field: "volume_usd", sortKey: "volume", currency: true },
+	{
+		id: "builderVolume",
+		title: "Builder vol",
+		field: "builder_usd_volume",
+		sortKey: "builder_volume",
+		currency: true,
+	},
 	{
 		id: "traders",
 		title: "Traders",
@@ -40,8 +55,43 @@ const NUMERIC_COLUMNS: readonly ColumnSpec[] = [
 		sortKey: "unique_traders",
 		currency: false,
 	},
+	{
+		id: "builderTraders",
+		title: "Builder traders",
+		field: "unique_builder_traders",
+		sortKey: "unique_builder_traders",
+		currency: false,
+	},
+	{
+		id: "makers",
+		title: "Makers",
+		field: "unique_makers",
+		sortKey: "unique_makers",
+		currency: false,
+	},
+	{
+		id: "takers",
+		title: "Takers",
+		field: "unique_takers",
+		sortKey: "unique_takers",
+		currency: false,
+	},
 	{ id: "trades", title: "Trades", field: "txn_count", sortKey: "txns", currency: false },
+	{
+		id: "builderTrades",
+		title: "Builder trades",
+		field: "builder_txn_count",
+		sortKey: "builder_txns",
+		currency: false,
+	},
 	{ id: "fees", title: "Fees", field: "fees_usd", sortKey: "fees", currency: true },
+	{
+		id: "builderFees",
+		title: "Builder fees",
+		field: "builder_fees_usd",
+		sortKey: "builder_fees",
+		currency: true,
+	},
 ];
 
 const NUMERIC_COLUMN_SIZE = TAGS_TABLE_COLUMN_SIZES.volume;
@@ -50,27 +100,46 @@ function numericColumn(
 	spec: ColumnSpec,
 	sort: SortState,
 ): ColumnDef<Tag, unknown> {
+	const sortKey = spec.sortKey;
 	return {
 		id: spec.id,
 		meta: { title: spec.title },
-		header: () => (
-			<SortableHeader
-				sortBy={spec.sortKey}
-				currentSortBy={sort.sortBy}
-				currentSortDirection="desc"
-				onSortChange={sort.onSortChange}
-			>
-				{spec.title}
-			</SortableHeader>
-		),
+		header: () =>
+			sortKey ? (
+				<SortableHeader
+					sortBy={sortKey}
+					currentSortBy={sort.sortBy}
+					currentSortDirection="desc"
+					onSortChange={sort.onSortChange}
+					table="tags"
+				>
+					{spec.title}
+				</SortableHeader>
+			) : (
+				<span>{spec.title}</span>
+			),
 		size: NUMERIC_COLUMN_SIZE,
 		cell: ({ row }) => {
-			const value = row.original[spec.field] as number | null | undefined;
-			const isActive = sort.sortBy === spec.sortKey;
+			const isActive = sortKey != null && sort.sortBy === sortKey;
 			const className = cn(
 				"tabular-nums",
 				isActive ? "text-foreground font-medium" : "text-foreground/80",
 			);
+			if (spec.field === "volume_usd" || spec.field === "builder_usd_volume") {
+				const usd =
+					spec.field === "volume_usd"
+						? row.original.volume_usd ?? null
+						: row.original.builder_usd_volume ?? null;
+				const shares =
+					spec.field === "volume_usd"
+						? row.original.shares_volume ?? null
+						: row.original.builder_shares_volume ?? null;
+				if ((usd ?? 0) <= 0 && (shares ?? 0) <= 0) {
+					return <p className={className}>—</p>;
+				}
+				return <Volume usd={usd} shares={shares} className={className} />;
+			}
+			const value = row.original[spec.field] as number | null | undefined;
 			return (
 				<p className={className}>
 					{value != null && value > 0
@@ -156,6 +225,10 @@ export function TagsTable({
 			onValueChange={(next) => {
 				const picked = next[0];
 				if (picked && picked !== timeframe) {
+					posthog.capture("tags_timeframe_changed", {
+						timeframe: picked,
+						previous_timeframe: timeframe,
+					});
 					onTimeframeChange(picked as TagSortTimeframe);
 				}
 			}}
@@ -185,6 +258,8 @@ export function TagsTable({
 			data={tags}
 			emptyMessage="No tags found."
 			columnLayout="fixed"
+			tableName="tags"
+			getRowHref={(row) => `/tags/${row.slug ?? row.label}`}
 			toolbarLeft={toolbarLeft}
 			toolbarRight={toolbarRightCombined}
 		/>

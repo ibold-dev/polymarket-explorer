@@ -1,13 +1,13 @@
-import type { GlobalCountsResponse } from "@structbuild/sdk";
+import type { AnalyticsGlobalCountsResponse } from "@structbuild/sdk";
 import { connection } from "next/server";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Volume } from "@/components/ui/volume";
+import { TooltipWrapper } from "@/components/ui/tooltip";
 import { formatNumber } from "@/lib/format";
 import { getPlatformCounts } from "@/lib/struct/market-queries";
 
 type StatSpec = {
-	key: keyof GlobalCountsResponse;
+	key: keyof AnalyticsGlobalCountsResponse;
 	label: string;
 	currency?: boolean;
 	compact?: boolean;
@@ -16,7 +16,7 @@ type StatSpec = {
 
 const stats: StatSpec[] = [
 	{ key: "volume_usd", label: "Volume", currency: true, compact: true, volume: true },
-	{ key: "txn_count", label: "Trades", compact: true },
+	{ key: "txn_count", label: "Trades" },
 	{ key: "markets", label: "Markets" },
 	{ key: "events", label: "Events" },
 	{ key: "unique_traders", label: "Traders" },
@@ -41,13 +41,30 @@ export async function PlatformStats() {
 			{stats.map(({ key, label, currency, compact, volume }) => (
 				<Card key={key} size="sm" className="px-2 rounded-lg ring-0 ">
 					<CardContent className="flex flex-col gap-0.5">
-							<p className="text-sm text-muted-foreground">{label}</p>
+							<p className="text-sm text-muted-foreground">
+								{volume ? (
+									<TooltipWrapper
+										content={
+											<span className="block max-w-[16rem] leading-snug">
+												USD volume is the dollar value of trades. Notional volume is the total shares traded (each share settles at $0–$1), so it represents the maximum possible payout exchanged.
+											</span>
+										}
+									>
+										<span className="cursor-help underline decoration-dotted underline-offset-2">
+											{label} (USD / notional)
+										</span>
+									</TooltipWrapper>
+								) : (
+									label
+								)}
+							</p>
 							<p className="text-xl font-medium tabular-nums">
 								{volume ? (
-									<Volume
-										usd={Number(counts.volume_usd ?? 0)}
-										shares={Number(counts.shares_volume ?? 0)}
-									/>
+									<>
+										{formatNumber(Number(counts.volume_usd ?? 0), { compact: true, currency: true })}
+										<span className="mx-1 text-muted-foreground">/</span>
+										{formatNumber(Number(counts.shares_volume ?? 0), { compact: true })}
+									</>
 								) : (
 									formatNumber(Number(counts[key] ?? 0), { compact, currency })
 								)}

@@ -1,23 +1,25 @@
 "use client";
 
-import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
+import type { ColumnDef, Row, VisibilityState } from "@tanstack/react-table";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { type ReactNode, useMemo, useState, useTransition } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 
-import { getTraderActivityPageAction, refreshTraderTabAction } from "@/app/actions";
+import { getTraderActivityPageAction } from "@/app/actions";
 import type { PaginatedResource } from "@/lib/struct/types";
 import { traderSearchParamParsers } from "@/lib/trader-search-params";
 import { maxTraderPageNumber } from "@/lib/trader-search-params-shared";
-import { ExternalLinkIcon, HashIcon, RefreshCwIcon } from "lucide-react";
+import { CoinsIcon, ExternalLinkIcon, GiftIcon, HashIcon, PercentIcon, RefreshCwIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { DataTable } from "../ui/data-table";
+import { TableCell, TableRow } from "../ui/table";
 import { TooltipWrapper } from "../ui/tooltip";
 import { ShowUnknownMarketsToggle } from "../ui/show-unknown-markets-toggle";
+import { ExternalLink } from "../ui/external-link";
 import { TraderTabs } from "./trader-tabs";
 import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -26,6 +28,21 @@ import { TimeAgo } from "@/components/ui/time-ago";
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
 import { isOrderFilledTrade, isBuyTrade, getActivityLabel } from "@/lib/trade-utils";
 import type { TradeRow } from "./types";
+
+type StandaloneTradeType = "Reward" | "Yield" | "MakerRebate";
+
+const standaloneTradeMeta: Record<StandaloneTradeType, { label: string; Icon: LucideIcon }> = {
+	Reward: { label: "Reward", Icon: GiftIcon },
+	Yield: { label: "Yield", Icon: CoinsIcon },
+	MakerRebate: { label: "Maker Rebate", Icon: PercentIcon },
+};
+
+function getStandaloneTradeType(trade: TradeRow): StandaloneTradeType | null {
+	if (trade.trade_type === "Reward" || trade.trade_type === "Yield" || trade.trade_type === "MakerRebate") {
+		return trade.trade_type;
+	}
+	return null;
+}
 
 const defaultColumnVisibility: VisibilityState = {
 	fee: false,
@@ -56,7 +73,7 @@ const columns: ColumnDef<TradeRow, unknown>[] = [
 			const title = question ?? "Unknown Market";
 			const href = marketSlug ? (`/markets/${marketSlug}` as Route) : null;
 			return (
-				<div className="flex items-center gap-3">
+				<div className="flex max-w-[480px] items-center gap-3">
 					{imageUrl ? (
 						<Image
 							className="size-10 shrink-0 rounded-md object-cover"
@@ -140,7 +157,7 @@ const columns: ColumnDef<TradeRow, unknown>[] = [
 			const isPositive = usdAmount != null && usdAmount > 0;
 			const isNegative = usdAmount != null && usdAmount < 0;
 			return (
-				<p className={cn(isPositive ? "text-emerald-500" : isNegative ? "text-red-500" : "")}>
+				<p className={cn(isPositive ? "text-emerald-500" : isNegative ? "text-red-500" : "text-muted-foreground")}>
 					{isPositive ? "+" : ""}
 					{formatNumber(usdAmount, { currency: true, compact: true })}
 				</p>
@@ -168,19 +185,19 @@ const columns: ColumnDef<TradeRow, unknown>[] = [
 			return (
 				<div className="flex justify-end">
 					<TooltipWrapper content="View on Polygonscan">
-						<a href={`https://polygonscan.com/tx/${trade.hash}`} target="_blank" rel="noopener noreferrer">
+						<ExternalLink href={`https://polygonscan.com/tx/${trade.hash}`} linkType="polygonscan">
 							<Button variant="ghost" size="icon" aria-label="View on Polygonscan">
 								<HashIcon className="size-4" />
 							</Button>
-						</a>
+						</ExternalLink>
 					</TooltipWrapper>
 					{slug ? (
 						<TooltipWrapper content="View on Polymarket">
-							<a href={`https://polymarket.com/${slug}`} target="_blank" rel="noopener noreferrer">
+							<ExternalLink href={`https://polymarket.com/${slug}`} linkType="polymarket_market">
 								<Button variant="ghost" size="icon" aria-label="View on Polymarket">
 									<ExternalLinkIcon className="size-4" />
 								</Button>
-							</a>
+							</ExternalLink>
 						</TooltipWrapper>
 					) : null}
 				</div>
@@ -194,11 +211,10 @@ type Props = {
 	page: PaginatedResource<TradeRow, number>;
 	pageNumber: number;
 	tabs?: ReactNode;
+	onRefresh?: () => Promise<void>;
 };
 
-export default function TraderActivity({ address, page, pageNumber, tabs }: Props) {
-	const pathname = usePathname();
-	const router = useRouter();
+export default function TraderActivity({ address, page, pageNumber, tabs, onRefresh }: Props) {
 	const [isPending, startTransition] = useTransition();
 	const [pageState, setPageState] = useState(() => ({
 		sourcePage: page,
@@ -221,17 +237,72 @@ export default function TraderActivity({ address, page, pageNumber, tabs }: Prop
 	const currentPage = hasLocalPage ? pageState.page : page;
 	const currentPageNumber = hasLocalPage ? pageState.pageNumber : pageNumber;
 
-	const hasUnknownMarkets = currentPage.data.some((trade) => !trade.question);
+	const hasUnknownMarkets = currentPage.data.some(
+		(trade) => !trade.question && !getStandaloneTradeType(trade),
+	);
 
 	const data = useMemo(() => {
 		if (showUnknown) {
 			return currentPage.data;
 		}
-		return currentPage.data.filter((trade) => trade.question);
+		return currentPage.data.filter((trade) => trade.question || getStandaloneTradeType(trade));
 	}, [currentPage.data, showUnknown]);
+
+	const renderRow = (row: Row<TradeRow>, columnCount: number): ReactNode | undefined => {
+		const trade = row.original;
+		const standaloneType = getStandaloneTradeType(trade);
+		if (!standaloneType) return undefined;
+		const meta = standaloneTradeMeta[standaloneType];
+		const Icon = meta.Icon;
+		const usdAmount = trade.usd_amount ?? null;
+		const amountText = formatNumber(usdAmount, { currency: true });
+		const visibleIds = row.getVisibleCells().map((cell) => cell.column.id);
+		const showAge = visibleIds.includes("age");
+		const showLink = visibleIds.includes("link");
+		const middleSpan = Math.max(columnCount - Number(showAge) - Number(showLink), 1);
+		return (
+			<TableRow className="bg-card text-foreground/90 hover:bg-card">
+				{showAge ? (
+					<TableCell>
+						{trade.confirmed_at != null ? (
+							<TimeAgo timestamp={trade.confirmed_at} className="text-sm text-muted-foreground" />
+						) : (
+							<p className="text-sm text-muted-foreground">—</p>
+						)}
+					</TableCell>
+				) : null}
+				<TableCell colSpan={middleSpan}>
+					<div className="flex items-center gap-3">
+						<div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+							<Icon className="size-5 text-foreground/70" />
+						</div>
+						<p className="min-w-0 flex-1 truncate text-base font-medium text-foreground">
+							{meta.label}
+							<span className="text-muted-foreground">: Received</span>{" "}
+							<span className="text-emerald-500">{amountText}</span>
+						</p>
+					</div>
+				</TableCell>
+				{showLink ? (
+					<TableCell>
+						<div className="flex justify-end">
+							<TooltipWrapper content="View on Polygonscan">
+								<ExternalLink href={`https://polygonscan.com/tx/${trade.hash}`} linkType="polygonscan">
+									<Button variant="ghost" size="icon" aria-label="View on Polygonscan">
+										<HashIcon className="size-4" />
+									</Button>
+								</ExternalLink>
+							</TooltipWrapper>
+						</div>
+					</TableCell>
+				) : null}
+			</TableRow>
+		);
+	};
 
 	return (
 		<DataTable
+			tableName="trader_activity"
 			toolbarLeft={tabs ?? <TraderTabs />}
 			toolbarRight={
 				<div className="flex items-center gap-3">
@@ -242,12 +313,14 @@ export default function TraderActivity({ address, page, pageNumber, tabs }: Prop
 						variant="outline"
 						size="sm"
 						onClick={() => {
-							startTransition(async () => {
-								await refreshTraderTabAction(pathname);
-								router.refresh();
+							if (!onRefresh) return;
+							startTransition(() => {
+								void onRefresh().catch((error) => {
+									console.error("Failed to refresh trader activity", error);
+								});
 							});
 						}}
-						disabled={isPending}
+						disabled={isPending || !onRefresh}
 					>
 						<RefreshCwIcon data-icon="inline-start" />
 						Refresh
@@ -256,6 +329,7 @@ export default function TraderActivity({ address, page, pageNumber, tabs }: Prop
 			}
 			columns={columns}
 			data={data}
+			renderRow={renderRow}
 			storageKey="activity-table"
 			defaultColumnVisibility={defaultColumnVisibility}
 			emptyMessage="No trades to show."

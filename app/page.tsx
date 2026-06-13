@@ -1,3 +1,4 @@
+import { BestTradesList, BestTradesListFallback } from "@/components/home/best-trades-list";
 import { HomeActivityTabs } from "@/components/home/home-activity-tabs";
 import { HomeExploreGrid } from "@/components/home/home-explore-grid";
 import { HomeSearchTrigger } from "@/components/home/home-search-trigger";
@@ -45,6 +46,11 @@ export default function HomePage() {
 					trending={
 						<Suspense fallback={<TrendingMarketsListFallback />}>
 							<TrendingMarketsList />
+						</Suspense>
+					}
+					bestTrades={
+						<Suspense fallback={<BestTradesListFallback />}>
+							<BestTradesList />
 						</Suspense>
 					}
 					markets={

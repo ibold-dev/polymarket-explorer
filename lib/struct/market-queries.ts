@@ -17,10 +17,12 @@ export type {
 } from "@/lib/struct/queries/market-trades";
 
 export {
+	getCategoryLeaderboard,
 	getGlobalLeaderboard,
 	getMarketHolders,
 	getMarketHoldersHistory,
 } from "@/lib/struct/queries/market-holders";
+export type { TraderLeaderboardEntry } from "@/lib/struct/queries/market-holders";
 
 export {
 	getMarketChart,

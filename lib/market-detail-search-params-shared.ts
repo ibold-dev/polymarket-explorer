@@ -1,4 +1,4 @@
-export const marketDetailTabValues = ["trades", "holders", "spikes", "holders-history"] as const;
+export const marketDetailTabValues = ["trades", "holders", "top-traders", "spikes", "holders-history"] as const;
 export type MarketDetailTab = (typeof marketDetailTabValues)[number];
 
 export const defaultMarketDetailTab: MarketDetailTab = "trades";
