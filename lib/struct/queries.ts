@@ -21,7 +21,6 @@ import type {
 } from "@structbuild/sdk";
 import { cache } from "react";
 
-import { readTotalPnlUsd } from "@/lib/format";
 import { normalizeMarketResponseImages } from "@/lib/image-url";
 import { getStructClient } from "@/lib/struct/client";
 import { logStructError, readStatus } from "@/lib/struct/http";
@@ -260,37 +259,6 @@ async function fetchTraderPositionsPage(
 	delete restOptions.sort_direction;
 
 	try {
-		// The endpoint returns total_pnl_usd but cannot sort by it server-side.
-		if (sort_by === "total_pnl_usd") {
-			const batchSize = 200;
-			const entries: PositionEntry[] = [];
-
-			for (let batchOffset = 0; ; batchOffset += batchSize) {
-				const response = await client.trader.getTraderOutcomePnl({
-					address,
-					status,
-					...restOptions,
-					limit: batchSize,
-					offset: batchOffset,
-					sort_by: "last_trade_at",
-					sort_direction: "desc",
-				});
-				entries.push(...response.data);
-				if (response.data.length < batchSize) break;
-			}
-
-			const direction = sort_direction === "asc" ? 1 : -1;
-			entries.sort((a, b) => direction * (readTotalPnlUsd(a) - readTotalPnlUsd(b)));
-			const data = entries.slice(offset, offset + limit);
-			const hasMore = offset + data.length < entries.length;
-			return {
-				data,
-				hasMore,
-				nextCursor: hasMore ? offset + data.length : null,
-				pageSize: limit,
-			};
-		}
-
 		const requestLimit = limit + 1;
 		const params: SdkGetTraderPositionPnlRequest = {
 			address,
@@ -298,7 +266,9 @@ async function fetchTraderPositionsPage(
 			...restOptions,
 			offset,
 			limit: requestLimit,
-			sort_by: sort_by ?? defaultTraderPositionSortBy[status],
+			sort_by:
+				(sort_by === "total_pnl_usd" ? "realized_pnl_usd" : sort_by) ??
+				defaultTraderPositionSortBy[status],
 			sort_direction: sort_direction ?? "desc",
 		};
 		const response = await client.trader.getTraderOutcomePnl(params);
