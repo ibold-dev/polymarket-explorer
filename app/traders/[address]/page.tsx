@@ -563,7 +563,7 @@ async function TraderPageContent({
 							resolution={resolution}
 							defaultResolution={defaultResolution}
 							defaultRange={defaultRange}
-							excludeMetrics={["uniqueTraders", "makersTakers"]}
+							excludeMetrics={["uniqueTraders"]}
 							appendMetrics={["fees", "tradeTypes"]}
 								allowedComponents={SCOPED_VOLUME_COMPONENTS}
 								pathname={`/traders/${address}`}
