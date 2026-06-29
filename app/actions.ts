@@ -252,7 +252,7 @@ export async function getMarketsStatusPageAction({
 		sortBy: safeSortBy,
 		sortDirection: safeSortDirection,
 		timeframe: safeTimeframe,
-		markets: result.data.map(marketResponseToRow),
+		markets: result.data.map((market) => marketResponseToRow(market)),
 		hasMore: result.hasMore,
 		nextCursor: result.nextCursor,
 	};
@@ -271,7 +271,7 @@ export async function getTagMarketsStatusPageAction({
 
 	return {
 		tab: safeTab,
-		markets: result.data.map(marketResponseToRow),
+		markets: result.data.map((market) => marketResponseToRow(market)),
 		hasMore: result.hasMore,
 		nextCursor: result.nextCursor,
 	};

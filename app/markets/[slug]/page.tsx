@@ -21,6 +21,7 @@ import { parseAnalyticsCap, parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } fro
 import { getMarketBySlug, getMarketsByTag } from "@/lib/struct/market-queries";
 import type { MarketTabOutcomeRef } from "@/lib/struct/market-tab-page";
 import { buildEntityPageTitle, buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
+import type { MarketResponse } from "@structbuild/sdk";
 
 type Props = {
 	params: Promise<{ slug: string }>;
