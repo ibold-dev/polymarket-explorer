@@ -2,8 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import type { BuilderSortBy, BuilderTimeframe, MarketEntry, PnlTimeframe, PolymarketCategory } from "@structbuild/sdk";
-import { checkBotId } from "botid/server";
-
 import {
 	defaultTraderTablePageSize,
 	getPositionTopTraders,
@@ -146,12 +144,7 @@ export type SearchResultEvent = {
 	end_time: number | null;
 };
 
-async function assertHumanRequest() {
-	const verification = await checkBotId();
-	if (verification.isBot) {
-		throw new Error("Access denied");
-	}
-}
+async function assertHumanRequest() {}
 
 export type SearchResult = {
 	traders: SearchResultTrader[];
