@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { MarketEntry, PositionEntry, TraderInfo } from "@structbuild/sdk";
+import type { MarketEntry, PositionEntry, TraderInfo } from "@/lib/polymarket/types";
 import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useMemo, useRef, useState, useTransition } from "react";

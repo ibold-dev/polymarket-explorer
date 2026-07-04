@@ -1,4 +1,4 @@
-import type { TraderInfo, Trade } from "@structbuild/sdk"
+import type { TraderInfo, Trade } from "@/lib/polymarket/types"
 
 export function hasTradeTrader(trade: Trade): trade is Trade & { trader: TraderInfo } {
 	return "trader" in trade
@@ -15,7 +15,7 @@ export function isBuyTrade(trade: OrderFilledTradeEvent): boolean {
 	return side === "buy" || side === "0"
 }
 
-const activityLabels: Record<Trade["trade_type"], string> = {
+const activityLabels: Record<string, string> = {
 	OrderFilled: "Order Filled",
 	OrdersMatched: "Orders Matched",
 	MakerRebate: "Maker Rebate",

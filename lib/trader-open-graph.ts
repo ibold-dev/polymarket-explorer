@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { GlobalEntry, UserProfile } from "@structbuild/sdk";
+import type { GlobalEntry, UserProfile } from "@/lib/polymarket/types";
 import { cache } from "react";
 
 import {
@@ -11,11 +11,11 @@ import {
 	type PnlDataPoint,
 	type PnlPeriods,
 	type PnlStreaks,
-} from "@/lib/struct/pnl";
+} from "@/lib/polymarket/pnl";
 import { getSiteUrl } from "@/lib/env";
 import { formatNumber } from "@/lib/format";
 import { buildEntityPageTitle } from "@/lib/site-metadata";
-import { getTraderPnlSummary, getTraderProfile } from "@/lib/struct/queries";
+import { getTraderPnlSummary, getTraderProfile } from "@/lib/polymarket/queries";
 import { getTraderDisplayName, normalizeWalletAddress, truncateAddress } from "@/lib/utils";
 
 export const traderOgImageSize = {

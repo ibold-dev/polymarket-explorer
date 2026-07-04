@@ -1,4 +1,4 @@
-import type { BuilderFeeRateHistoryEntry } from "@structbuild/sdk";
+import type { BuilderFeeRateHistoryEntry } from "@/lib/polymarket/types";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { InfoTooltip } from "@/components/ui/info-tooltip";

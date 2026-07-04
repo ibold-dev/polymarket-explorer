@@ -30,27 +30,27 @@ import {
 	parseAnalyticsParams,
 	type AnalyticsResolution,
 	type VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 import {
 	getBuildersPaginated,
 	getBuilderGlobal,
 	getBuilderGlobalChanges,
 	getBuilderGlobalTags,
-} from "@/lib/struct/builder-queries";
+} from "@/lib/polymarket/builder-queries";
 import {
 	BUILDER_TIMEFRAME_LABELS,
 	getBuilderSortOptionsForTimeframe,
 	parseBuilderSort,
 	parseBuilderTimeframe,
-} from "@/lib/struct/builder-shared";
-import { getBuildersStackedData } from "@/lib/struct/builders-stacked";
+} from "@/lib/polymarket/builder-shared";
+import { getBuildersStackedData } from "@/lib/polymarket/builders-stacked";
 import {
 	DEFAULT_BUILDERS_STACKED_TOP_N,
 	parseBuildersStackedMetric,
 	parseBuildersStackedResolution,
 	type BuildersStackedMetric,
-} from "@/lib/struct/builders-stacked-shared";
-import type { BuilderSortBy, BuilderTimeframe } from "@structbuild/sdk";
+} from "@/lib/polymarket/builders-stacked-shared";
+import type { BuilderSortBy, BuilderTimeframe } from "@/lib/polymarket/types";
 import { getBuilderDisplayName } from "@/lib/builder-display-name";
 
 export const metadata: Metadata = buildPageMetadata({

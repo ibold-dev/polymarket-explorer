@@ -1,6 +1,6 @@
 import { ChartCard } from "@/components/market/chart-card";
 import { MarketVolumeChartClient } from "@/components/market/market-volume-chart-client";
-import { getMarketChart, getPositionVolumeChart } from "@/lib/struct/market-queries";
+import { getMarketChart, getPositionVolumeChart } from "@/lib/polymarket/market-queries";
 
 export async function MarketVolumeChart({ conditionId }: { conditionId: string }) {
 	const outcomes = await getMarketChart(conditionId);

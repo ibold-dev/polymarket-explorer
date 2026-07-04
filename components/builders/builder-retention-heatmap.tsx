@@ -1,4 +1,4 @@
-import type { CohortRetentionRow } from "@structbuild/sdk";
+import type { CohortRetentionRow } from "@/lib/polymarket/types";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { InfoTooltip } from "@/components/ui/info-tooltip";

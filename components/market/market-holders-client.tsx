@@ -5,7 +5,7 @@ import posthog from "posthog-js";
 import Link from "next/link";
 import type { Route } from "next";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { MarketHolder, OutcomeHolders } from "@structbuild/sdk";
+import type { MarketHolder, OutcomeHolders } from "@/lib/polymarket/types";
 
 import { DataTable } from "@/components/ui/data-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";

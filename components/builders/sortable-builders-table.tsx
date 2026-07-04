@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useId, useMemo, useState, useTransition } from "react";
 import posthog from "posthog-js";
 import { GitCompareIcon, XIcon } from "lucide-react";
-import type { BuilderLatestRowWithMetadata, BuilderSortBy, BuilderTimeframe } from "@structbuild/sdk";
+import type { BuilderLatestRowWithMetadata, BuilderSortBy, BuilderTimeframe } from "@/lib/polymarket/types";
 
 import {
 	BuildersTable,
@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MAX_COMPARE_BUILDERS } from "@/lib/builder-compare-search-params-shared";
-import { DEFAULT_BUILDER_SORT, DEFAULT_BUILDER_TIMEFRAME } from "@/lib/struct/builder-shared";
+import { DEFAULT_BUILDER_SORT, DEFAULT_BUILDER_TIMEFRAME } from "@/lib/polymarket/builder-shared";
 
 type SortableBuildersTableProps = {
 	builders: BuilderLatestRowWithMetadata[];

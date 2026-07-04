@@ -3,7 +3,7 @@ import { type ReactNode, useCallback, useRef, useState, useTransition } from "re
 import { useQueryStates } from "nuqs";
 
 import { SortableHeader } from "@/components/ui/sortable-header";
-import type { PaginatedResource } from "@/lib/struct/types";
+import type { PaginatedResource } from "@/lib/polymarket/types";
 import { traderSearchParamParsers, type TraderSearchParams } from "@/lib/trader-search-params";
 import { maxTraderPageNumber, type TraderSortDirection } from "@/lib/trader-search-params-shared";
 

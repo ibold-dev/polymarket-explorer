@@ -2,7 +2,7 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import type { Trade } from "@structbuild/sdk";
+import type { Trade } from "@/lib/polymarket/types";
 import { Facehash } from "facehash";
 import { HashIcon, RefreshCwIcon } from "lucide-react";
 import type { Route } from "next";
@@ -23,7 +23,7 @@ import { maxBuilderTradesPageNumber } from "@/lib/builder-search-params-shared";
 import { facehashColorClasses } from "@/lib/facehash";
 import { formatNumber, formatPriceCents } from "@/lib/format";
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
-import type { PaginatedResource } from "@/lib/struct/types";
+import type { PaginatedResource } from "@/lib/polymarket/types";
 import { hasTradeTrader, isBuyTrade, isOrderFilledTrade } from "@/lib/trade-utils";
 import { cn, getTraderDisplayName, normalizeWalletAddress } from "@/lib/utils";
 

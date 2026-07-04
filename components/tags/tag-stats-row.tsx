@@ -1,4 +1,4 @@
-import type { Tag } from "@structbuild/sdk";
+import type { Tag } from "@/lib/polymarket/types";
 
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/format";

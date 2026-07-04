@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { UserProfile } from "@structbuild/sdk";
+import type { UserProfile } from "@/lib/polymarket/types";
 import { ExternalLinkIcon } from "lucide-react";
 
 import { ExternalLink } from "@/components/ui/external-link";

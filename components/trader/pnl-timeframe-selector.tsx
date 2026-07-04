@@ -10,7 +10,7 @@ import {
 	pnlTimeframeParser,
 	pnlToParser,
 } from "@/lib/trader-search-params"
-import { pnlTimeframeValues, type PnlTimeframe } from "@/lib/struct/pnl-timeframes"
+import { pnlTimeframeValues, type PnlTimeframe } from "@/lib/polymarket/pnl-timeframes"
 import { TooltipWrapper } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 

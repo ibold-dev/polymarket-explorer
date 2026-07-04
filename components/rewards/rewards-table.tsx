@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { MarketResponse } from "@structbuild/sdk";
+import type { MarketResponse } from "@/lib/polymarket/types";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";

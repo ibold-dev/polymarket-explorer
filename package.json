@@ -2,7 +2,6 @@
   "name": "polymarket-explorer",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.11.0",
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build",
@@ -14,9 +13,9 @@
     "@base-ui/react": "^1.3.0",
     "@date-fns/tz": "^1.4.1",
     "@marsidev/react-turnstile": "^1.5.3",
+    "@polymarket/client": "^0.1.0-beta.4",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
-    "@structbuild/sdk": "github:structbuild/struct-typescript-sdk#v0.6.0-staging.18",
     "@tanstack/react-hotkeys": "^0.4.2",
     "@tanstack/react-table": "^8.21.3",
     "@vercel/analytics": "^2.0.1",

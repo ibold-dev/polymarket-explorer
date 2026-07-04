@@ -2,7 +2,7 @@
 
 import type { Route } from "next";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { PolymarketCategory } from "@structbuild/sdk";
+import type { PolymarketCategory } from "@/lib/polymarket/types";
 import { useCallback, useTransition } from "react";
 import posthog from "posthog-js";
 

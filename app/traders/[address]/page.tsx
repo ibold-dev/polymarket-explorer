@@ -23,10 +23,10 @@ import {
 	type PnlDataPoint,
 	type PnlPeriods,
 	type PnlStreaks,
-} from "@/lib/struct/pnl";
-import { PNL_RISK_TIMEFRAMES } from "@/lib/struct/pnl-timeframes";
-import { resolvePnlRange, type ResolvedPnlRange } from "@/lib/struct/pnl-range";
-import { compactPnlDataPointsForWire } from "@/lib/struct/pnl-wire";
+} from "@/lib/polymarket/pnl";
+import { PNL_RISK_TIMEFRAMES } from "@/lib/polymarket/pnl-timeframes";
+import { resolvePnlRange, type ResolvedPnlRange } from "@/lib/polymarket/pnl-range";
+import { compactPnlDataPointsForWire } from "@/lib/polymarket/pnl-wire";
 import {
 	getTraderOgImageAlt,
 	getTraderOgImageUrl,
@@ -37,8 +37,8 @@ import {
 } from "@/lib/trader-open-graph";
 import { loadTraderSearchParams } from "@/lib/trader-search-params.server";
 import { getServerTimezone } from "@/lib/timezone.server";
-import { parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/struct/analytics-shared";
-import { getTraderCategoryPnl, getTraderPnlSummary, getTraderPnlChanges, getTraderProfile } from "@/lib/struct/queries";
+import { parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/polymarket/analytics-shared";
+import { getTraderCategoryPnl, getTraderPnlSummary, getTraderPnlChanges, getTraderProfile } from "@/lib/polymarket/queries";
 import { SectionAnchor } from "@/components/layout/section-anchor";
 import type { SubheaderSlot } from "@/components/layout/section-subheader-bar";
 import { BridgeSectionSubheader, TabBridgeProvider } from "@/components/layout/tab-bridge";
@@ -47,7 +47,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { readTotalPnlUsd } from "@/lib/format";
 import { buildPageMetadata } from "@/lib/site-metadata";
 import { getTraderDisplayName, normalizeWalletAddress } from "@/lib/utils";
-import type { GlobalEntry } from "@structbuild/sdk";
+import type { GlobalEntry } from "@/lib/polymarket/types";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";

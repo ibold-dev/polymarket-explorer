@@ -1,6 +1,6 @@
 "use client";
 
-import type { PositionChartOutcome } from "@structbuild/sdk";
+import type { PositionChartOutcome } from "@/lib/polymarket/types";
 import posthog from "posthog-js";
 import { useCallback, useRef, useState, useTransition } from "react";
 

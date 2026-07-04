@@ -10,7 +10,7 @@ import { AnalyticsCapToggle } from "@/components/analytics/cap-toggle";
 import { AnalyticsRangeToggle } from "@/components/analytics/range-toggle";
 import { AnalyticsResolutionToggle } from "@/components/analytics/resolution-toggle";
 import { AnalyticsViewToggle } from "@/components/analytics/view-toggle";
-import type { AnalyticsSectionData } from "@/lib/struct/analytics-section-data";
+import type { AnalyticsSectionData } from "@/lib/polymarket/analytics-section-data";
 import {
 	applyAnalyticsCap,
 	computeTradeCountComponentTotals,
@@ -25,7 +25,7 @@ import {
 	type AnalyticsRange,
 	type AnalyticsSubject,
 	type VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 type Props = {
 	initialData: AnalyticsSectionData;

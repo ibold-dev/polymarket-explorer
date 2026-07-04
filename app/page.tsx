@@ -3,7 +3,7 @@ import { HomeExploreGrid } from "@/components/home/home-explore-grid";
 import { HomeSearchTrigger } from "@/components/home/home-search-trigger";
 import { PlatformStats, PlatformStatsFallback } from "@/components/home/platform-stats";
 import { RecentTradesListFallback } from "@/components/home/recent-trades-list";
-import { loadHomeActivityData } from "@/lib/struct/home-activity.server";
+import { loadHomeActivityData } from "@/lib/polymarket/home-activity.server";
 import { SITE_NAME } from "@/lib/site-metadata";
 import type { Metadata } from "next";
 import { connection } from "next/server";

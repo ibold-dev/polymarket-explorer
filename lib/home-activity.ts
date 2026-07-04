@@ -1,4 +1,4 @@
-import type { MarketEntry, Trade } from "@structbuild/sdk";
+import type { MarketEntry, Trade } from "@/lib/polymarket/types";
 
 import type { MarketTableRow } from "@/lib/market-table-map";
 

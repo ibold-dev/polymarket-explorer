@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { eventResponseToRow } from "@/lib/event-table-map";
 import { getSiteUrl } from "@/lib/env";
 import { buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
-import { getTopEvents } from "@/lib/struct/queries/events";
+import { getTopEvents } from "@/lib/polymarket/queries/events";
 import { loadEventSearchParams } from "@/lib/event-search-params.server";
 
 export const metadata: Metadata = buildPageMetadata({

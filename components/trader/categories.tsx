@@ -1,6 +1,6 @@
 "use client";
 
-import type { CategoryEntry } from "@structbuild/sdk";
+import type { CategoryEntry } from "@/lib/polymarket/types";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { type ReactNode, useMemo } from "react";
 import { RefreshCwIcon } from "lucide-react";
@@ -9,7 +9,7 @@ import { getTraderCategoriesPageAction } from "@/app/actions";
 import { DataTable } from "@/components/ui/data-table";
 import { dateCol, durationCol, numericCol } from "@/components/ui/table-columns";
 import { Volume } from "@/components/ui/volume";
-import type { PaginatedResource } from "@/lib/struct/types";
+import type { PaginatedResource } from "@/lib/polymarket/types";
 import type { TraderCategorySortBy, TraderSortDirection } from "@/lib/trader-search-params-shared";
 import { formatNumber, pnlColorClass, readTotalPnlUsd } from "@/lib/format";
 import { cn } from "@/lib/utils";

@@ -17,7 +17,7 @@ import {
 	BUY_DIST_LABELS,
 	type AnalyticsPoint,
 	type BuyDistributionKey,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 const BUCKET_COLORS: Record<BuyDistributionKey, string> = {
 	buyDistUnder10: "#10b981",

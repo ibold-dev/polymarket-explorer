@@ -1,10 +1,10 @@
-import type { AnalyticsGlobalCountsResponse } from "@structbuild/sdk";
+import type { AnalyticsGlobalCountsResponse } from "@/lib/polymarket/types";
 import { connection } from "next/server";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { TooltipWrapper } from "@/components/ui/tooltip";
 import { formatNumber } from "@/lib/format";
-import { getPlatformCounts } from "@/lib/struct/market-queries";
+import { getPlatformCounts } from "@/lib/polymarket/market-queries";
 
 type StatSpec = {
 	key: keyof AnalyticsGlobalCountsResponse;

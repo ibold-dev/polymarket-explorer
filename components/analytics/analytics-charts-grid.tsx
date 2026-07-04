@@ -26,7 +26,7 @@ import {
 	type AnalyticsSubject,
 	type AnalyticsView,
 	type VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 const EQUAL_HEIGHT_CARD_CLASS =
 	"grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto]";

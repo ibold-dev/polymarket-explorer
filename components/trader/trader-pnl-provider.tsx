@@ -1,6 +1,6 @@
 "use client";
 
-import type { GlobalEntry, PnlChangesResponse, PnlRiskResponse } from "@structbuild/sdk";
+import type { GlobalEntry, PnlChangesResponse, PnlRiskResponse } from "@/lib/polymarket/types";
 import {
 	createContext,
 	useCallback,
@@ -16,21 +16,21 @@ import {
 import { getTraderPnlViewAction } from "@/app/actions";
 import { PerformanceSummary } from "@/components/trader/performance-summary";
 import { getPnlChartAnnotations } from "@/lib/pnl-chart-annotations";
-import { expandPnlDataPointsFromWire, type WirePnlPoint } from "@/lib/struct/pnl-wire";
+import { expandPnlDataPointsFromWire, type WirePnlPoint } from "@/lib/polymarket/pnl-wire";
 import type {
 	PnlChartAnnotation,
 	PnlChartExit,
 	PnlDataPoint,
 	PnlPeriods,
 	PnlStreaks,
-} from "@/lib/struct/pnl";
-import type { ResolvedPnlRange } from "@/lib/struct/pnl-range";
+} from "@/lib/polymarket/pnl";
+import type { ResolvedPnlRange } from "@/lib/polymarket/pnl-range";
 import {
 	pnlAnchorValues,
 	pnlTimeframeValues,
 	type PnlAnchor,
 	type PnlTimeframe,
-} from "@/lib/struct/pnl-timeframes";
+} from "@/lib/polymarket/pnl-timeframes";
 
 type TraderPnlQuery = {
 	timeframe: PnlTimeframe;

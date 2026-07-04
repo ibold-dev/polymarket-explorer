@@ -1,7 +1,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 
-import { getTagBuilders } from "@/lib/struct/builder-queries";
+import { getTagBuilders } from "@/lib/polymarket/builder-queries";
 import { BuilderAvatar } from "@/components/builders/builder-avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { InfoTooltip } from "@/components/ui/info-tooltip";

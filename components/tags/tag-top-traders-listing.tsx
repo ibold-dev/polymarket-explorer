@@ -1,9 +1,9 @@
-import type { PolymarketCategory } from "@structbuild/sdk";
+import type { PolymarketCategory } from "@/lib/polymarket/types";
 
 import { PaginationNav } from "@/components/seo/pagination-nav";
 import { TradersTable } from "@/components/trader/traders-table";
 import { TradersTimeframeToggle } from "@/components/trader/traders-timeframe-toggle";
-import { getCategoryLeaderboard } from "@/lib/struct/market-queries";
+import { getCategoryLeaderboard } from "@/lib/polymarket/market-queries";
 import {
 	resolveLeaderboardSortField,
 	type TraderLeaderboardSortDirection,

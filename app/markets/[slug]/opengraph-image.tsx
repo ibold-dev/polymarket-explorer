@@ -1,8 +1,8 @@
 import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
-import type { PositionChartDataPoint } from "@structbuild/sdk";
+import type { PositionChartDataPoint } from "@/lib/polymarket/types";
 import { formatDateShort, formatNumber } from "@/lib/format";
-import { getMarketBySlug, getMarketChart } from "@/lib/struct/market-queries";
+import { getMarketBySlug, getMarketChart } from "@/lib/polymarket/market-queries";
 import { loadImageAsDataUrl, ogImageSize, ogPalette, OgStatItem } from "@/lib/opengraph";
 
 export const runtime = "nodejs";

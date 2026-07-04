@@ -1,6 +1,6 @@
 "use client";
 
-import type { BuilderLatestRowWithMetadata, BuilderSortBy, BuilderTimeframe } from "@structbuild/sdk";
+import type { BuilderLatestRowWithMetadata, BuilderSortBy, BuilderTimeframe } from "@/lib/polymarket/types";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Route } from "next";
 import Link from "next/link";
@@ -16,7 +16,7 @@ import { formatNumber } from "@/lib/format";
 import {
 	BUILDER_SORT_DESCRIPTIONS,
 	isBuilderSortAvailableForTimeframe,
-} from "@/lib/struct/builder-shared";
+} from "@/lib/polymarket/builder-shared";
 import { cn, formatBuilderCodeDisplay } from "@/lib/utils";
 import { BUILDERS_TABLE_COLUMN_SIZES } from "./builders-table-columns";
 

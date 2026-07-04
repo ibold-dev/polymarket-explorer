@@ -5,7 +5,7 @@ import type {
 	BuilderLatestRowWithMetadata,
 	BuilderMetadata,
 	BuilderTagRow,
-} from "@structbuild/sdk";
+} from "@/lib/polymarket/types";
 import { cache } from "react";
 
 import { getSiteUrl } from "@/lib/env";
@@ -16,7 +16,7 @@ import {
 	getBuilderFees,
 	getBuilderMetadata,
 	getBuilderTags,
-} from "@/lib/struct/builder-queries";
+} from "@/lib/polymarket/builder-queries";
 import { getBuilderDisplayName } from "@/lib/builder-display-name";
 import { formatBuilderCodeDisplay } from "@/lib/utils";
 

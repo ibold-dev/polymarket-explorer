@@ -1,4 +1,4 @@
-import type { MetricsTimeframe } from "@structbuild/sdk";
+import type { MetricsTimeframe } from "@/lib/polymarket/types";
 
 export const METRICS_TIMEFRAMES = ["1h", "6h", "24h", "7d", "30d", "lifetime"] as const satisfies readonly MetricsTimeframe[];
 

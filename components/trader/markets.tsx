@@ -1,6 +1,6 @@
 "use client";
 
-import type { MarketEntry } from "@structbuild/sdk";
+import type { MarketEntry } from "@/lib/polymarket/types";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import type { Route } from "next";
 import Image from "next/image";
@@ -13,7 +13,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { dateCol, numericCol } from "@/components/ui/table-columns";
 import { Volume } from "@/components/ui/volume";
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
-import type { PaginatedResource } from "@/lib/struct/types";
+import type { PaginatedResource } from "@/lib/polymarket/types";
 import type { TraderMarketSortBy, TraderSortDirection } from "@/lib/trader-search-params-shared";
 import { formatNumber, pnlColorClass, readTotalPnlUsd } from "@/lib/format";
 import { cn } from "@/lib/utils";

@@ -1,5 +1,5 @@
 import { MarketHoldersClient } from "@/components/market/market-holders-client";
-import { getMarketHolders } from "@/lib/struct/market-queries";
+import { getMarketHolders } from "@/lib/polymarket/market-queries";
 
 export async function MarketHolders({ slug }: { slug: string }) {
 	const data = await getMarketHolders(slug, 25);

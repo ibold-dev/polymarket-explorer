@@ -1,0 +1,86 @@
+import "server-only";
+
+import type {
+	PositionChartOutcome,
+	PositionVolumeDataPoint,
+	PriceJump,
+} from "@/lib/polymarket/types";
+
+import { getPolymarketClient } from "@/lib/polymarket/client";
+import { logStructError, readStatus } from "@/lib/polymarket/http";
+
+export function toVolumePoints(points: PositionVolumeDataPoint[] | null) {
+	return (points ?? [])
+		.filter((point) => (point.bv ?? 0) + (point.sv ?? 0) > 0)
+		.map((point) => ({ t: point.t, buy: point.bv ?? 0, sell: point.sv ?? 0 }));
+}
+
+import type { ChartResolution } from "@/lib/polymarket/types";
+
+export async function getMarketChart(
+	conditionId: string,
+	resolution: ChartResolution = "1D",
+): Promise<PositionChartOutcome[] | null> {
+	const client = getPolymarketClient();
+
+	if (!client) {
+		return null;
+	}
+
+	try {
+		const response = await client.markets.getMarketChart({ condition_id: conditionId, resolution });
+		return response.data;
+	} catch (error) {
+		if (readStatus(error) === 404) {
+			return null;
+		}
+
+		logStructError(`getMarketChart:${conditionId}`, error);
+		return null;
+	}
+}
+
+export async function getPositionVolumeChart(positionId: string): Promise<PositionVolumeDataPoint[] | null> {
+	const client = getPolymarketClient();
+
+	if (!client) {
+		return null;
+	}
+
+	try {
+		const response = await client.markets.getPositionVolumeChart({ position_id: positionId, resolution: "60" });
+		return response.data;
+	} catch (error) {
+		if (readStatus(error) === 404) {
+			return null;
+		}
+
+		logStructError(`getPositionVolumeChart:${positionId}`, error);
+		return null;
+	}
+}
+
+export async function getMarketPriceJumps(conditionId: string): Promise<PriceJump[] | null> {
+	const client = getPolymarketClient();
+
+	if (!client) {
+		return null;
+	}
+
+	try {
+		const response = await client.markets.getPriceJumps({
+			condition_id: conditionId,
+			resolution: "5",
+			min_change_pct: 10,
+			lookback: 1440,
+		});
+		return response.data;
+	} catch (error) {
+		if (readStatus(error) === 404) {
+			return null;
+		}
+
+		logStructError(`getMarketPriceJumps:${conditionId}`, error);
+		return null;
+	}
+}

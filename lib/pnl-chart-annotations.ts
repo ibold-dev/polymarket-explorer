@@ -1,4 +1,4 @@
-import type { PnlChartAnnotation, PnlDataPoint, PnlPeriodWindow, PnlPeriods } from "@/lib/struct/pnl";
+import type { PnlChartAnnotation, PnlDataPoint, PnlPeriodWindow, PnlPeriods } from "@/lib/polymarket/pnl";
 
 export function getPnlChartAnnotations(
 	candles: PnlDataPoint[],

@@ -1,7 +1,7 @@
 import {
 	defaultTraderTablePageSize,
 	getTraderPositionsPage,
-} from "@/lib/struct/queries"
+} from "@/lib/polymarket/queries"
 import {
 	rankedPositionSortBy,
 	rankedPositionSortDirection,

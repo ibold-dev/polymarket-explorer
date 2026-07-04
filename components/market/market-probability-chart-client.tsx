@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import posthog from "posthog-js";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import type { PositionChartOutcome } from "@structbuild/sdk";
+import type { PositionChartOutcome } from "@/lib/polymarket/types";
 
 import {
 	ChartContainer,

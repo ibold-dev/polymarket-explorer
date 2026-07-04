@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
 import { formatCapitalizeWords } from "@/lib/format";
 import { deduplicateByImage, loadImageAsDataUrl, OgCollectionLayout, ogFloatingPositions, ogImageSize } from "@/lib/opengraph";
-import { getTagBySlug, getMarketsByTag } from "@/lib/struct/market-queries";
+import { getTagBySlug, getMarketsByTag } from "@/lib/polymarket/market-queries";
 
 export const runtime = "nodejs";
 export const size = ogImageSize;

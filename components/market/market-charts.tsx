@@ -5,7 +5,7 @@ import {
 	getMarketChart,
 	getPositionVolumeChart,
 	toVolumePoints,
-} from "@/lib/struct/market-queries";
+} from "@/lib/polymarket/market-queries";
 
 export async function MarketCharts({ conditionId }: { conditionId: string }) {
 	const outcomes = await getMarketChart(conditionId);

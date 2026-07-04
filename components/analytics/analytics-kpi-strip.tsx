@@ -1,4 +1,4 @@
-import type { AnalyticsMetricPctChange } from "@structbuild/sdk";
+import type { AnalyticsMetricPctChange } from "@/lib/polymarket/types";
 
 import { AvgTradeSizeKpiCard } from "@/components/analytics/avg-trade-size-kpi-card";
 import { ComponentsKpiCard } from "@/components/analytics/components-kpi-card";
@@ -11,7 +11,7 @@ import type {
 	AnalyticsSummary,
 	ComponentTotals,
 	VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 const VOLUME_STORAGE_KEY = "analytics:volumeComponents";
 const TRADES_STORAGE_KEY = "analytics:tradeComponents";

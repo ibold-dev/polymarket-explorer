@@ -1,6 +1,6 @@
 "use client"
 
-import type { DailyPnlEntry, PnlPeriodRecord, PnlPeriods } from "@/lib/struct/pnl"
+import type { DailyPnlEntry, PnlPeriodRecord, PnlPeriods } from "@/lib/polymarket/pnl"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import posthog from "posthog-js"

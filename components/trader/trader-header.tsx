@@ -5,7 +5,7 @@ import { ViewProfileButton } from "@/components/trader/view-profile-button";
 import { Volume } from "@/components/ui/volume";
 import { formatDateShort } from "@/lib/format";
 import { formatNumber } from "@/lib/format";
-import type { GlobalEntry } from "@structbuild/sdk";
+import type { GlobalEntry } from "@/lib/polymarket/types";
 
 type StatItemProps = {
 	label: string;

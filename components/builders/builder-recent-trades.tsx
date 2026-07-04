@@ -2,7 +2,7 @@ import { InfoTooltip } from "@/components/ui/info-tooltip";
 import {
 	defaultBuilderTradesPageSize,
 	getBuilderTradesPage,
-} from "@/lib/struct/builder-queries";
+} from "@/lib/polymarket/builder-queries";
 
 import { BuilderRecentTradesTable } from "./builder-recent-trades-table";
 

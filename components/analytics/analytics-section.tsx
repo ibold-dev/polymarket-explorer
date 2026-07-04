@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AnalyticsChartsGridFallback, type AnalyticsMetricPlacement } from "@/components/analytics/analytics-charts-grid";
 import { AnalyticsKpiStripFallback } from "@/components/analytics/analytics-kpi-strip";
 import { AnalyticsSectionClient } from "@/components/analytics/analytics-section-client";
-import { loadAnalyticsSectionData } from "@/lib/struct/analytics-section-data";
+import { loadAnalyticsSectionData } from "@/lib/polymarket/analytics-section-data";
 import {
 	DEFAULT_ANALYTICS_RANGE,
 	type AnalyticsMetricId,
@@ -13,7 +13,7 @@ import {
 	type AnalyticsSubject,
 	type AnalyticsView,
 	type VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 type AnalyticsSectionProps = {
 	title?: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import type { BuilderMetadata } from "@structbuild/sdk";
+import type { BuilderMetadata } from "@/lib/polymarket/types";
 import Link from "next/link";
 import type { Route } from "next";
 import { ExternalLinkIcon, GitCompareIcon } from "lucide-react";
@@ -10,7 +10,7 @@ import { CopyAddress } from "@/components/trader/copy-address";
 import { Button } from "@/components/ui/button";
 import { captureOutbound } from "@/components/ui/external-link";
 import { getBuilderDisplayName } from "@/lib/builder-display-name";
-import { DEFAULT_BUILDER_TIMEFRAME } from "@/lib/struct/builder-shared";
+import { DEFAULT_BUILDER_TIMEFRAME } from "@/lib/polymarket/builder-shared";
 import { formatBuilderCodeDisplay } from "@/lib/utils";
 
 const BUILDER_METADATA_CONTACT_HREF = "https://x.com/structbuild";

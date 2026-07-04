@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { formatNumber } from "@/lib/format";
 import { deduplicateByImage, loadImageAsDataUrl, OgCollectionLayout, ogFloatingPositions, ogImageSize, ogPalette } from "@/lib/opengraph";
-import { getRewardsMarkets } from "@/lib/struct/queries";
+import { getRewardsMarkets } from "@/lib/polymarket/queries";
 
 export const runtime = "nodejs";
 export const revalidate = 300;

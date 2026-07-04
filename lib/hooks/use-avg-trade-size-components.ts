@@ -6,7 +6,7 @@ import {
 	DEFAULT_KPI_VOLUME_COMPONENTS,
 	deserializeVolumeComponents,
 	type VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 export function useAvgTradeSizeComponents() {
 	return useLocalStorage<readonly VolumeComponentId[]>(

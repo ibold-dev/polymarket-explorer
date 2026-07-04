@@ -1,4 +1,4 @@
-import type { PnlAnchor, PnlTimeframe } from "@/lib/struct/pnl-timeframes";
+import type { PnlAnchor, PnlTimeframe } from "@/lib/polymarket/pnl-timeframes";
 import { formatDateCompact } from "@/lib/format";
 
 const TIMEFRAME_LABELS: Record<PnlTimeframe, string> = {

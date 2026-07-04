@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { formatCapitalizeWords } from "@/lib/format";
-import { getEventTagFrequencies } from "@/lib/struct/queries/events";
+import { getEventTagFrequencies } from "@/lib/polymarket/queries/events";
 
 export async function EventTagsScroller() {
 	const ranked = await getEventTagFrequencies();

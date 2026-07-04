@@ -7,7 +7,7 @@ import {
 	ANALYTICS_RANGE_LABELS,
 	DEFAULT_ANALYTICS_RANGE,
 	type AnalyticsRange,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 export function AnalyticsRangeToggle({
 	range,

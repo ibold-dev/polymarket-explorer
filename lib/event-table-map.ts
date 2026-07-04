@@ -1,4 +1,4 @@
-import type { Event, MetricsTimeframe, SimpleTimeframeMetrics } from "@structbuild/sdk";
+import type { Event, MetricsTimeframe, SimpleTimeframeMetrics } from "@/lib/polymarket/types";
 
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
 

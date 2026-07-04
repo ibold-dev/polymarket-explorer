@@ -4,7 +4,7 @@ import { compareCodesParserDef } from "./builder-compare-search-params-shared";
 import {
 	BUILDER_TIMEFRAME_OPTIONS,
 	DEFAULT_BUILDER_TIMEFRAME,
-} from "./struct/builder-shared";
+} from "./polymarket/builder-shared";
 
 const builderCompareSearchParamParsers = {
 	codes: createParser<string[]>(compareCodesParserDef).withDefault([]),

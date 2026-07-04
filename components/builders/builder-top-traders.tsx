@@ -1,4 +1,4 @@
-import type { TopTraderRow } from "@structbuild/sdk";
+import type { TopTraderRow } from "@/lib/polymarket/types";
 import type { Route } from "next";
 import Link from "next/link";
 

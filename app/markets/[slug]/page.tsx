@@ -17,11 +17,11 @@ import { formatCapitalizeWords, formatNumber, slugify } from "@/lib/format";
 import { toRelatedMarketItems } from "@/lib/market-related";
 import { buildMarketJsonLd } from "@/lib/market-json-ld";
 import { loadMarketDetailSearchParams } from "@/lib/market-detail-search-params.server";
-import { parseAnalyticsCap, parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/struct/analytics-shared";
-import { getMarketBySlug, getMarketsByTag } from "@/lib/struct/market-queries";
-import type { MarketTabOutcomeRef } from "@/lib/struct/market-tab-page";
+import { parseAnalyticsCap, parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/polymarket/analytics-shared";
+import { getMarketBySlug, getMarketsByTag } from "@/lib/polymarket/market-queries";
+import type { MarketTabOutcomeRef } from "@/lib/polymarket/market-tab-page";
 import { buildEntityPageTitle, buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
-import type { MarketResponse } from "@structbuild/sdk";
+import type { MarketResponse } from "@/lib/polymarket/types";
 
 type Props = {
 	params: Promise<{ slug: string }>;

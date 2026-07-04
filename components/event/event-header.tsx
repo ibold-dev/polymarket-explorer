@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import type { ReactNode } from "react";
-import type { Event } from "@structbuild/sdk";
+import type { Event } from "@/lib/polymarket/types";
 
 import { MarketDescription } from "@/components/market/market-description";
 import { MarketTags } from "@/components/market/market-tags";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import type { GlobalEntry } from "@structbuild/sdk";
+import type { GlobalEntry } from "@/lib/polymarket/types";
 
 import { DnaShareDialog } from "@/components/trader/dna-share-dialog";
 import { ShareIdentityHeader } from "@/components/trader/share-identity-header";

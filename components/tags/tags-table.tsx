@@ -1,6 +1,6 @@
 "use client";
 
-import type { Tag, TagSortBy, TagSortTimeframe } from "@structbuild/sdk";
+import type { Tag, TagSortBy, TagSortTimeframe } from "@/lib/polymarket/types";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Route } from "next";
 import Link from "next/link";
@@ -15,7 +15,7 @@ import { formatCapitalizeWords, formatNumber } from "@/lib/format";
 import {
 	TAG_TIMEFRAME_LABELS,
 	TAG_TIMEFRAME_OPTIONS,
-} from "@/lib/struct/tag-shared";
+} from "@/lib/polymarket/tag-shared";
 import { cn } from "@/lib/utils";
 import { TAGS_TABLE_COLUMN_SIZES } from "./tags-table-columns";
 

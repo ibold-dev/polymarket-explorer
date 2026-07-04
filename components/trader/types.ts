@@ -1,4 +1,4 @@
-import type { components } from "@structbuild/sdk";
+import type { components } from "@/lib/polymarket/types";
 
 export type TradeEvent = components["schemas"]["TradeEvent"];
 

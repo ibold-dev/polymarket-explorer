@@ -1,6 +1,6 @@
 "use client";
 
-import type { BuilderGlobalLatestRow, GlobalPctChange } from "@structbuild/sdk";
+import type { BuilderGlobalLatestRow, GlobalPctChange } from "@/lib/polymarket/types";
 import type { ReactNode } from "react";
 
 import { formatPctChange, pctToneClass } from "@/components/analytics/pct-display";
@@ -9,7 +9,7 @@ import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Volume } from "@/components/ui/volume";
 import { formatNumber } from "@/lib/format";
 import { useVolumeMode } from "@/lib/hooks/use-volume-mode";
-import { BUILDER_SORT_DESCRIPTIONS } from "@/lib/struct/builder-shared";
+import { BUILDER_SORT_DESCRIPTIONS } from "@/lib/polymarket/builder-shared";
 
 type StatSpec = {
 	key: keyof BuilderGlobalLatestRow;

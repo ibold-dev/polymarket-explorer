@@ -1,8 +1,8 @@
-import type { Event, EventMarket, EventMarketChartOutcome } from "@structbuild/sdk";
+import type { Event, EventMarket, EventMarketChartOutcome } from "@/lib/polymarket/types";
 
 import { ChartCard } from "@/components/market/chart-card";
 import { EventOverviewChartClient } from "@/components/event/event-overview-chart-client";
-import { getEventChart, type EventChartResolution } from "@/lib/struct/queries/events";
+import { getEventChart, type EventChartResolution } from "@/lib/polymarket/queries/events";
 
 const MAX_SERIES = 4;
 const ACTIVE_STATUSES = new Set(["open", "active"]);

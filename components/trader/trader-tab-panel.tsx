@@ -1,4 +1,4 @@
-import type { PolymarketCategory } from "@structbuild/sdk"
+import type { PolymarketCategory } from "@/lib/polymarket/types"
 
 import type {
 	TraderCategorySortBy,
@@ -13,7 +13,7 @@ import {
 	getTraderMarketsPage,
 	getTraderPositionsPage,
 	getTraderTradesPage,
-} from "@/lib/struct/queries"
+} from "@/lib/polymarket/queries"
 
 import { TraderTabPanelClient } from "./trader-tab-panel-client"
 import { TraderTabs } from "./trader-tabs"

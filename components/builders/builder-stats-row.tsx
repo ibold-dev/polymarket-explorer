@@ -1,4 +1,4 @@
-import type { BuilderFeeRate, BuilderLatestRow } from "@structbuild/sdk";
+import type { BuilderFeeRate, BuilderLatestRow } from "@/lib/polymarket/types";
 import type { ReactNode } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Volume } from "@/components/ui/volume";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/lib/format";
 import { bpsToLabel } from "@/lib/builder-compare-metrics";
-import { BUILDER_SORT_DESCRIPTIONS } from "@/lib/struct/builder-shared";
+import { BUILDER_SORT_DESCRIPTIONS } from "@/lib/polymarket/builder-shared";
 
 type Stat = {
 	label: string;

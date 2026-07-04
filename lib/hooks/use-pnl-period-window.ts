@@ -3,7 +3,7 @@
 import { useCallback } from "react"
 
 import { useLocalStorage } from "@/lib/hooks/use-local-storage"
-import type { PnlPeriodWindow } from "@/lib/struct/pnl"
+import type { PnlPeriodWindow } from "@/lib/polymarket/pnl"
 
 const STORAGE_KEY = "polymarket-explorer:pnl-period-window"
 const DEFAULT_WINDOW: PnlPeriodWindow = "week"

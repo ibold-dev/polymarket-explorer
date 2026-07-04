@@ -1,6 +1,6 @@
 import { ChartCard } from "@/components/market/chart-card";
 import { MarketHoldersHistoryClient } from "@/components/market/market-holders-history-client";
-import { getMarketHoldersHistory } from "@/lib/struct/market-queries";
+import { getMarketHoldersHistory } from "@/lib/polymarket/market-queries";
 
 export async function MarketHoldersHistory({ conditionId }: { conditionId: string }) {
 	const candles = await getMarketHoldersHistory(conditionId);

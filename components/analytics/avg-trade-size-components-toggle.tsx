@@ -2,7 +2,7 @@
 
 import { VolumeComponentsToggle } from "@/components/analytics/volume-components-toggle";
 import { useAvgTradeSizeComponents } from "@/lib/hooks/use-avg-trade-size-components";
-import type { VolumeComponentId } from "@/lib/struct/analytics-shared";
+import type { VolumeComponentId } from "@/lib/polymarket/analytics-shared";
 
 export function AvgTradeSizeComponentsToggle({
 	allowedComponents,

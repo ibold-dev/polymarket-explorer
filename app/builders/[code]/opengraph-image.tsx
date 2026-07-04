@@ -1,12 +1,12 @@
-import type { BuilderTagRow } from "@structbuild/sdk";
+import type { BuilderTagRow } from "@/lib/polymarket/types";
 import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
 import {
 	loadBuilderOpenGraphData,
 } from "@/lib/builder-open-graph";
 import { formatCapitalizeWords, formatNumber } from "@/lib/format";
-import { getBuilderAnalyticsTimeseries } from "@/lib/struct/analytics-queries";
-import type { AnalyticsPoint } from "@/lib/struct/analytics-shared";
+import { getBuilderAnalyticsTimeseries } from "@/lib/polymarket/analytics-queries";
+import type { AnalyticsPoint } from "@/lib/polymarket/analytics-shared";
 import {
 	loadImageAsDataUrl,
 	ogImageSize,

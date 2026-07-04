@@ -15,7 +15,7 @@ import { TooltipWrapper } from "@/components/ui/tooltip";
 import { Volume } from "@/components/ui/volume";
 import { facehashColorClasses } from "@/lib/facehash";
 import { formatNumber, pnlColorClass, readTotalPnlUsd } from "@/lib/format";
-import type { TraderLeaderboardEntry } from "@/lib/struct/trader-leaderboard";
+import type { TraderLeaderboardEntry } from "@/lib/polymarket/trader-leaderboard";
 import {
 	DEFAULT_TRADER_LEADERBOARD_SORT,
 	DEFAULT_TRADER_LEADERBOARD_SORT_DIRECTION,

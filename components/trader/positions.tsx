@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table"
-import type { PolymarketCategory, PositionEntry } from "@structbuild/sdk"
+import type { PolymarketCategory, PositionEntry } from "@/lib/polymarket/types"
 import type { Route } from "next"
 import Link from "next/link"
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon, RefreshCwIcon } from "lucide-react"
@@ -16,7 +16,7 @@ import type {
 	TraderPositionSortBy,
 	TraderSortDirection,
 } from "@/lib/trader-search-params-shared"
-import type { PaginatedResource } from "@/lib/struct/types"
+import type { PaginatedResource } from "@/lib/polymarket/types"
 import { traderSearchParamParsers } from "@/lib/trader-search-params"
 import { maxTraderPageNumber } from "@/lib/trader-search-params-shared"
 import { POLYMARKET_CATEGORIES } from "@/lib/tag-category"

@@ -8,8 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatVolumeValue } from "@/components/ui/volume";
 import { COMPARE_ACTIVITY_METRICS } from "@/lib/builder-compare-activity";
 import { useVolumeMode } from "@/lib/hooks/use-volume-mode";
-import type { CompareActivity } from "@/lib/struct/builder-compare";
-import type { AnalyticsResolution } from "@/lib/struct/analytics-shared";
+import type { CompareActivity } from "@/lib/polymarket/builder-compare";
+import type { AnalyticsResolution } from "@/lib/polymarket/analytics-shared";
 
 type CompareTimeseriesProps = {
 	activity: CompareActivity;

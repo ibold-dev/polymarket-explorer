@@ -11,7 +11,7 @@ import { DataTableSkeleton } from "@/components/ui/data-table-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSiteUrl } from "@/lib/env";
 import { buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
-import { getRewardsMarkets } from "@/lib/struct/queries";
+import { getRewardsMarkets } from "@/lib/polymarket/queries";
 
 export const metadata: Metadata = buildPageMetadata({
 	title: "Polymarket Liquidity Rewards · Live APR & Spreads",

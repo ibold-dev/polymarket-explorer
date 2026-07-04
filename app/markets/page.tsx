@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { marketResponseToRow } from "@/lib/market-table-map";
 import { getSiteUrl } from "@/lib/env";
 import { buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
-import { getTopMarkets } from "@/lib/struct/market-queries";
+import { getTopMarkets } from "@/lib/polymarket/market-queries";
 import { loadMarketSearchParams } from "@/lib/market-search-params.server";
 
 export const metadata: Metadata = buildPageMetadata({

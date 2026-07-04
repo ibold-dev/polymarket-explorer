@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import type { TagSortBy, TagSortTimeframe } from "@structbuild/sdk";
+import type { TagSortBy, TagSortTimeframe } from "@/lib/polymarket/types";
 
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -8,11 +8,11 @@ import { SortableTagsTable } from "@/components/tags/sortable-tags-table";
 import { getSiteUrl } from "@/lib/env";
 import { TAGS_PAGE_SIZE } from "@/lib/pagination";
 import { SITE_NAME } from "@/lib/site-metadata";
-import { DEFAULT_TAG_SORT, DEFAULT_TAG_TIMEFRAME } from "@/lib/struct/tag-shared";
+import { DEFAULT_TAG_SORT, DEFAULT_TAG_TIMEFRAME } from "@/lib/polymarket/tag-shared";
 import {
 	getTagsPaginated,
 	getTagPageCount,
-} from "@/lib/struct/market-queries";
+} from "@/lib/polymarket/market-queries";
 
 type TagGridPageProps = {
 	page: number;

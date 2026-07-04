@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
 
 import { formatNumber } from "@/lib/format";
-import { getEventBySlug } from "@/lib/struct/queries/events";
+import { getEventBySlug } from "@/lib/polymarket/queries/events";
 import { loadImageAsDataUrl, ogImageSize, ogPalette, OgStatItem } from "@/lib/opengraph";
 
 export const runtime = "nodejs";

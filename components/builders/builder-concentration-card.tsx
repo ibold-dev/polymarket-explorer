@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
-import type { ConcentrationResponse } from "@structbuild/sdk";
+import type { ConcentrationResponse } from "@/lib/polymarket/types";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { InfoTooltip } from "@/components/ui/info-tooltip";

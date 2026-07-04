@@ -13,7 +13,7 @@ import { DataTableSkeleton } from "@/components/ui/data-table-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSiteUrl } from "@/lib/env";
 import { buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
-import { getCategoryLeaderboard, getGlobalLeaderboard } from "@/lib/struct/market-queries";
+import { getCategoryLeaderboard, getGlobalLeaderboard } from "@/lib/polymarket/market-queries";
 import { parsePolymarketCategory } from "@/lib/tag-category";
 import {
 	buildLeaderboardSearchParams,

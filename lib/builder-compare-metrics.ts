@@ -1,6 +1,6 @@
-import type { BuilderFeeRate, BuilderLatestRow } from "@structbuild/sdk";
+import type { BuilderFeeRate, BuilderLatestRow } from "@/lib/polymarket/types";
 
-import { BUILDER_SORT_DESCRIPTIONS } from "@/lib/struct/builder-shared";
+import { BUILDER_SORT_DESCRIPTIONS } from "@/lib/polymarket/builder-shared";
 
 export type CompareMetricFormat = "currency" | "count" | "bps" | "volume";
 

@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { deduplicateByImage, loadImageAsDataUrl, OgCollectionLayout, ogFloatingPositions, ogImageSize } from "@/lib/opengraph";
-import { getTopMarkets } from "@/lib/struct/market-queries";
+import { getTopMarkets } from "@/lib/polymarket/market-queries";
 
 export const runtime = "nodejs";
 export const size = ogImageSize;

@@ -1,6 +1,6 @@
 import { ChartCard } from "@/components/market/chart-card";
 import { MarketProbabilityChartClient } from "@/components/market/market-probability-chart-client";
-import { getMarketChart } from "@/lib/struct/market-queries";
+import { getMarketChart } from "@/lib/polymarket/market-queries";
 
 export async function MarketProbabilityChart({ conditionId }: { conditionId: string }) {
 	const outcomes = await getMarketChart(conditionId);

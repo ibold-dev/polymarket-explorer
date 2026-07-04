@@ -10,7 +10,7 @@ import {
 	type AnalyticsResolution,
 	type AnalyticsSubject,
 	type AnalyticsView,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 const RESOLUTION_WORD: Record<AnalyticsResolution, string> = {
 	"60": "Hourly",

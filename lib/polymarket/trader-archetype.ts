@@ -1,4 +1,4 @@
-import type { GlobalEntry } from "@structbuild/sdk";
+import type { GlobalEntry } from "@/lib/polymarket/types";
 
 import { formatDuration, formatNumber } from "@/lib/format";
 import { POLYMARKET_CATEGORIES } from "@/lib/tag-category";

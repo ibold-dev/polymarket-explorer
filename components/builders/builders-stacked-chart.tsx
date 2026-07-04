@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import type { BuilderTimeframe } from "@structbuild/sdk";
+import type { BuilderTimeframe } from "@/lib/polymarket/types";
 
 import { getBuildersStackedDataAction } from "@/app/actions";
 import { AnalyticsUrlToggle } from "@/components/analytics/url-toggle";
@@ -19,8 +19,8 @@ import {
 	sharesFieldKey,
 	type BuildersStackedData,
 	type BuildersStackedSlot,
-} from "@/lib/struct/builders-stacked-shared";
-import type { AnalyticsResolution } from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/builders-stacked-shared";
+import type { AnalyticsResolution } from "@/lib/polymarket/analytics-shared";
 import { colorForCompareIndex } from "@/lib/builder-compare-colors";
 
 const OTHER_COLOR = "#64748b";

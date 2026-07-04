@@ -9,7 +9,7 @@ import { TagGridPage } from "@/components/tags/tag-grid-page";
 import {
 	parseTagSort,
 	parseTagTimeframe,
-} from "@/lib/struct/tag-shared";
+} from "@/lib/polymarket/tag-shared";
 import { TagIndexPageFallback } from "@/components/tags/tag-index-page-fallback";
 
 type Props = {

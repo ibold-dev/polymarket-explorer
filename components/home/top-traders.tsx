@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getGlobalLeaderboard } from "@/lib/struct/market-queries";
+import { getGlobalLeaderboard } from "@/lib/polymarket/market-queries";
 import { formatNumber, pnlColorClass, readTotalPnlUsd } from "@/lib/format";
 import { getTraderDisplayName, normalizeWalletAddress } from "@/lib/utils";
 import type { Route } from "next";

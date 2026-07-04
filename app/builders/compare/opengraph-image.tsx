@@ -5,7 +5,7 @@ import {
 	ogFloatingPositions,
 	ogImageSize,
 } from "@/lib/opengraph";
-import { getBuildersPaginated } from "@/lib/struct/builder-queries";
+import { getBuildersPaginated } from "@/lib/polymarket/builder-queries";
 
 export const runtime = "nodejs";
 export const size = ogImageSize;

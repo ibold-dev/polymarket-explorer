@@ -2,7 +2,7 @@ import { connection } from "next/server";
 
 import { HomeRefreshButton } from "@/components/home/home-refresh-button";
 import { RecentTradesTable } from "@/components/home/recent-trades-table";
-import { getRecentTrades } from "@/lib/struct/market-queries";
+import { getRecentTrades } from "@/lib/polymarket/market-queries";
 
 export async function RecentTradesList() {
 	await connection();

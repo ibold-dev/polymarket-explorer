@@ -6,9 +6,9 @@ import {
 	getAllMarketSlugs,
 	getAllTags,
 	getGlobalLeaderboard,
-} from "@/lib/struct/market-queries";
-import { getAllEventSlugs } from "@/lib/struct/queries/events";
-import { getAllBuilderCodes } from "@/lib/struct/builder-queries";
+} from "@/lib/polymarket/market-queries";
+import { getAllEventSlugs } from "@/lib/polymarket/queries/events";
+import { getAllBuilderCodes } from "@/lib/polymarket/builder-queries";
 import { normalizeWalletAddress } from "@/lib/utils";
 
 export const maxDuration = 60;

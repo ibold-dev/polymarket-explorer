@@ -9,7 +9,7 @@ import { CopyLink } from "@/components/trader/copy-link";
 import { Badge } from "@/components/ui/badge";
 import { Volume } from "@/components/ui/volume";
 import { formatDateShort, formatNumber } from "@/lib/format";
-import type { MarketResponse } from "@structbuild/sdk";
+import type { MarketResponse } from "@/lib/polymarket/types";
 
 function StatusBadge({ status }: { status: string }) {
 	const isOpen = status === "active";

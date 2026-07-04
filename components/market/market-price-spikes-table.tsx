@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { PriceJump } from "@structbuild/sdk";
+import type { PriceJump } from "@/lib/polymarket/types";
 import { ArrowDownRightIcon, ArrowUpRightIcon } from "lucide-react";
 
 import { DataTable } from "@/components/ui/data-table";

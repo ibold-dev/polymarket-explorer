@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Trade } from "@structbuild/sdk";
+import type { Trade } from "@/lib/polymarket/types";
 import { Facehash } from "facehash";
 import { HashIcon } from "lucide-react";
 import type { Route } from "next";

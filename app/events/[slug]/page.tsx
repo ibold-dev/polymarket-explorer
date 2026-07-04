@@ -14,7 +14,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { getSiteUrl } from "@/lib/env";
 import { formatCapitalizeWords, formatNumber, slugify } from "@/lib/format";
 import { buildEntityPageTitle, buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
-import { getEventBySlug } from "@/lib/struct/queries/events";
+import { getEventBySlug } from "@/lib/polymarket/queries/events";
 
 type Props = {
 	params: Promise<{ slug: string }>;

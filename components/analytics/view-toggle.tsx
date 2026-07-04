@@ -7,7 +7,7 @@ import {
 	ANALYTICS_VIEW_LABELS,
 	DEFAULT_ANALYTICS_VIEW,
 	type AnalyticsView,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 export function AnalyticsViewToggle({
 	view,

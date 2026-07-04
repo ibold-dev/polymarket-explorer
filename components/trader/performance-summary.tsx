@@ -5,11 +5,11 @@ import { InfoRow } from "@/components/trader/info-row";
 import { PeriodRows } from "@/components/trader/period-rows";
 import { Separator } from "@/components/ui/separator";
 import { TruncateTooltip } from "@/components/ui/truncate-tooltip";
-import type { PnlPeriods, PnlStreaks } from "@/lib/struct/pnl";
+import type { PnlPeriods, PnlStreaks } from "@/lib/polymarket/pnl";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
-import type { PnlChangesResponse, PnlRiskResponse, GlobalEntry } from "@structbuild/sdk";
+import type { PnlChangesResponse, PnlRiskResponse, GlobalEntry } from "@/lib/polymarket/types";
 
 type PerformanceSummaryProps = {
 	pnlSummary: GlobalEntry | null;

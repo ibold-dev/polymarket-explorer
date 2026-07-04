@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { HomeRefreshButton } from "@/components/home/home-refresh-button";
 import { MarketsTable } from "@/components/market/markets-table";
 import { marketResponseToRow } from "@/lib/market-table-map";
-import { getHomeTopMarkets } from "@/lib/struct/market-queries";
+import { getHomeTopMarkets } from "@/lib/polymarket/market-queries";
 
 const MARKET_FETCH_COUNT = 12;
 

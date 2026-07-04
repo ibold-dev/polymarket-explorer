@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import posthog from "posthog-js";
-import type { EventMarket, EventMarketOutcome } from "@structbuild/sdk";
+import type { EventMarket, EventMarketOutcome } from "@/lib/polymarket/types";
 
 import { Button } from "@/components/ui/button";
 import { SortableHeader } from "@/components/ui/sortable-header";

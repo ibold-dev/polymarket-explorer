@@ -6,7 +6,7 @@ import {
 	type CompareMetric,
 } from "@/lib/builder-compare-metrics";
 import { formatNumber } from "@/lib/format";
-import type { CompareBuilder } from "@/lib/struct/builder-compare";
+import type { CompareBuilder } from "@/lib/polymarket/builder-compare";
 import { cn } from "@/lib/utils";
 
 function formatMetric(metric: CompareMetric, builder: CompareBuilder) {

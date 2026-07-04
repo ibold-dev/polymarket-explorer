@@ -3,10 +3,10 @@
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
-import type { Tag, TagSortBy, TagSortTimeframe } from "@structbuild/sdk";
+import type { Tag, TagSortBy, TagSortTimeframe } from "@/lib/polymarket/types";
 
 import { TagsTable } from "@/components/tags/tags-table";
-import { DEFAULT_TAG_SORT, DEFAULT_TAG_TIMEFRAME } from "@/lib/struct/tag-shared";
+import { DEFAULT_TAG_SORT, DEFAULT_TAG_TIMEFRAME } from "@/lib/polymarket/tag-shared";
 
 type SortableTagsTableProps = {
 	tags: Tag[];

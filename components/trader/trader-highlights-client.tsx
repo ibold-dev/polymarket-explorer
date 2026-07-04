@@ -1,6 +1,6 @@
 "use client"
 
-import type { PositionEntry } from "@structbuild/sdk"
+import type { PositionEntry } from "@/lib/polymarket/types"
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import { useQueryStates } from "nuqs"
 import posthog from "posthog-js"
@@ -14,7 +14,7 @@ import {
 	traderExitModeValues,
 	type TraderExitMode,
 } from "@/lib/trader-search-params-shared"
-import type { PaginatedResource } from "@/lib/struct/types"
+import type { PaginatedResource } from "@/lib/polymarket/types"
 import { cn } from "@/lib/utils"
 
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"

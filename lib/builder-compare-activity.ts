@@ -1,4 +1,4 @@
-import type { AnalyticsPoint } from "@/lib/struct/analytics-shared";
+import type { AnalyticsPoint } from "@/lib/polymarket/analytics-shared";
 
 export type CompareActivityMetric = {
 	id: string;

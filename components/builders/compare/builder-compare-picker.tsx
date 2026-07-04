@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState, useTransition } from "react";
 import { useQueryStates } from "nuqs";
 import { PlusIcon, XIcon } from "lucide-react";
-import type { BuilderTimeframe } from "@structbuild/sdk";
+import type { BuilderTimeframe } from "@/lib/polymarket/types";
 
 import { searchAction, type SearchResult } from "@/app/actions";
 import { BuilderAvatar } from "@/components/builders/builder-avatar";
@@ -23,7 +23,7 @@ import { MAX_COMPARE_BUILDERS } from "@/lib/builder-compare-search-params-shared
 import {
 	BUILDER_TIMEFRAME_LABELS,
 	BUILDER_TIMEFRAME_OPTIONS,
-} from "@/lib/struct/builder-shared";
+} from "@/lib/polymarket/builder-shared";
 
 const DEBOUNCE_MS = 250;
 

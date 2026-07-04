@@ -1,4 +1,4 @@
-import type { MarketOutcome, MarketResponse } from "@structbuild/sdk";
+import type { MarketOutcome, MarketResponse } from "@/lib/polymarket/types";
 
 import { formatNumber } from "@/lib/format";
 

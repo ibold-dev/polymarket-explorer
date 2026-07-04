@@ -5,7 +5,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import posthog from "posthog-js";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-import type { EventMarketChartOutcome } from "@structbuild/sdk";
+import type { EventMarketChartOutcome } from "@/lib/polymarket/types";
 
 import {
 	ChartContainer,

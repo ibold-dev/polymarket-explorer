@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/chart";
 import { formatCapitalizeWords, formatNumber } from "@/lib/format";
 import { useVolumeMode } from "@/lib/hooks/use-volume-mode";
-import type { CompareBuilder } from "@/lib/struct/builder-compare";
+import type { CompareBuilder } from "@/lib/polymarket/builder-compare";
 
 const MAX_TAGS = 8;
 const ROW_HEIGHT_PX = 22;

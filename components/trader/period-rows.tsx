@@ -5,7 +5,7 @@ import posthog from "posthog-js";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { usePnlPeriodWindow } from "@/lib/hooks/use-pnl-period-window";
 import { formatDateCompact, formatNumber } from "@/lib/format";
-import type { PnlPeriodRecord, PnlPeriodWindow, PnlPeriods } from "@/lib/struct/pnl";
+import type { PnlPeriodRecord, PnlPeriodWindow, PnlPeriods } from "@/lib/polymarket/pnl";
 import { cn } from "@/lib/utils";
 
 const PERIOD_WINDOWS: { value: PnlPeriodWindow; label: string }[] = [

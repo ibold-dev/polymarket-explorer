@@ -1,6 +1,6 @@
 "use client";
 
-import type { AnalyticsMetricPctChange } from "@structbuild/sdk";
+import type { AnalyticsMetricPctChange } from "@/lib/polymarket/types";
 
 import { formatPctChange, pctToneClass } from "@/components/analytics/pct-display";
 import { VolumeComponentsToggle } from "@/components/analytics/volume-components-toggle";
@@ -17,7 +17,7 @@ import {
 	type AnalyticsSummary,
 	type ComponentTotals,
 	type VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 export function AvgTradeSizeKpiCard({
 	label,

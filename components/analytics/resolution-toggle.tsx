@@ -7,7 +7,7 @@ import {
 	RESOLUTION_OPTIONS_BY_RANGE,
 	type AnalyticsRange,
 	type AnalyticsResolution,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 type Props = {
 	range: AnalyticsRange;

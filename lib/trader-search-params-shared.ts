@@ -103,7 +103,7 @@ export const rankedPositionSortDirection = {
 	losses: "asc",
 } as const satisfies Record<TraderExitMode, TraderSortDirection>;
 
-export { pnlTimeframeValues, pnlAnchorValues, type PnlTimeframe, type PnlAnchor } from "@/lib/struct/pnl-timeframes";
+export { pnlTimeframeValues, pnlAnchorValues, type PnlTimeframe, type PnlAnchor } from "@/lib/polymarket/pnl-timeframes";
 
 export const positivePageParserDef = {
 	parse(value: string) {

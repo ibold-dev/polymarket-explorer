@@ -1,4 +1,4 @@
-import type { BuilderLatestRowWithMetadata, BuilderMetadata } from "@structbuild/sdk";
+import type { BuilderLatestRowWithMetadata, BuilderMetadata } from "@/lib/polymarket/types";
 
 import { formatBuilderCodeDisplay } from "@/lib/utils";
 

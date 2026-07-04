@@ -1,0 +1,56 @@
+import type { TagSortBy, TagSortTimeframe } from "@/lib/polymarket/types";
+
+export const TAG_SORT_OPTIONS = [
+	"volume",
+	"builder_volume",
+	"unique_traders",
+	"unique_builder_traders",
+	"unique_makers",
+	"unique_takers",
+	"txns",
+	"builder_txns",
+	"fees",
+	"builder_fees",
+] as const satisfies readonly TagSortBy[];
+
+type TagSortOption = (typeof TAG_SORT_OPTIONS)[number];
+
+export const TAG_SORT_LABELS: Record<TagSortOption, string> = {
+	volume: "Volume",
+	builder_volume: "Builder vol",
+	unique_traders: "Traders",
+	unique_builder_traders: "Builder traders",
+	unique_makers: "Makers",
+	unique_takers: "Takers",
+	txns: "Trades",
+	builder_txns: "Builder trades",
+	fees: "Fees",
+	builder_fees: "Builder fees",
+};
+
+export const DEFAULT_TAG_SORT: TagSortBy = "volume";
+
+export function parseTagSort(value: string | string[] | undefined): TagSortBy {
+	const raw = Array.isArray(value) ? value[0] : value;
+	return TAG_SORT_OPTIONS.includes(raw as TagSortOption) ? (raw as TagSortBy) : DEFAULT_TAG_SORT;
+}
+
+export const TAG_TIMEFRAME_OPTIONS: readonly TagSortTimeframe[] = ["24h", "7d", "30d", "lifetime"];
+
+export const TAG_TIMEFRAME_LABELS: Record<TagSortTimeframe, string> = {
+	lifetime: "All",
+	"1h": "1h",
+	"24h": "24h",
+	"7d": "7d",
+	"30d": "30d",
+	"1mo": "1mo",
+};
+
+export const DEFAULT_TAG_TIMEFRAME: TagSortTimeframe = "lifetime";
+
+export function parseTagTimeframe(value: string | string[] | undefined): TagSortTimeframe {
+	const raw = Array.isArray(value) ? value[0] : value;
+	return TAG_TIMEFRAME_OPTIONS.includes(raw as TagSortTimeframe)
+		? (raw as TagSortTimeframe)
+		: DEFAULT_TAG_TIMEFRAME;
+}

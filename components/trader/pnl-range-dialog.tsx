@@ -28,7 +28,7 @@ import {
 	pnlAnchorValues,
 	type PnlAnchor,
 	type PnlTimeframe,
-} from "@/lib/struct/pnl-timeframes"
+} from "@/lib/polymarket/pnl-timeframes"
 import { ANCHOR_LABELS, pnlRangeChipLabel } from "@/lib/pnl-range-label"
 import { useTimezone } from "@/lib/hooks/use-timezone"
 import { cn } from "@/lib/utils"

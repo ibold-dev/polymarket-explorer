@@ -2,7 +2,7 @@ import type {
 	MarketResponse,
 	MetricsTimeframe,
 	SimpleTimeframeMetrics,
-} from "@structbuild/sdk";
+} from "@/lib/polymarket/types";
 
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
 

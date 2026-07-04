@@ -1,6 +1,6 @@
 "use client";
 
-import type { CategoryEntry, PolymarketCategory } from "@structbuild/sdk";
+import type { CategoryEntry, PolymarketCategory } from "@/lib/polymarket/types";
 import {
 	PolarAngleAxis,
 	PolarGrid,

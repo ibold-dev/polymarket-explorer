@@ -23,7 +23,7 @@ import {
 	loadBuilderCompare,
 	type CompareBuilder,
 	type CompareCandidateBuilder,
-} from "@/lib/struct/builder-compare";
+} from "@/lib/polymarket/builder-compare";
 
 const CONCENTRATION_SKELETON_COUNT = 3;
 

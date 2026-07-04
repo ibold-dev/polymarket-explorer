@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import type { BuilderTimeframe } from "@structbuild/sdk";
+import type { BuilderTimeframe } from "@/lib/polymarket/types";
 
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
 import { BuilderConcentrationCard } from "@/components/builders/builder-concentration-card";
@@ -36,7 +36,7 @@ import { formatBuilderCodeDisplay } from "@/lib/utils";
 import {
 	type AnalyticsRange,
 	parseAnalyticsParams,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 import {
 	getBuilderByCode,
 	getBuilderConcentration,
@@ -45,7 +45,7 @@ import {
 	getBuilderRetention,
 	getBuilderTags,
 	getBuilderTopTraders,
-} from "@/lib/struct/builder-queries";
+} from "@/lib/polymarket/builder-queries";
 
 const BUILDER_ANALYTICS_APPEND_METRICS = ["builderFees", "newUsers"] as const;
 const BUILDER_ANALYTICS_METRIC_PLACEMENTS = [

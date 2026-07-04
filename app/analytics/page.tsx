@@ -12,11 +12,11 @@ import { buildPageMetadata } from "@/lib/site-metadata";
 import {
 	parseAnalyticsParams,
 	ANALYTICS_RANGE_LABELS,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 import {
 	getBuilderGlobal,
 	getBuilderGlobalChanges,
-} from "@/lib/struct/builder-queries";
+} from "@/lib/polymarket/builder-queries";
 
 export const metadata: Metadata = buildPageMetadata({
 	title: "Polymarket Analytics · Volume, Trades & Fees",

@@ -1,7 +1,7 @@
 import type {
 	CategoryEntry,
 	MarketEntry,
-} from "@structbuild/sdk";
+} from "@/lib/polymarket/types";
 import type { ReactNode } from "react";
 import type { Route } from "next";
 import Link from "next/link";
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Volume } from "@/components/ui/volume";
 import { formatNumber, pnlColorClass, readTotalPnlUsd } from "@/lib/format";
-import type { CursorPage } from "@/lib/struct/queries";
+import type { CursorPage } from "@/lib/polymarket/queries";
 import { cn } from "@/lib/utils";
 
 type BreakdownTableProps<Row> = {

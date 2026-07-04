@@ -8,7 +8,7 @@ import { type ReactNode, useMemo, useState, useTransition } from "react";
 import { useQueryStates } from "nuqs";
 
 import { getTraderActivityPageAction } from "@/app/actions";
-import type { PaginatedResource } from "@/lib/struct/types";
+import type { PaginatedResource } from "@/lib/polymarket/types";
 import { traderSearchParamParsers } from "@/lib/trader-search-params";
 import { maxTraderPageNumber } from "@/lib/trader-search-params-shared";
 import { CoinsIcon, ExternalLinkIcon, GiftIcon, HashIcon, PercentIcon, RefreshCwIcon } from "lucide-react";

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import type { Tag } from "@structbuild/sdk";
+import type { Tag } from "@/lib/polymarket/types";
 
 import { AnalyticsSection } from "@/components/analytics/analytics-section";
 import { TagBuildersSection } from "@/components/builders/tag-builders-section";
@@ -28,11 +28,11 @@ import {
 	buildPageMetadata,
 	SITE_NAME,
 } from "@/lib/site-metadata";
-import { DEFAULT_ANALYTICS_VIEW, parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/struct/analytics-shared";
+import { DEFAULT_ANALYTICS_VIEW, parseAnalyticsParams, SCOPED_VOLUME_COMPONENTS } from "@/lib/polymarket/analytics-shared";
 import { parseEventStatusTab } from "@/lib/event-search-params-shared";
 import { parseMarketStatusTab } from "@/lib/market-search-params-shared";
-import { getEventsByTag } from "@/lib/struct/queries/events";
-import { getTagBySlug, getMarketsByTag } from "@/lib/struct/market-queries";
+import { getEventsByTag } from "@/lib/polymarket/queries/events";
+import { getTagBySlug, getMarketsByTag } from "@/lib/polymarket/market-queries";
 import {
 	buildLeaderboardSearchParams,
 	parseTraderLeaderboardSort,

@@ -1,7 +1,7 @@
 import { MarketTabPanelClient } from "@/components/market/market-tab-panel-client";
 import { MarketTradesFallback } from "@/components/market/market-trades";
 import type { MarketDetailTab } from "@/lib/market-detail-search-params-shared";
-import { loadMarketTabPage, type MarketTabOutcomeRef } from "@/lib/struct/market-tab-page";
+import { loadMarketTabPage, type MarketTabOutcomeRef } from "@/lib/polymarket/market-tab-page";
 
 type MarketTabPanelProps = {
 	currentTab: MarketDetailTab;

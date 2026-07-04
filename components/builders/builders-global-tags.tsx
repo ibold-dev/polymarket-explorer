@@ -4,7 +4,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
-import type { BuilderSortBy, BuilderTimeframe, GlobalBuilderTagRow } from "@structbuild/sdk";
+import type { BuilderSortBy, BuilderTimeframe, GlobalBuilderTagRow } from "@/lib/polymarket/types";
 
 import { getBuilderGlobalTagsAction } from "@/app/actions";
 import { AnalyticsUrlToggle } from "@/components/analytics/url-toggle";
@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatVolumeValue } from "@/components/ui/volume";
 import { formatCapitalizeWords, formatNumber, slugify } from "@/lib/format";
 import { useVolumeMode } from "@/lib/hooks/use-volume-mode";
-import { getBuilderSortOptionsForTimeframe } from "@/lib/struct/builder-shared";
+import { getBuilderSortOptionsForTimeframe } from "@/lib/polymarket/builder-shared";
 
 type TagMetric =
 	| "volumeUsd"

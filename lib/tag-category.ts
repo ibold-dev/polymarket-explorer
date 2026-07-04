@@ -1,4 +1,4 @@
-import type { PolymarketCategory } from "@structbuild/sdk";
+import type { PolymarketCategory } from "@/lib/polymarket/types";
 
 export const POLYMARKET_CATEGORIES: PolymarketCategory[] = [
 	"Politics",

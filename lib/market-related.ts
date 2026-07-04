@@ -1,4 +1,4 @@
-import type { MarketResponse } from "@structbuild/sdk";
+import type { MarketResponse } from "@/lib/polymarket/types";
 
 import { normalizePolymarketS3ImageUrl } from "@/lib/image-url";
 

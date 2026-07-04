@@ -4,7 +4,7 @@ import {
 	BestTradesListClient,
 	type BestTradesTimeframe,
 } from "@/components/home/best-trades-list-client";
-import { getTopTradesMarkets } from "@/lib/struct/queries";
+import { getTopTradesMarkets } from "@/lib/polymarket/queries";
 
 const ROW_COUNT = 12;
 const DEFAULT_TIMEFRAME: BestTradesTimeframe = "1d";

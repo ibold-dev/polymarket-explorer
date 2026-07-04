@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { BuilderSortBy, BuilderTimeframe, MarketEntry, PnlTimeframe, PolymarketCategory } from "@structbuild/sdk";
+import type { BuilderSortBy, BuilderTimeframe, MarketEntry, PnlTimeframe, PolymarketCategory } from "@/lib/polymarket/types";
 import {
 	defaultTraderTablePageSize,
 	getPositionTopTraders,
@@ -12,7 +12,7 @@ import {
 	getTraderTradesPage,
 	searchAll,
 	searchTraders,
-} from "@/lib/struct/queries";
+} from "@/lib/polymarket/queries";
 import {
 	defaultMarketTradesPageSize,
 	getPositionVolumeChart,
@@ -20,18 +20,18 @@ import {
 	getTopMarkets,
 	getMarketTradesPage,
 	toVolumePoints,
-} from "@/lib/struct/market-queries";
-import { getEventsByTag } from "@/lib/struct/queries/events";
+} from "@/lib/polymarket/market-queries";
+import { getEventsByTag } from "@/lib/polymarket/queries/events";
 import { eventResponseToRow } from "@/lib/event-table-map";
 import { parseEventStatusTab, type EventStatusTab } from "@/lib/event-search-params-shared";
 import {
 	defaultBuilderTradesPageSize,
 	getBuilderGlobalTags,
 	getBuilderTradesPage,
-} from "@/lib/struct/builder-queries";
-import { getBuildersStackedData } from "@/lib/struct/builders-stacked";
+} from "@/lib/polymarket/builder-queries";
+import { getBuildersStackedData } from "@/lib/polymarket/builders-stacked";
 import { maxBuilderTradesPageNumber } from "@/lib/builder-search-params-shared";
-import type { AnalyticsResolution } from "@/lib/struct/analytics-shared";
+import type { AnalyticsResolution } from "@/lib/polymarket/analytics-shared";
 import {
 	parseAnalyticsParams,
 	type AnalyticsMetricId,
@@ -39,37 +39,37 @@ import {
 	type AnalyticsRange,
 	type AnalyticsView,
 	type VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
-import { loadAnalyticsSectionData } from "@/lib/struct/analytics-section-data";
+} from "@/lib/polymarket/analytics-shared";
+import { loadAnalyticsSectionData } from "@/lib/polymarket/analytics-section-data";
 import { HOME_ACTIVITY_TABS, type HomeActivityTab } from "@/lib/home-activity";
-import { loadHomeActivityData } from "@/lib/struct/home-activity.server";
+import { loadHomeActivityData } from "@/lib/polymarket/home-activity.server";
 import {
 	getTraderChartExits,
 	getTraderPnlCandles,
 	getTraderPnlRisk,
-} from "@/lib/struct/pnl";
-import { resolvePnlRange } from "@/lib/struct/pnl-range";
+} from "@/lib/polymarket/pnl";
+import { resolvePnlRange } from "@/lib/polymarket/pnl-range";
 import {
 	PNL_RISK_TIMEFRAMES,
 	pnlAnchorValues,
 	pnlTimeframeValues,
 	type PnlAnchor,
 	type PnlTimeframe as TraderPnlTimeframe,
-} from "@/lib/struct/pnl-timeframes";
+} from "@/lib/polymarket/pnl-timeframes";
 import {
 	DEFAULT_BUILDERS_STACKED_TOP_N,
 	parseBuildersStackedMetric,
 	parseBuildersStackedResolution,
 	type BuildersStackedMetric,
-} from "@/lib/struct/builders-stacked-shared";
+} from "@/lib/polymarket/builders-stacked-shared";
 import {
 	getBuilderSortOptionsForTimeframe,
 	parseBuilderTimeframe,
-} from "@/lib/struct/builder-shared";
+} from "@/lib/polymarket/builder-shared";
 import {
 	maxMarketTradesPageNumber,
 } from "@/lib/market-detail-search-params-shared";
-import { loadMarketTabPage, type MarketTabPageParams } from "@/lib/struct/market-tab-page";
+import { loadMarketTabPage, type MarketTabPageParams } from "@/lib/polymarket/market-tab-page";
 import {
 	DEFAULT_MARKET_STATUS_TAB,
 	defaultMarketSortBy,

@@ -1,7 +1,7 @@
-import type { EventMarket } from "@structbuild/sdk";
+import type { EventMarket } from "@/lib/polymarket/types";
 
 import { EventTradesTable } from "@/components/event/event-trades-table";
-import { defaultEventTradesLimit, getEventTrades } from "@/lib/struct/queries/market-trades";
+import { defaultEventTradesLimit, getEventTrades } from "@/lib/polymarket/queries/market-trades";
 
 const MAX_MARKETS = 10;
 

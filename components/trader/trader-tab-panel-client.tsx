@@ -1,6 +1,6 @@
 "use client"
 
-import type { CategoryEntry, MarketEntry, PolymarketCategory, PositionEntry } from "@structbuild/sdk"
+import type { CategoryEntry, MarketEntry, PolymarketCategory, PositionEntry } from "@/lib/polymarket/types"
 import type { ReactNode } from "react"
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 
@@ -13,7 +13,7 @@ import type {
 	TraderSortDirection,
 	TraderTab,
 } from "@/lib/trader-search-params-shared"
-import type { PaginatedResource } from "@/lib/struct/types"
+import type { PaginatedResource } from "@/lib/polymarket/types"
 import type { TradeRow } from "./types"
 import TraderActivity from "./activity"
 import TraderCategories from "./categories"

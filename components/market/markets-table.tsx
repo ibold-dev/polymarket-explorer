@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import type { SimpleTimeframeMetrics } from "@structbuild/sdk";
+import type { SimpleTimeframeMetrics } from "@/lib/polymarket/types";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";

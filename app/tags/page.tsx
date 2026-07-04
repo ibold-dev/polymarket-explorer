@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { buildPageMetadata } from "@/lib/site-metadata";
 import { TagGridPage } from "@/components/tags/tag-grid-page";
 import { TagIndexPageFallback } from "@/components/tags/tag-index-page-fallback";
-import { parseTagSort, parseTagTimeframe } from "@/lib/struct/tag-shared";
+import { parseTagSort, parseTagTimeframe } from "@/lib/polymarket/tag-shared";
 
 export const metadata: Metadata = buildPageMetadata({
 	title: "Polymarket Categories · Politics, Crypto, Sports & More",

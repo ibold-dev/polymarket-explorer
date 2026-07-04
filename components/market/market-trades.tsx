@@ -1,5 +1,5 @@
 import { MarketTradesTable } from "@/components/market/market-trades-table";
-import { defaultMarketTradesPageSize, getMarketTradesPage } from "@/lib/struct/market-queries";
+import { defaultMarketTradesPageSize, getMarketTradesPage } from "@/lib/polymarket/market-queries";
 
 export async function MarketTrades({
 	conditionId,

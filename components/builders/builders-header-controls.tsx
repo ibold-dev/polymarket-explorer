@@ -1,7 +1,7 @@
 "use client";
 
 import posthog from "posthog-js";
-import type { BuilderSortBy, BuilderTimeframe } from "@structbuild/sdk";
+import type { BuilderSortBy, BuilderTimeframe } from "@/lib/polymarket/types";
 
 import { AnalyticsUrlToggle } from "@/components/analytics/url-toggle";
 import {
@@ -9,18 +9,18 @@ import {
 	ANALYTICS_RESOLUTION_LABELS,
 	RESOLUTION_OPTIONS_BY_RANGE,
 	type AnalyticsResolution,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 import {
 	BUILDER_TIMEFRAME_LABELS,
 	BUILDER_TIMEFRAME_OPTIONS,
 	DEFAULT_BUILDER_TIMEFRAME,
 	isBuilderSortAvailableForTimeframe,
-} from "@/lib/struct/builder-shared";
+} from "@/lib/polymarket/builder-shared";
 import {
 	getBuildersStackedMetricOptionsForTimeframe,
 	resolveStackedRange,
 	type BuildersStackedMetric,
-} from "@/lib/struct/builders-stacked-shared";
+} from "@/lib/polymarket/builders-stacked-shared";
 
 const BUILDER_TIMEFRAME_DESCRIPTIONS: Record<BuilderTimeframe, string> = {
 	"1d": "Rank builders by the last 24 hours of routed activity.",

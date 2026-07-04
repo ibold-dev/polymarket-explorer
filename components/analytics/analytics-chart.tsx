@@ -29,7 +29,7 @@ import {
 	formatTimeCompact,
 } from "@/lib/format";
 import { useShareMode } from "@/lib/hooks/use-share-mode";
-import type { AnalyticsResolution } from "@/lib/struct/analytics-shared";
+import type { AnalyticsResolution } from "@/lib/polymarket/analytics-shared";
 import { cn } from "@/lib/utils";
 
 const SECONDS_PER_DAY = 86400;

@@ -1,6 +1,6 @@
 import { BuilderAvatar } from "@/components/builders/builder-avatar";
 import { BuilderConcentrationCard } from "@/components/builders/builder-concentration-card";
-import type { CompareBuilder } from "@/lib/struct/builder-compare";
+import type { CompareBuilder } from "@/lib/polymarket/builder-compare";
 
 type CompareConcentrationProps = {
 	builders: CompareBuilder[];

@@ -1,5 +1,5 @@
 import { MarketPriceSpikesTable } from "@/components/market/market-price-spikes-table";
-import { getMarketPriceJumps } from "@/lib/struct/market-queries";
+import { getMarketPriceJumps } from "@/lib/polymarket/market-queries";
 
 export async function MarketPriceSpikes({ conditionId }: { conditionId: string }) {
 	const jumps = await getMarketPriceJumps(conditionId);

@@ -11,7 +11,7 @@ import {
 	VOLUME_COMPONENT_LABELS,
 	isDefaultVolumeComponents,
 	type VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 export function VolumeComponentsToggle({
 	components,

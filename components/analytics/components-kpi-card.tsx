@@ -16,7 +16,7 @@ import {
 	sumSelectedComponentTotals,
 	type ComponentTotals,
 	type VolumeComponentId,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 export type ComponentPctMap = Partial<Record<VolumeComponentId, number | null>>;
 

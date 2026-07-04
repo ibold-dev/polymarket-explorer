@@ -17,7 +17,7 @@ import {
 	type VolumeComponentId,
 	VOLUME_COMPONENT_IDS,
 	isDefaultVolumeComponents,
-} from "@/lib/struct/analytics-shared";
+} from "@/lib/polymarket/analytics-shared";
 
 const COMPONENT_VOLUME_KEYS: Record<VolumeComponentId, keyof AnalyticsPoint> = {
 	buy: "buyVolumeUsd",

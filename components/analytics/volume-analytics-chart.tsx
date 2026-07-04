@@ -8,7 +8,7 @@ import {
 } from "@/components/analytics/analytics-chart";
 import { formatVolumeValue } from "@/components/ui/volume";
 import { useVolumeMode } from "@/lib/hooks/use-volume-mode";
-import type { AnalyticsResolution, AnalyticsView } from "@/lib/struct/analytics-shared";
+import type { AnalyticsResolution, AnalyticsView } from "@/lib/polymarket/analytics-shared";
 
 type VolumeChartDatum = { t: number } & Record<string, number>;
 
