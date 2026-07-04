@@ -80,17 +80,52 @@ export function getPolymarketClient(): any {
     },
     trader: {
       getGlobalPnl: async () => ({ data: [] }),
-      getTraderProfile: async (params: any = {}) => {
-        return {
-          data: {
-            proxy_wallet: params.address || "",
-            display_username_public: true,
-            verified_badge: false,
-            is_creator: false,
-            is_mod: false,
-            name: params.address ? `Trader ${params.address.substring(0, 6)}` : "Trader"
-          }
-        };
+      getTraderProfile: async (params: any = {}) => ({
+        data: {
+          proxy_wallet: params.address || "",
+          display_username_public: true,
+          verified_badge: false,
+          is_creator: false,
+          is_mod: false,
+          name: params.address ? `Trader ${params.address.substring(0, 6)}` : "Trader"
+        }
+      }),
+      getTraderPnl: async (params: any = {}) => ({
+        data: {
+          trader: { address: params.address || "" },
+          realized_pnl_usd: 0,
+          total_pnl_usd: 0,
+          unrealized_pnl_usd: 0,
+          usd_balance: 0,
+          realized_pnl_percent: 0,
+          unrealized_pnl_percent: 0,
+          total_pnl_percent: 0,
+          buy_count: 0,
+          sell_count: 0,
+          total_buys: 0,
+          total_sells: 0,
+          total_fees: 0,
+          total_shares_bought: 0,
+          total_shares_sold: 0,
+        }
+      }),
+      getTraderPnlCandles: async () => ({ data: [] }),
+      getTraderPnlChanges: async () => ({ data: { changes: [] } }),
+      getTraderPnlPeriods: async () => ({ data: { "1d": null, "7d": null, "30d": null, max: null } }),
+      getTraderPnlRisk: async () => ({ data: { current_risk: 0, max_risk: 0 } }),
+      getTraderMarketPnl: async () => ({ data: [] }),
+      getTraderCategoryPnl: async () => ({ data: [] }),
+      getTraderOutcomePnl: async () => ({ data: [] }),
+      getTraderPnlExits: async () => ({ data: [] }),
+      getTraderTrades: async (params: any = {}) => {
+        const query: any = { limit: params.limit, offset: params.offset };
+        if (params.address) query.user = params.address;
+        const data = await fetchData('/trades', query);
+        return { data };
+      },
+      getTopTradesMarkets: async (params: any = {}) => {
+        const data = await fetchData('/trades', { limit: params.limit, offset: params.offset });
+        return { data };
       }
     },
     tags: {
@@ -101,7 +136,9 @@ export function getPolymarketClient(): any {
       getCategoryTopTraders: async () => ({ data: [] })
     },
     analytics: {
-      getCounts: async () => ({ data: null })
+      getCounts: async () => ({ data: null }),
+      getTraderChanges: async () => ({ data: null }),
+      getTraderDeltas: async () => ({ data: [] })
     },
     builders: {
       getBuilders: async () => ({ data: [] }),
