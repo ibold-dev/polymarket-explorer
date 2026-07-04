@@ -396,11 +396,11 @@ export function MarketsTable(props: MarketsTableProps) {
 	const sortingMode = props.sortingMode;
 	const isClientSort = sortingMode === "client";
 	const isServerSort = sortingMode === "server";
-	const serverSortBy = isServerSort ? props.sortBy : undefined;
-	const serverSortDirection = isServerSort ? props.sortDirection : undefined;
-	const serverOnSortChange = isServerSort ? props.onSortChange : undefined;
-	const serverTimeframe = isServerSort ? props.timeframe : undefined;
-	const serverOnTimeframeChange = isServerSort ? props.onTimeframeChange : undefined;
+	const serverSortBy = isServerSort ? (props as any).sortBy : undefined;
+	const serverSortDirection = isServerSort ? (props as any).sortDirection : undefined;
+	const serverOnSortChange = isServerSort ? (props as any).onSortChange : undefined;
+	const serverTimeframe = isServerSort ? (props as any).timeframe : undefined;
+	const serverOnTimeframeChange = isServerSort ? (props as any).onTimeframeChange : undefined;
 	const hasServerTimeframeControl =
 		isServerSort && serverTimeframe !== undefined && serverOnTimeframeChange !== undefined;
 

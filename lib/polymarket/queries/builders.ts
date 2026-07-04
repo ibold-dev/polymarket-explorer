@@ -22,7 +22,6 @@ import type {
 	TagBuilderRowWithMetadata,
 	TopTraderRow,
 	TopTradersSortBy,
-	any,
 	Trade,
 } from "@/lib/polymarket/types";
 
@@ -40,7 +39,7 @@ import type { PaginatedResource } from "@/lib/polymarket/types";
 export const defaultBuilderTradesPageSize = 25;
 
 export type GetBuilderTradesRequest = NonNullable<Parameters<any["markets"]["getTrades"]>[0]>;
-export type BuilderTradesPageOptions = Omit<GetBuilderTradesRequest, "builder_codes">;
+export type BuilderTradesPageOptions = { limit?: number; offset?: number; sort_desc?: boolean; trade_types?: string[]; [key: string]: any };
 
 export async function getBuildersPaginated(
 	limit: number = defaultPageSize,

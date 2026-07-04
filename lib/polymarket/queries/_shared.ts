@@ -26,7 +26,7 @@ export function logPaginationLimitReached(label: string) {
 export function emptyOffsetPage<T>(limit: number): PaginatedResource<T, number> {
 	return {
 		data: [],
-		hasMore: false,
+		hasMore: false, count: 0,
 		nextCursor: null,
 		pageSize: limit,
 	};

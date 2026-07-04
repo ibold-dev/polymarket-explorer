@@ -107,7 +107,7 @@ export async function getGlobalLeaderboard(
 	}
 
 	const tf = timeframe as "1d" | "7d" | "30d" | "lifetime";
-	const sortBy = sort?.sortBy as NonNullable<Parameters<typeof client.trader.getGlobalPnl>[0]>["sort_by"] | undefined;
+	const sortBy = sort?.sortBy as string | undefined;
 	const sortOption = sortBy ? { sort_by: sortBy, sort_direction: sort?.sortDirection ?? "desc" } : {};
 	const data: TraderLeaderboardEntry[] = [];
 	let paginationKey: string | undefined = cursor;
@@ -168,7 +168,7 @@ export async function getCategoryLeaderboard(
 	}
 
 	const tf = timeframe as "1d" | "7d" | "30d" | "lifetime";
-	const sortBy = sort?.sortBy as NonNullable<Parameters<typeof client.tags.getCategoryTopTraders>[0]>["sort_by"] | undefined;
+	const sortBy = sort?.sortBy as string | undefined;
 	const sortOption = sortBy ? { sort_by: sortBy, sort_direction: sort?.sortDirection ?? "desc" } : {};
 	const data: TraderLeaderboardEntry[] = [];
 	let paginationKey: string | undefined = cursor;

@@ -1,8 +1,7 @@
 import "server-only";
 
 import type {
-	HttpClient,
-	MarketResponse,
+		MarketResponse,
 	MarketSortBy,
 	SortDirection,
 	Tag,
@@ -218,11 +217,11 @@ export async function getTagBySlug(slug: string): Promise<Tag | null> {
 	}
 
 	try {
-		const http = (client.tags as unknown as { http: HttpClient }).http;
-		const response = await http.get<Tag>(
+		const http = (client as any).sdk.tags;
+		const response = await (http.get as Function)(
 			`/polymarket/tags/${encodeURIComponent(slug)}`,
 			{ params: { include_metrics: true, timeframe: "lifetime" } },
-		);
+		) as { data: Tag };
 		return response.data;
 	} catch (error) {
 		if (readStatus(error) === 404) {

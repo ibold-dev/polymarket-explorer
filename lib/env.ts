@@ -11,19 +11,6 @@ function readPositiveInteger(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-export function hasStructConfig() {
-  return Boolean(readString(process.env.STRUCTBUILD_API_KEY));
-}
-
-export function getStructConfig() {
-  return {
-    apiKey: readString(process.env.STRUCTBUILD_API_KEY),
-    timeoutMs: readPositiveInteger(
-      process.env.STRUCTBUILD_TIMEOUT_MS,
-      defaultTimeoutMs,
-    ),
-  };
-}
 
 export function getSiteUrl() {
   const configured =

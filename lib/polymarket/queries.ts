@@ -13,7 +13,6 @@ import type {
 	PnlRiskResponse,
 	PolymarketCategory,
 	PositionEntry,
-	any,
 	Trade,
 	Trader,
 	TraderWithPnl,
@@ -44,8 +43,8 @@ export type GetTraderPositionPnlRequest = Omit<SdkGetTraderPositionPnlRequest, "
 };
 export type GetTraderTradesRequest = Parameters<any["trader"]["getTraderTrades"]>[0];
 
-export type TraderPositionsOptions = Omit<GetTraderPositionPnlRequest, "address" | "status">;
-export type TraderTradesPageOptions = Omit<GetTraderTradesRequest, "address">;
+export type TraderPositionsOptions = { limit?: number; offset?: number; sort_by?: string; sort_direction?: string; category?: string;[key: string]: any };
+export type TraderTradesPageOptions = { limit?: number; offset?: number; sort_desc?: boolean; trade_types?: string[];[key: string]: any };
 
 function normalizeTraderSearchQuery(query: string) {
 	return query.trim().replace(/\s+/g, " ").slice(0, maxTraderSearchQueryLength);
@@ -231,7 +230,7 @@ export async function getMarketsByConditionIds(conditionIds: string[]): Promise<
 function emptyPage<T>(limit: number): PaginatedResource<T, number> {
 	return {
 		data: [],
-		hasMore: false,
+		hasMore: false, count: 0,
 		nextCursor: null,
 		pageSize: limit,
 	};
@@ -587,7 +586,7 @@ export async function getTraderCategoryPnl(
 	}
 }
 
-export type TraderCategoriesPageOptions = Omit<GetTraderCategoryPnlOptions, "address">;
+export type TraderCategoriesPageOptions = { limit?: number; offset?: number; sort_by?: string; sort_direction?: string;[key: string]: any };
 
 async function fetchTraderCategoriesPage(
 	address: string,
@@ -651,7 +650,7 @@ export async function getTraderCategoriesPage(
 	return fetchTraderCategoriesPage(normalizedAddress, options);
 }
 
-export type TraderMarketsPageOptions = Omit<GetTraderMarketPnlOptions, "address">;
+export type TraderMarketsPageOptions = { limit?: number; offset?: number; sort_by?: string; sort_direction?: string;[key: string]: any };
 
 async function fetchTraderMarketsPage(
 	address: string,

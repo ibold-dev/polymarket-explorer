@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { any, Trade } from "@/lib/polymarket/types";
+import type { Trade } from "@/lib/polymarket/types";
 
 import { getPolymarketClient } from "@/lib/polymarket/client";
 import { logStructError, readStatus } from "@/lib/polymarket/http";
@@ -10,7 +10,7 @@ import type { PaginatedResource } from "@/lib/polymarket/types";
 export const defaultMarketTradesPageSize = 25;
 
 export type GetMarketTradesRequest = NonNullable<Parameters<any["markets"]["getTrades"]>[0]>;
-export type MarketTradesPageOptions = Omit<GetMarketTradesRequest, "condition_ids">;
+export type MarketTradesPageOptions = { limit?: number; offset?: number; sort_desc?: boolean; trade_types?: string[];[key: string]: any };
 
 export async function getMarketTradesPage(
 	conditionId: string,

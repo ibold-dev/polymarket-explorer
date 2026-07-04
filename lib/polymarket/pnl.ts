@@ -189,7 +189,7 @@ export async function getTraderPnlRisk(address: string, timeframe: StructPnlPeri
 export const defaultTraderExitsPageSize = 25;
 
 function emptyExitsPage(limit: number): PaginatedResource<PnlExitMarker, number> {
-	return { data: [], hasMore: false, nextCursor: null, pageSize: limit };
+	return { data: [], hasMore: false, pageSize: limit, count: 0, nextCursor: null };
 }
 
 const getTraderExitsPageCached = cache(
