@@ -79,7 +79,19 @@ export function getPolymarketClient(): any {
       getMarketHoldersHistory: async () => ({ data: [] })
     },
     trader: {
-      getGlobalPnl: async () => ({ data: [] })
+      getGlobalPnl: async () => ({ data: [] }),
+      getTraderProfile: async (params: any = {}) => {
+        return {
+          data: {
+            proxy_wallet: params.address || "",
+            display_username_public: true,
+            verified_badge: false,
+            is_creator: false,
+            is_mod: false,
+            name: params.address ? `Trader ${params.address.substring(0, 6)}` : "Trader"
+          }
+        };
+      }
     },
     tags: {
       getTags: async (params: any = {}) => {
@@ -106,6 +118,18 @@ export function getPolymarketClient(): any {
       getGlobalChanges: async () => ({ data: null }),
       getGlobalTags: async () => ({ data: [] }),
       getTagBuilders: async () => ({ data: [] })
+    },
+    search: {
+      search: async (params: any = {}) => {
+        const q = params.q || "";
+        const data: any = { traders: [], markets: [], events: [], builders: [] };
+        
+        if (q.startsWith("0x") && q.length === 42) {
+          data.traders.push({ address: q });
+        }
+        
+        return { data };
+      }
     }
   };
 }

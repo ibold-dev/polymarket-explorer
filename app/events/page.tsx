@@ -14,6 +14,7 @@ import { getSiteUrl } from "@/lib/env";
 import { buildPageMetadata, SITE_NAME } from "@/lib/site-metadata";
 import { getTopEvents } from "@/lib/polymarket/queries/events";
 import { loadEventSearchParams } from "@/lib/event-search-params.server";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export const metadata: Metadata = buildPageMetadata({
 	title: "Polymarket Events · Browse by Volume",
@@ -91,16 +92,18 @@ async function EventsPageContent({ searchParams }: Props) {
 				<Suspense fallback={<TagsScrollerFallback />}>
 					<EventTagsScroller />
 				</Suspense>
-				<EventsStatusListing
-					initialEvents={events.map(eventResponseToRow)}
-					initialTab={tab}
-					initialCursor={activeCursor ?? null}
-					initialHasMore={hasMore}
-					initialNextCursor={nextCursor}
-					sortBy={sort_by}
-					sortDirection={sort_dir}
-					timeframe={timeframe}
-				/>
+				<NuqsAdapter>
+					<EventsStatusListing
+						initialEvents={events.map(eventResponseToRow)}
+						initialTab={tab}
+						initialCursor={activeCursor ?? null}
+						initialHasMore={hasMore}
+						initialNextCursor={nextCursor}
+						sortBy={sort_by}
+						sortDirection={sort_dir}
+						timeframe={timeframe}
+					/>
+				</NuqsAdapter>
 			</div>
 		</>
 	);
