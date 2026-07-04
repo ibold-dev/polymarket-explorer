@@ -48,3 +48,29 @@ export class AnalyticsEngine {
         };
     }
 }
+
+import { HttpClient } from '../http';
+
+export class AnalyticsModule {
+    constructor(private http: HttpClient) {}
+
+    public async getCounts(): Promise<{ data: any }> {
+        return { data: null };
+    }
+
+    public async getTraderChanges(): Promise<{ data: any }> {
+        return { data: null };
+    }
+
+    public async getDeltas(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getChanges(): Promise<{ data: any }> { return { data: null }; }
+    public async getMarketDeltas(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getMarketChanges(): Promise<{ data: any }> { return { data: null }; }
+    public async getTagDeltas(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getTagChanges(): Promise<{ data: any }> { return { data: null }; }
+    public async getTimeseries(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getMarketTimeseries(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getTagTimeseries(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getTraderTimeseries(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getTraderDeltas(): Promise<{ data: any[] }> { return { data: [] }; }
+}

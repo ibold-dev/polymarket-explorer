@@ -72,7 +72,7 @@ const getTraderPnlCandlesCached = cache(
 		}
 
 		try {
-			const response = await client.trader.getTraderPnlCandles({
+			const response = await client.newClient.traders.getTraderPnlCandles({
 				address,
 				timeframe,
 				resolution,
@@ -165,7 +165,7 @@ const getTraderPnlRiskCached = cache(
 		}
 
 		try {
-			const response = await client.trader.getTraderPnlRisk({ address, timeframe });
+			const response = await client.newClient.traders.getTraderPnlRisk({ address, timeframe });
 			return response.data ?? null;
 		} catch (error) {
 			if (readStatus(error) === 404) {
@@ -208,7 +208,7 @@ const getTraderExitsPageCached = cache(
 		}
 
 		try {
-			const response = await client.trader.getTraderPnlExits({
+			const response = await client.newClient.traders.getTraderPnlExits({
 				address,
 				sort_by: "pnl_usd",
 				sort_direction: mode === "wins" ? "desc" : "asc",
@@ -434,7 +434,7 @@ const getTraderPnlPeriodsCached = cache(
 		}
 
 		try {
-			const response = await client.trader.getTraderPnlPeriods({ address, timeframe });
+			const response = await client.newClient.traders.getTraderPnlPeriods({ address, timeframe });
 			const periods = response.data;
 
 			return {

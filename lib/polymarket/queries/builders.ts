@@ -53,7 +53,7 @@ export async function getBuildersPaginated(
 	}
 
 	try {
-		const response = await client.builders.getBuilders({
+		const response = await client.newClient.builders.getBuilders({
 			limit,
 			offset,
 			sort,
@@ -90,7 +90,7 @@ export async function getAllBuilderCodes(maxCount?: number): Promise<{ code: str
 				logPaginationLimitReached("getAllBuilderCodes");
 				break;
 			}
-			const response = await client.builders.getBuilders({
+			const response = await client.newClient.builders.getBuilders({
 				limit: batchSize,
 				offset,
 				sort: "volume",
@@ -124,7 +124,7 @@ export async function getBuilderByCode(
 	if (!client) return null;
 
 	try {
-		const response = await client.builders.getBuilder({ builder_code: code, timeframe });
+		const response = await client.newClient.builders.getBuilder({ builder_code: code, timeframe });
 		return response.data ?? null;
 	} catch (error) {
 		if (readStatus(error) === 404) return null;
@@ -138,7 +138,7 @@ export async function getBuilderMetadata(code: string): Promise<BuilderMetadata 
 	if (!client) return null;
 
 	try {
-		const response = await client.builders.getBuilderMetadata({ builder_code: code });
+		const response = await client.newClient.builders.getBuilderMetadata({ builder_code: code });
 		return response.data ?? null;
 	} catch (error) {
 		if (readStatus(error) === 404) return null;
@@ -155,7 +155,7 @@ export async function getBuilderConcentration(
 	if (!client) return null;
 
 	try {
-		const response = await client.builders.getBuilderConcentration({
+		const response = await client.newClient.builders.getBuilderConcentration({
 			builder_code: code,
 			timeframe,
 		});
@@ -172,7 +172,7 @@ export async function getBuilderFees(code: string): Promise<BuilderFeeRate | nul
 	if (!client) return null;
 
 	try {
-		const response = await client.builders.getBuilderFees({ builder_code: code });
+		const response = await client.newClient.builders.getBuilderFees({ builder_code: code });
 		return response.data ?? null;
 	} catch (error) {
 		if (readStatus(error) === 404) return null;
@@ -189,7 +189,7 @@ export async function getBuilderFeesHistory(
 	if (!client) return [];
 
 	try {
-		const response = await client.builders.getBuilderFeesHistory({
+		const response = await client.newClient.builders.getBuilderFeesHistory({
 			builder_code: code,
 			limit,
 		});
@@ -210,7 +210,7 @@ export async function getBuilderRetention(
 	if (!client) return [];
 
 	try {
-		const response = await client.builders.getBuilderRetention({
+		const response = await client.newClient.builders.getBuilderRetention({
 			builder_code: code,
 			...(from !== undefined ? { from } : {}),
 			...(to !== undefined ? { to } : {}),
@@ -233,7 +233,7 @@ export async function getBuilderTags(
 	if (!client) return [];
 
 	try {
-		const response = await client.builders.getBuilderTags({
+		const response = await client.newClient.builders.getBuilderTags({
 			builder_code: code,
 			sort,
 			timeframe,
@@ -257,7 +257,7 @@ export async function getBuilderTopTraders(
 	if (!client) return [];
 
 	try {
-		const response = await client.builders.getBuilderTopTraders({
+		const response = await client.newClient.builders.getBuilderTopTraders({
 			builder_code: code,
 			sort_by: sort,
 			timeframe,
@@ -291,7 +291,7 @@ export async function getBuilderTradesPage(
 	const { sort_desc, trade_types, ...restOptions } = (options ?? {}) as BuilderTradesPageOptions;
 
 	try {
-		const response = await client.markets.getTrades({
+		const response = await client.newClient.markets.getTrades({
 			builder_codes: builderCode,
 			...restOptions,
 			limit: limit + 1,
@@ -344,7 +344,7 @@ export async function getBuilderComposition(
 	}
 
 	try {
-		const response = await client.builders.getComposition({
+		const response = await client.newClient.builders.getComposition({
 			metric,
 			resolution,
 			count_back: countBack,
@@ -384,7 +384,7 @@ export async function getBuilderGlobal(
 	if (!client) return null;
 
 	try {
-		const response = await client.builders.getGlobal({ timeframe });
+		const response = await client.newClient.builders.getGlobal({ timeframe });
 		return response.data ?? null;
 	} catch (error) {
 		if (readStatus(error) === 404) return null;
@@ -400,7 +400,7 @@ export async function getBuilderGlobalChanges(
 	if (!client) return null;
 
 	try {
-		const response = await client.builders.getGlobalChanges({ timeframe });
+		const response = await client.newClient.builders.getGlobalChanges({ timeframe });
 		return response.data ?? null;
 	} catch (error) {
 		if (readStatus(error) === 404) return null;
@@ -421,7 +421,7 @@ export async function getBuilderGlobalTags(
 	}
 
 	try {
-		const response = await client.builders.getGlobalTags({
+		const response = await client.newClient.builders.getGlobalTags({
 			sort,
 			timeframe,
 			limit,
@@ -450,7 +450,7 @@ export async function getTagBuilders(
 	if (!client) return [];
 
 	try {
-		const response = await client.builders.getTagBuilders({
+		const response = await client.newClient.builders.getTagBuilders({
 			tag,
 			sort,
 			timeframe,

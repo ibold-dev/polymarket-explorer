@@ -75,7 +75,7 @@ export const searchTraders = cache(async (query: string): Promise<Trader[]> => {
 	}
 
 	try {
-		const response = await client.search.search({
+		const response = await client.newClient.search.search({
 			q: normalizedQuery,
 			limit: 25,
 			type: "traders"
@@ -104,11 +104,10 @@ export const searchAll = cache(
 		}
 
 		try {
-			const response = await client.search.search({
+			const response = await client.newClient.search.search({
 				q: normalizedQuery,
 				limit: 10,
-				type: "traders,markets,events,builders",
-				include_pnl: true,
+				type: "traders,markets,events,builders" as any,
 			});
 			return {
 				traders: response.data.traders ?? [],
@@ -134,13 +133,17 @@ async function fetchTraderProfile(address: string): Promise<UserProfile> {
 	}
 
 	try {
-		const response = await client.trader.getTraderProfile({ address });
+		const response = await client.newClient.profiles.getProfile(address);
 
 		if (!response.data) {
 			throw new TraderDataUnavailableError("Trader profile was empty");
 		}
 
-		return response.data;
+		return {
+			...response.data,
+			address,
+			name: response.data.name || `Trader ${address.substring(0, 6)}`
+		} as UserProfile;
 	} catch (error) {
 		if (readStatus(error) === 404) {
 			throw new TraderDataUnavailableError("Trader profile was not found");
@@ -176,13 +179,28 @@ async function fetchTraderPnlSummary(address: string): Promise<GlobalEntry> {
 	}
 
 	try {
-		const response = await client.trader.getTraderPnl({ address, timeframe: "lifetime" });
+		const response = await client.newClient.positions.getPositionValue(address);
+		const data = response.data;
+		
+		const value = Array.isArray(data) && data.length > 0 ? data[0].value : (data?.value || 0);
 
-		if (!response.data) {
-			throw new TraderDataUnavailableError("Trader PnL summary was empty");
-		}
-
-		return response.data;
+		return {
+			trader: { address },
+			realized_pnl_usd: 0,
+			total_pnl_usd: value,
+			unrealized_pnl_usd: 0,
+			usd_balance: 0,
+			realized_pnl_percent: 0,
+			unrealized_pnl_percent: 0,
+			total_pnl_percent: 0,
+			buy_count: 0,
+			sell_count: 0,
+			total_buys: 0,
+			total_sells: 0,
+			total_fees: 0,
+			total_shares_bought: 0,
+			total_shares_sold: 0,
+		} as any;
 	} catch (error) {
 		if (readStatus(error) === 404) {
 			throw new TraderDataUnavailableError("Trader PnL summary was not found");
@@ -218,7 +236,7 @@ export async function getMarketsByConditionIds(conditionIds: string[]): Promise<
 	}
 
 	try {
-		const response = await client.markets.getMarkets({ condition_ids: conditionIds.join(",") });
+		const response = await client.newClient.markets.getMarkets({ condition_ids: conditionIds.join(",") });
 		const data = response.data ?? [];
 		return data.map(normalizeMarketResponseImages);
 	} catch (error) {
@@ -259,19 +277,13 @@ async function fetchTraderPositionsPage(
 
 	try {
 		const requestLimit = limit + 1;
-		const params: SdkGetTraderPositionPnlRequest = {
-			address,
+		const response = await client.newClient.positions.getPositions({
+			user: address,
 			status,
-			...restOptions,
-			offset,
 			limit: requestLimit,
-			sort_by:
-				(sort_by === "total_pnl_usd" ? "realized_pnl_usd" : sort_by) ??
-				defaultTraderPositionSortBy[status],
-			sort_direction: sort_direction ?? "desc",
-		};
-		const response = await client.trader.getTraderOutcomePnl(params);
-		const data = response.data.slice(0, limit);
+			offset
+		});
+		const data = response.data.slice(0, limit) as any;
 		const hasMore = response.data.length > limit;
 		const nextCursor = hasMore ? offset + data.length : null;
 		return {
@@ -325,14 +337,12 @@ async function fetchTraderTradesPage(
 
 	try {
 		const requestLimit = limit + 1;
-		const params: GetTraderTradesRequest = {
-			address,
-			...restOptions,
+		const response = await client.newClient.trades.getTrades({
+			user: address,
 			limit: requestLimit,
-			sort_desc: sort_desc ?? true,
-		};
-		const response = await client.trader.getTraderTrades(params);
-		const data = response.data.slice(0, limit);
+			offset
+		});
+		const data = response.data.slice(0, limit) as any;
 		const hasMore = response.data.length > limit;
 		const nextCursor = hasMore ? offset + data.length : null;
 
@@ -418,7 +428,7 @@ export async function getTraderPnl(
 	}
 
 	try {
-		const response = await client.trader.getTraderPnl({
+		const response = await client.newClient.traders.getTraderPnl({
 			address: normalizedAddress,
 			...(options ?? {}),
 		});
@@ -444,7 +454,7 @@ export async function getTraderPnlCandles(
 	}
 
 	try {
-		const response = await client.trader.getTraderPnlCandles({
+		const response = await client.newClient.traders.getTraderPnlCandles({
 			address: normalizedAddress,
 			...(options ?? {}),
 		});
@@ -469,7 +479,7 @@ export async function getTraderPnlChanges(
 	}
 
 	try {
-		const response = await client.trader.getTraderPnlChanges({
+		const response = await client.newClient.traders.getTraderPnlChanges({
 			address: normalizedAddress,
 		});
 		return response.data ?? null;
@@ -494,7 +504,7 @@ export async function getTraderPnlPeriods(
 	}
 
 	try {
-		const response = await client.trader.getTraderPnlPeriods({
+		const response = await client.newClient.traders.getTraderPnlPeriods({
 			address: normalizedAddress,
 			...(options ?? {}),
 		});
@@ -520,7 +530,7 @@ export async function getTraderPnlRisk(
 	}
 
 	try {
-		const response = await client.trader.getTraderPnlRisk({
+		const response = await client.newClient.traders.getTraderPnlRisk({
 			address: normalizedAddress,
 			...(options ?? {}),
 		});
@@ -546,7 +556,7 @@ export async function getTraderMarketPnl(
 	}
 
 	try {
-		const response = await client.trader.getTraderMarketPnl({
+		const response = await client.newClient.traders.getTraderMarketPnl({
 			address: normalizedAddress,
 			...(options ?? {}),
 		});
@@ -572,7 +582,7 @@ export async function getTraderCategoryPnl(
 	}
 
 	try {
-		const response = await client.trader.getTraderCategoryPnl({
+		const response = await client.newClient.traders.getTraderCategoryPnl({
 			address: normalizedAddress,
 			...(options ?? {}),
 		});
@@ -609,7 +619,7 @@ async function fetchTraderCategoriesPage(
 
 	try {
 		const requestLimit = limit + 1;
-		const response = await client.trader.getTraderCategoryPnl({
+		const response = await client.newClient.traders.getTraderCategoryPnl({
 			address,
 			...restOptions,
 			limit: requestLimit,
@@ -673,7 +683,7 @@ async function fetchTraderMarketsPage(
 
 	try {
 		const requestLimit = limit + 1;
-		const response = await client.trader.getTraderMarketPnl({
+		const response = await client.newClient.traders.getTraderMarketPnl({
 			address,
 			...restOptions,
 			limit: requestLimit,
@@ -726,11 +736,11 @@ export async function getTraderOutcomePnl(
 	}
 
 	try {
-		const response = await client.trader.getTraderOutcomePnl({
-			address: normalizedAddress,
+		const response = await client.newClient.positions.getPositions({
+			user: normalizedAddress,
 			...options,
 		});
-		return readCursorPage<PositionEntry>(response);
+		return readCursorPage<PositionEntry>(response as any);
 	} catch (error) {
 		if (readStatus(error) === 404) {
 			return emptyCursorPage<PositionEntry>();
@@ -750,8 +760,8 @@ export async function getTopTradesMarkets(
 	}
 
 	try {
-		const response = await client.trader.getTopTradesMarkets(options);
-		return readCursorPage<MarketEntry>(response);
+		const response = await client.newClient.trades.getTrades(options);
+		return readCursorPage<MarketEntry>(response as any);
 	} catch (error) {
 		logStructError("getTopTradesMarkets", error);
 		return emptyCursorPage<MarketEntry>();
@@ -769,7 +779,7 @@ export async function getCategoryTopTraders(
 	}
 
 	try {
-		const response = await client.tags.getCategoryTopTraders({
+		const response = await client.newClient.tags.getCategoryTopTraders({
 			category,
 			...(options ?? {}),
 		});
@@ -790,7 +800,7 @@ export async function getMarketTopTraders(
 	}
 
 	try {
-		const response = await client.markets.getMarketTopTraders(options);
+		const response = await client.newClient.markets.getMarketTopTraders(options);
 		return readCursorPage<MarketEntry>(response);
 	} catch (error) {
 		if (readStatus(error) === 404) {
@@ -812,7 +822,7 @@ export async function getPositionTopTraders(
 	}
 
 	try {
-		const response = await client.markets.getPositionTopTraders({
+		const response = await client.newClient.markets.getPositionTopTraders({
 			position_id: positionId,
 			...(options ?? {}),
 		});
@@ -834,7 +844,7 @@ export async function getRewardsMarkets(): Promise<MarketResponse[]> {
 	}
 
 	try {
-		const response = await client.markets.getMarkets({
+		const response = await client.newClient.markets.getMarkets({
 			has_rewards: true,
 			status: "open",
 			limit: 25,

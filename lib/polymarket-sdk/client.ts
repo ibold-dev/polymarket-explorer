@@ -7,6 +7,10 @@ import { ProfilesModule } from './modules/profiles';
 import { PositionsModule } from './modules/positions';
 import { TradesModule } from './modules/trades';
 import { ActivityModule } from './modules/activity';
+import { AnalyticsModule } from './modules/analytics';
+import { BuildersModule } from './modules/builders';
+import { HoldersModule } from './modules/holders';
+import { TradersModule } from './modules/traders';
 
 export class PolymarketClient {
     public readonly http: HttpClient;
@@ -18,6 +22,10 @@ export class PolymarketClient {
     public readonly positions: PositionsModule;
     public readonly trades: TradesModule;
     public readonly activity: ActivityModule;
+    public readonly analytics: AnalyticsModule;
+    public readonly builders: BuildersModule;
+    public readonly holders: HoldersModule;
+    public readonly traders: TradersModule;
 
     constructor() {
         this.http = new HttpClient();
@@ -29,6 +37,10 @@ export class PolymarketClient {
         this.positions = new PositionsModule(this.http);
         this.trades = new TradesModule(this.http);
         this.activity = new ActivityModule(this.http);
+        this.analytics = new AnalyticsModule(this.http);
+        this.builders = new BuildersModule(this.http);
+        this.holders = new HoldersModule(this.http);
+        this.traders = new TradersModule(this.http);
     }
 }
 

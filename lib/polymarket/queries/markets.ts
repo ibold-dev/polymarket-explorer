@@ -36,7 +36,7 @@ async function fetchTopMarkets(
 	}
 
 	try {
-		const response = await client.markets.getMarkets({
+		const response = await client.newClient.markets.getMarkets({
 			limit,
 			status,
 			sort_by: sortBy,
@@ -45,7 +45,7 @@ async function fetchTopMarkets(
 			include_metrics: includeMetrics,
 			...(cursor ? { pagination_key: cursor } : {}),
 			...(excludeTags ? { exclude_tags: excludeTags } : {}),
-		});
+		} as any);
 		const hasMore = response.pagination?.has_more ?? false;
 		const nextKey = response.pagination?.pagination_key;
 		return {
@@ -67,7 +67,7 @@ export async function getMarketBySlug(slug: string): Promise<MarketResponse | nu
 	}
 
 	try {
-		const response = await client.markets.getMarketBySlug({ marketSlug: slug });
+		const response = await (client.newClient.markets.getMarketBySlug as any)(slug);
 		const data = response.data;
 		return data ? normalizeMarketResponseImages(data) : null;
 	} catch (error) {
@@ -121,13 +121,13 @@ export async function getAllMarketSlugs(
 				break;
 			}
 
-			const response = await client.markets.getMarkets({
+			const response = await client.newClient.markets.getMarkets({
 				status: "all",
 				sort_by: "volume",
 				sort_dir: "desc",
 				limit: 100,
 				...(paginationKey ? { pagination_key: paginationKey } : {}),
-			});
+			} as any);
 			requestCount += 1;
 
 			for (const market of response.data) {
@@ -166,7 +166,7 @@ export async function getPlatformCounts(): Promise<AnalyticsGlobalCountsResponse
 	}
 
 	try {
-		const response = await client.analytics.getCounts();
+		const response = await client.newClient.analytics.getCounts();
 		return response.data;
 	} catch (error) {
 		logStructError("getPlatformCounts", error);

@@ -28,7 +28,7 @@ export async function getMarketChart(
 	}
 
 	try {
-		const response = await client.markets.getMarketChart({ condition_id: conditionId, resolution });
+		const response = await client.newClient.markets.getMarketChart({ condition_id: conditionId, resolution });
 		return response.data;
 	} catch (error) {
 		if (readStatus(error) === 404) {
@@ -48,7 +48,7 @@ export async function getPositionVolumeChart(positionId: string): Promise<Positi
 	}
 
 	try {
-		const response = await client.markets.getPositionVolumeChart({ position_id: positionId, resolution: "60" });
+		const response = await client.newClient.markets.getPositionVolumeChart({ position_id: positionId, resolution: "60" });
 		return response.data;
 	} catch (error) {
 		if (readStatus(error) === 404) {
@@ -68,7 +68,7 @@ export async function getMarketPriceJumps(conditionId: string): Promise<PriceJum
 	}
 
 	try {
-		const response = await client.markets.getPriceJumps({
+		const response = await client.newClient.markets.getPriceJumps({
 			condition_id: conditionId,
 			resolution: "5",
 			min_change_pct: 10,

@@ -341,7 +341,7 @@ export async function getAnalyticsDeltas(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.analytics.getDeltas(params),
+			(params) => client.newClient.analytics.getDeltas(params),
 			{},
 			buildRangeConfig(range, resolution),
 			`getAnalyticsDeltas:${range}:${resolution}`,
@@ -358,7 +358,7 @@ export async function getAnalyticsChanges(range: AnalyticsRange): Promise<Analyt
 	const client = getPolymarketClient();
 	if (!client) return null;
 	try {
-		const response = await client.analytics.getChanges({
+		const response = await client.newClient.analytics.getChanges({
 			timeframe: CHANGES_TIMEFRAME[range],
 		});
 		return response.data;
@@ -376,7 +376,7 @@ export async function getMarketAnalyticsDeltas(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.analytics.getMarketDeltas(params),
+			(params) => client.newClient.analytics.getMarketDeltas(params),
 			{ condition_id: conditionId },
 			buildRangeConfig(range, resolution),
 			`getMarketAnalyticsDeltas:${conditionId}:${range}:${resolution}`,
@@ -396,7 +396,7 @@ export async function getMarketAnalyticsChanges(
 	const client = getPolymarketClient();
 	if (!client) return null;
 	try {
-		const response = await client.analytics.getMarketChanges({
+		const response = await client.newClient.analytics.getMarketChanges({
 			condition_id: conditionId,
 			timeframe: CHANGES_TIMEFRAME[range],
 		});
@@ -418,7 +418,7 @@ export async function getTagAnalyticsDeltas(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.analytics.getTagDeltas(params),
+			(params) => client.newClient.analytics.getTagDeltas(params),
 			{ tag },
 			buildRangeConfig(range, resolution),
 			`getTagAnalyticsDeltas:${tag}:${range}:${resolution}`,
@@ -438,7 +438,7 @@ export async function getTagAnalyticsChanges(
 	const client = getPolymarketClient();
 	if (!client) return null;
 	try {
-		const response = await client.analytics.getTagChanges({
+		const response = await client.newClient.analytics.getTagChanges({
 			tag,
 			timeframe: TAG_CHANGES_TIMEFRAME[range],
 		});
@@ -457,7 +457,7 @@ export async function getTraderAnalyticsDeltas(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.analytics.getTraderDeltas(params),
+			(params) => client.newClient.analytics.getTraderDeltas(params),
 			{ address },
 			buildRangeConfig(range, resolution),
 			`getTraderAnalyticsDeltas:${address}:${range}:${resolution}`,
@@ -477,7 +477,7 @@ export async function getTraderAnalyticsChanges(
 	const client = getPolymarketClient();
 	if (!client) return null;
 	try {
-		const response = await client.analytics.getTraderChanges({
+		const response = await client.newClient.analytics.getTraderChanges({
 			address,
 			timeframe: CHANGES_TIMEFRAME[range],
 		});
@@ -498,7 +498,7 @@ export async function getAnalyticsTimeseries(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.analytics.getTimeseries(params),
+			(params) => client.newClient.analytics.getTimeseries(params),
 			{},
 			buildRangeConfig(range, resolution),
 			`getAnalyticsTimeseries:${range}:${resolution}`,
@@ -521,7 +521,7 @@ export async function getMarketAnalyticsTimeseries(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.analytics.getMarketTimeseries(params),
+			(params) => client.newClient.analytics.getMarketTimeseries(params),
 			{ condition_id: conditionId },
 			buildRangeConfig(range, resolution),
 			`getMarketAnalyticsTimeseries:${conditionId}:${range}:${resolution}`,
@@ -544,7 +544,7 @@ export async function getTagAnalyticsTimeseries(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.analytics.getTagTimeseries(params),
+			(params) => client.newClient.analytics.getTagTimeseries(params),
 			{ tag },
 			buildRangeConfig(range, resolution),
 			`getTagAnalyticsTimeseries:${tag}:${range}:${resolution}`,
@@ -567,7 +567,7 @@ export async function getTraderAnalyticsTimeseries(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.analytics.getTraderTimeseries(params),
+			(params) => client.newClient.analytics.getTraderTimeseries(params),
 			{ address },
 			buildRangeConfig(range, resolution),
 			`getTraderAnalyticsTimeseries:${address}:${range}:${resolution}`,
@@ -615,7 +615,7 @@ export async function getBuilderAnalyticsDeltas(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.builders.getBuilderDeltas(params),
+			(params) => client.newClient.builders.getBuilderDeltas(params),
 			{ builder_code: builderCode },
 			buildRangeConfig(range, resolution),
 			`getBuilderAnalyticsDeltas:${builderCode}:${range}:${resolution}`,
@@ -637,7 +637,7 @@ export async function getBuilderAnalyticsTimeseries(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.builders.getBuilderTimeseries(params),
+			(params) => client.newClient.builders.getBuilderTimeseries(params),
 			{ builder_code: builderCode },
 			buildRangeConfig(range, resolution),
 			`getBuilderAnalyticsTimeseries:${builderCode}:${range}:${resolution}`,
@@ -658,7 +658,7 @@ export async function getBuilderAnalyticsChanges(
 	const client = getPolymarketClient();
 	if (!client) return null;
 	try {
-		const response = await client.builders.getBuilderChanges({
+		const response = await client.newClient.builders.getBuilderChanges({
 			builder_code: builderCode,
 			timeframe: CHANGES_TIMEFRAME[range],
 		});
@@ -679,7 +679,7 @@ export async function getBuilderGlobalAnalyticsDeltas(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.builders.getGlobalDeltas(params),
+			(params) => client.newClient.builders.getGlobalDeltas(params),
 			{},
 			buildRangeConfig(range, resolution),
 			`getBuilderGlobalAnalyticsDeltas:${range}:${resolution}`,
@@ -700,7 +700,7 @@ export async function getBuilderGlobalAnalyticsTimeseries(
 	if (!client) return [];
 	try {
 		return await fetchTimeBucketsWithPagination(
-			(params) => client.builders.getGlobalTimeseries(params),
+			(params) => client.newClient.builders.getGlobalTimeseries(params),
 			{},
 			buildRangeConfig(range, resolution),
 			`getBuilderGlobalAnalyticsTimeseries:${range}:${resolution}`,
@@ -720,7 +720,7 @@ export async function getBuilderGlobalAnalyticsChanges(
 	const client = getPolymarketClient();
 	if (!client) return null;
 	try {
-		const response = await client.builders.getGlobalChanges({
+		const response = await client.newClient.builders.getGlobalChanges({
 			timeframe: BUILDER_GLOBAL_CHANGES_TIMEFRAME[range],
 		});
 		return response.data ? projectBuilderChanges(response.data) : null;

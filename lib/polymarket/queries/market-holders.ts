@@ -47,7 +47,7 @@ export async function getMarketHolders(
 	}
 
 	try {
-		const response = await client.holders.getMarketHolders({
+		const response = await client.newClient.holders.getMarketHolders({
 			market_slug: marketSlug,
 			limit,
 			include_pnl: true,
@@ -74,7 +74,7 @@ export async function getMarketHoldersHistory(
 	}
 
 	try {
-		const response = await client.holders.getMarketHoldersHistory({
+		const response = await client.newClient.holders.getMarketHoldersHistory({
 			condition_id: conditionId,
 			hours,
 		});
@@ -124,7 +124,7 @@ export async function getGlobalLeaderboard(
 			}
 
 			const chunkLimit = Math.min(MAX_LEADERBOARD_PAGE_SIZE, limit - data.length);
-			const response = await client.trader.getGlobalPnl({
+			const response = await client.newClient.traders.getGlobalPnl({
 				timeframe: tf,
 				...sortOption,
 				limit: chunkLimit,
@@ -185,7 +185,7 @@ export async function getCategoryLeaderboard(
 			}
 
 			const chunkLimit = Math.min(MAX_CATEGORY_LEADERBOARD_PAGE_SIZE, limit - data.length);
-			const response = await client.tags.getCategoryTopTraders({
+			const response = await client.newClient.tags.getCategoryTopTraders({
 				category,
 				timeframe: tf,
 				...sortOption,

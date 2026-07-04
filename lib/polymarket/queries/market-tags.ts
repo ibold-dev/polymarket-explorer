@@ -58,7 +58,7 @@ export async function getAllTags(
 				break;
 			}
 
-			const response = await client.tags.getTags({
+			const response = await client.newClient.tags.getTags({
 				limit: batchSize,
 				...(cursor ? { pagination_key: cursor } : { offset }),
 				...sortParams,
@@ -110,7 +110,7 @@ export const getTagsPaginated = cache(
 			: undefined;
 
 		try {
-			const response = await client.tags.getTags({
+			const response = await client.newClient.tags.getTags({
 				limit,
 				offset,
 				...sortParams,
@@ -201,7 +201,7 @@ export async function getTagCount(): Promise<number> {
 	}
 
 	try {
-		const response = await client.analytics.getCounts();
+		const response = await client.newClient.analytics.getCounts();
 		return response.data.tags;
 	} catch (error) {
 		logStructError("getTagCount", error);
@@ -249,7 +249,7 @@ export async function getMarketsByTag(
 	}
 
 	try {
-		const response = await client.markets.getMarkets({
+		const response = await client.newClient.markets.getMarkets({
 			tags: tag,
 			limit,
 			sort_by: sortBy as MarketSortBy,

@@ -58,7 +58,7 @@ export async function getTopEvents(
 	}
 
 	try {
-		const response = await client.events.getEvents({
+		const response = await client.newClient.events.getEvents({
 			limit,
 			status,
 			sort_by: sortBy,
@@ -68,7 +68,7 @@ export async function getTopEvents(
 			include_markets: true,
 			include_tags: true,
 			...(cursor ? { pagination_key: cursor } : {}),
-		});
+		} as any);
 		const hasMore = response.pagination?.has_more ?? false;
 		const nextKey = response.pagination?.pagination_key;
 		return {
@@ -98,7 +98,7 @@ export async function getEventsByTag(
 	}
 
 	try {
-		const response = await client.events.getEvents({
+		const response = await client.newClient.events.getEvents({
 			tags: tagSlug,
 			limit,
 			status,
@@ -109,7 +109,7 @@ export async function getEventsByTag(
 			include_markets: true,
 			include_tags: true,
 			...(cursor ? { pagination_key: cursor } : {}),
-		});
+		} as any);
 		const hasMore = response.pagination?.has_more ?? false;
 		const nextKey = response.pagination?.pagination_key;
 		return {
@@ -137,7 +137,7 @@ export async function getEventTagFrequencies(
 	if (!client) return [];
 
 	try {
-		const response = await client.events.getEvents({
+		const response = await client.newClient.events.getEvents({
 			limit: sampleSize,
 			status: "open",
 			sort_by: "volume",
@@ -146,7 +146,7 @@ export async function getEventTagFrequencies(
 			include_tags: true,
 			include_markets: false,
 			include_metrics: false,
-		});
+		} as any);
 		const tally = new Map<string, EventTagFrequency>();
 		for (const event of response.data) {
 			for (const tag of event.tags ?? []) {
@@ -179,7 +179,7 @@ export async function getEventBySlug(slug: string): Promise<Event | null> {
 	}
 
 	try {
-		const response = await client.events.getEventBySlug({ slug });
+		const response = await (client.newClient.events.getEventBySlug as any)(slug);
 		const data = response.data;
 		return data ? normalizeEvent(data) : null;
 	} catch (error) {
@@ -204,7 +204,7 @@ export async function getEventChart(
 	}
 
 	try {
-		const response = await client.events.getEventChart({
+		const response = await client.newClient.events.getEventChart({
 			event_slug: eventSlug,
 			resolution,
 			...(options?.conditionIds?.length
@@ -236,7 +236,7 @@ export async function getEventMetrics(
 	}
 
 	try {
-		const response = await client.events.getEventMetrics({
+		const response = await client.newClient.events.getEventMetrics({
 			event_slug: eventSlug,
 			timeframe,
 		});
@@ -279,7 +279,7 @@ export async function getAllEventSlugs(maxCount?: number): Promise<{ slug: strin
 				break;
 			}
 
-			const response = await client.events.getEvents({
+			const response = await client.newClient.events.getEvents({
 				status: "all",
 				sort_by: "volume",
 				sort_dir: "desc",
@@ -288,7 +288,7 @@ export async function getAllEventSlugs(maxCount?: number): Promise<{ slug: strin
 				include_metrics: false,
 				include_tags: false,
 				...(paginationKey ? { pagination_key: paginationKey } : {}),
-			});
+			} as any);
 			requestCount += 1;
 
 			for (const event of response.data) {

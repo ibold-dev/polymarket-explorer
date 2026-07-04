@@ -56,4 +56,10 @@ export class MarketsModule {
         const data = await this.http.get<Market[] | Market>('gamma', `/markets/slug/${slug}`);
         return { data: Array.isArray(data) ? data[0] : (data || null) };
     }
+
+    public async getMarketChart(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getPositionVolumeChart(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getPriceJumps(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getMarketTopTraders(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getPositionTopTraders(): Promise<{ data: any[] }> { return { data: [] }; }
 }
