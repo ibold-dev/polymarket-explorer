@@ -11,4 +11,7 @@ export class TradersModule {
     public async getTraderMarketPnl(): Promise<{ data: any[] }> { return { data: [] }; }
     public async getTraderCategoryPnl(): Promise<{ data: any[] }> { return { data: [] }; }
     public async getTraderPnlExits(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getTraderOutcomePnl(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getTraderTrades(): Promise<{ data: any[] }> { return { data: [] }; }
+    public async getTopTradesMarkets(): Promise<{ data: any[] }> { return { data: [] }; }
 }

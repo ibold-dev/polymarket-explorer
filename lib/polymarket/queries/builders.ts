@@ -291,7 +291,7 @@ export async function getBuilderTradesPage(
 	const { sort_desc, trade_types, ...restOptions } = (options ?? {}) as BuilderTradesPageOptions;
 
 	try {
-		const response = await client.newClient.markets.getTrades({
+		const response = await client.newClient.trades.getTrades({
 			builder_codes: builderCode,
 			...restOptions,
 			limit: limit + 1,

@@ -27,7 +27,7 @@ export async function getMarketTradesPage(
 	const { sort_desc, trade_types, ...restOptions } = (options ?? {}) as MarketTradesPageOptions;
 
 	try {
-		const response = await client.newClient.markets.getTrades({
+		const response = await client.newClient.trades.getTrades({
 			condition_ids: conditionId,
 			...restOptions,
 			limit: limit + 1,
@@ -69,7 +69,7 @@ export async function getEventTrades(
 	}
 
 	try {
-		const response = await client.newClient.markets.getTrades({
+		const response = await client.newClient.trades.getTrades({
 			condition_ids: filtered.join(","),
 			limit,
 			sort_desc: true,
@@ -94,7 +94,7 @@ export async function getRecentTrades(limit: number = 10): Promise<Trade[]> {
 	}
 
 	try {
-		const response = await client.newClient.markets.getTrades({
+		const response = await client.newClient.trades.getTrades({
 			limit,
 			sort_desc: true,
 			trade_types: "OrderFilled,OrdersMatched",
